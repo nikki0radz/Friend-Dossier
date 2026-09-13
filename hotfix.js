@@ -108,15 +108,16 @@
   }
 
   function saveFriendFallback(event) {
-    if (!form) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (!form.reportValidity()) return;
+    event?.preventDefault?.();
+    event?.stopImmediatePropagation?.();
+    if (!form || !form.reportValidity()) return;
 
     const id = $('friendId')?.value || makeId();
     const name = $('friendName')?.value.trim() || '';
     if (!name) return;
 
+    const existingStored = readStoredFriends();
+    const existing = existingStored.find(friend => friend.id === id);
     const newFriend = {
       id,
       name,
@@ -125,47 +126,36 @@
       birthdayDay: Number($('birthdayDay')?.value) || '',
       birthdayMonth: Number($('birthdayMonth')?.value) || '',
       birthdayYear: Number($('birthdayYear')?.value) || '',
-      entries: [],
+      entries: existing?.entries || [],
       bubbleColor: $('friendBubbleColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--bubble').trim() || '#b9d8ff',
       frameStyle: $('friendFrameStyle')?.value || 'plain',
       frameColor: $('friendFrameColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e2b5ff'
     };
 
-    let handledInApp = false;
     try {
       if (typeof state !== 'undefined' && state && Array.isArray(state.friends)) {
         const index = state.friends.findIndex(friend => friend.id === id);
         if (index >= 0) {
-          newFriend.entries = state.friends[index].entries || [];
+          newFriend.entries = state.friends[index].entries || newFriend.entries;
           state.friends[index] = newFriend;
         } else {
           state.friends.push(newFriend);
         }
         localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(state.friends));
         if (typeof renderHome === 'function') renderHome();
-        handledInApp = true;
+      } else {
+        const index = existingStored.findIndex(friend => friend.id === id);
+        if (index >= 0) existingStored[index] = newFriend;
+        else existingStored.push(newFriend);
+        localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(existingStored));
       }
     } catch (err) {
-      console.warn('Main app save path unavailable, using fallback storage', err);
-    }
-
-    if (!handledInApp) {
-      const friends = readStoredFriends();
-      const index = friends.findIndex(friend => friend.id === id);
-      if (index >= 0) {
-        newFriend.entries = friends[index].entries || [];
-        friends[index] = newFriend;
-      } else {
-        friends.push(newFriend);
-      }
-      localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(friends));
+      console.error('Could not save friend', err);
+      return;
     }
 
     safeClose(dialog);
-    try {
-      if (typeof showToast === 'function') showToast('Friend added');
-    } catch {}
-    if (!handledInApp) setTimeout(() => location.reload(), 80);
+    try { if (typeof showToast === 'function') showToast(existing ? 'Person updated' : 'Friend added'); } catch {}
   }
 
   ensureMonths();
@@ -176,7 +166,18 @@
     openAddFriend();
   }, { capture: true });
 
-  if (form) form.addEventListener('submit', saveFriendFallback, { capture: true });
+  if (form) {
+    const saveBtn = form.querySelector('.primary-button');
+    if (saveBtn) {
+      saveBtn.type = 'button';
+      saveBtn.addEventListener('click', saveFriendFallback, { capture: true });
+    }
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      saveFriendFallback(event);
+    }, { capture: true });
+  }
 
   const settingsBtn = $('settingsBtn');
   const settingsDialog = $('settingsDialog');
