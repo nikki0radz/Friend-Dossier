@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#120f16" />
   <title>Friend Dossier</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20260913-2" />
 </head>
 <body>
   <div id="loadingScreen" class="loading-screen">
@@ -214,6 +214,14 @@
 
   <div id="toast" class="toast" aria-live="polite"></div>
 
-  <script src="app.js"></script>
+  <script>
+    window.__friendDossierLoadingFallback = setTimeout(() => {
+      const loading = document.getElementById('loadingScreen');
+      const app = document.getElementById('appRoot');
+      if (loading) loading.classList.add('fade-out');
+      if (app) app.classList.remove('hidden');
+    }, 4000);
+  </script>
+  <script src="app.js?v=20260913-2"></script>
 </body>
 </html>
