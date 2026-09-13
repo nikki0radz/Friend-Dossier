@@ -6,6 +6,7 @@
   const saveBtn = form?.querySelector('.primary-button');
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const DATA_KEY = 'friendDossier.v4';
+  const MIRROR_KEY = 'friendDossier.persistent.v1';
 
   function ensureMonths() {
     ['birthdayMonth','entryMonth'].forEach(id => {
@@ -73,7 +74,21 @@
   }
 
   function makeId(){return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}
-  function readFriends(){try{const p=JSON.parse(localStorage.getItem(DATA_KEY)||'[]');return Array.isArray(p)?p:(Array.isArray(p?.friends)?p.friends:[])}catch{return []}}
+  function parseFriends(raw){try{const p=JSON.parse(raw||'[]');return Array.isArray(p)?p:(Array.isArray(p?.friends)?p.friends:[])}catch{return []}}
+  function readFriends(){
+    const main=parseFriends(localStorage.getItem(DATA_KEY));
+    const mirror=parseFriends(localStorage.getItem(MIRROR_KEY));
+    if (!mirror.length) return main;
+    if (!main.length) return mirror;
+    const merged = new Map(main.map(f=>[f.id,f]));
+    mirror.forEach(f=>merged.set(f.id,f));
+    return [...merged.values()];
+  }
+  function writeFriends(friends){
+    const raw=JSON.stringify(friends);
+    localStorage.setItem(DATA_KEY,raw);
+    localStorage.setItem(MIRROR_KEY,raw);
+  }
   function initials(name=''){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'?'}
   function esc(v=''){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
 
@@ -103,11 +118,11 @@
     const cs=getComputedStyle(document.documentElement);
     const friend={id,name,relationship:$('friendRelation')?.value.trim()||'',imageData:$('photoData')?.value||'',birthdayDay:Number($('birthdayDay')?.value)||'',birthdayMonth:Number($('birthdayMonth')?.value)||'',birthdayYear:Number($('birthdayYear')?.value)||'',entries:old?.entries||[],bubbleColor:$('friendBubbleColour')?.value||cs.getPropertyValue('--bubble').trim()||'#b9d8ff',frameStyle:$('friendFrameStyle')?.value||'plain',frameColor:$('friendFrameColour')?.value||cs.getPropertyValue('--accent').trim()||'#e2b5ff'};
     if(idx>=0)friends[idx]=friend;else friends.push(friend);
-    try{localStorage.setItem(DATA_KEY,JSON.stringify(friends));}
+    try{writeFriends(friends);}
     catch(err){
       friend.imageData=await shrinkDataUrl(friend.imageData);
       if(idx>=0)friends[idx]=friend;else friends[friends.length-1]=friend;
-      try{localStorage.setItem(DATA_KEY,JSON.stringify(friends));}
+      try{writeFriends(friends);}
       catch(err2){alert('Could not save this friend because browser storage is full. Try removing the photo and saving again.');return;}
     }
     try{if(typeof state!=='undefined'&&state?.friends){state.friends=friends;if(typeof renderHome==='function')renderHome();else renderFriendDirect(friend)}else renderFriendDirect(friend)}catch{renderFriendDirect(friend)}
