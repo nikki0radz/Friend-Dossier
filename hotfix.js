@@ -4,6 +4,7 @@
   const dialog = $('friendDialog');
   const form = $('friendForm');
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DATA_KEY_FALLBACK = 'friendDossier.v4';
 
   function ensureMonths() {
     ['birthdayMonth','entryMonth'].forEach(id => {
@@ -91,6 +92,82 @@
     safeOpen(dialog);
   }
 
+  function makeId() {
+    return (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function readStoredFriends() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(DATA_KEY_FALLBACK) || '[]');
+      return Array.isArray(parsed) ? parsed : Array.isArray(parsed?.friends) ? parsed.friends : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveFriendFallback(event) {
+    if (!form) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (!form.reportValidity()) return;
+
+    const id = $('friendId')?.value || makeId();
+    const name = $('friendName')?.value.trim() || '';
+    if (!name) return;
+
+    const newFriend = {
+      id,
+      name,
+      relationship: $('friendRelation')?.value.trim() || '',
+      imageData: $('photoData')?.value || '',
+      birthdayDay: Number($('birthdayDay')?.value) || '',
+      birthdayMonth: Number($('birthdayMonth')?.value) || '',
+      birthdayYear: Number($('birthdayYear')?.value) || '',
+      entries: [],
+      bubbleColor: $('friendBubbleColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--bubble').trim() || '#b9d8ff',
+      frameStyle: $('friendFrameStyle')?.value || 'plain',
+      frameColor: $('friendFrameColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e2b5ff'
+    };
+
+    let handledInApp = false;
+    try {
+      if (typeof state !== 'undefined' && state && Array.isArray(state.friends)) {
+        const index = state.friends.findIndex(friend => friend.id === id);
+        if (index >= 0) {
+          newFriend.entries = state.friends[index].entries || [];
+          state.friends[index] = newFriend;
+        } else {
+          state.friends.push(newFriend);
+        }
+        localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(state.friends));
+        if (typeof renderHome === 'function') renderHome();
+        handledInApp = true;
+      }
+    } catch (err) {
+      console.warn('Main app save path unavailable, using fallback storage', err);
+    }
+
+    if (!handledInApp) {
+      const friends = readStoredFriends();
+      const index = friends.findIndex(friend => friend.id === id);
+      if (index >= 0) {
+        newFriend.entries = friends[index].entries || [];
+        friends[index] = newFriend;
+      } else {
+        friends.push(newFriend);
+      }
+      localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(friends));
+    }
+
+    safeClose(dialog);
+    try {
+      if (typeof showToast === 'function') showToast('Friend added');
+    } catch {}
+    if (!handledInApp) setTimeout(() => location.reload(), 80);
+  }
+
   ensureMonths();
 
   if (add) add.addEventListener('click', event => {
@@ -98,6 +175,8 @@
     event.stopImmediatePropagation();
     openAddFriend();
   }, { capture: true });
+
+  if (form) form.addEventListener('submit', saveFriendFallback, { capture: true });
 
   const settingsBtn = $('settingsBtn');
   const settingsDialog = $('settingsDialog');
