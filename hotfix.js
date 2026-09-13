@@ -3,6 +3,19 @@
   const add = $('addFriendBtn');
   const dialog = $('friendDialog');
   const form = $('friendForm');
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function ensureMonths() {
+    ['birthdayMonth','entryMonth'].forEach(id => {
+      const select = $(id);
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="">Month</option>' + MONTH_NAMES.map((month, i) => `<option value="${i + 1}">${month}</option>`).join('');
+      if (current) select.value = current;
+      select.disabled = false;
+      select.style.pointerEvents = 'auto';
+    });
+  }
 
   function safeOpen(el) {
     if (!el) return;
@@ -61,6 +74,7 @@
     if (!dialog || !form) return;
     try {
       ensureStyleFields();
+      ensureMonths();
       form.reset();
       if ($('friendId')) $('friendId').value = '';
       if ($('friendDialogTitle')) $('friendDialogTitle').textContent = 'Add friend';
@@ -76,6 +90,8 @@
     }
     safeOpen(dialog);
   }
+
+  ensureMonths();
 
   if (add) add.addEventListener('click', event => {
     event.preventDefault();
