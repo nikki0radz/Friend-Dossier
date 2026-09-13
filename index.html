@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#171124" />
   <title>Friend Dossier</title>
-  <link rel="stylesheet" href="style.css?v=4.4.0" />
-  <link rel="stylesheet" href="splash.css?v=4.4.0" />
+  <link rel="stylesheet" href="style.css?v=4.5.0" />
+  <link rel="stylesheet" href="splash.css?v=4.5.0" />
+  <link rel="stylesheet" href="editor-polish.css?v=1.0.0" />
 </head>
 <body>
   <section id="splash" class="splash splash-v2" aria-label="Loading Friend Dossier">
@@ -80,8 +81,8 @@
   <dialog id="settingsDialog" class="modal"><form method="dialog" class="modal-card settings-card"><div class="modal-head"><h2>Settings</h2><button type="button" data-close="settingsDialog" class="xbtn">×</button></div><h3>Colours</h3><div class="colour-grid"><label>Background<input id="bgColour" type="color" /></label><label>Accent<input id="accentColour" type="color" /></label><label>Bubble tint<input id="bubbleColour" type="color" /></label></div><h3>Categories</h3><div id="settingsCategories" class="settings-categories"></div><button id="addCategoryBtn" type="button" class="soft-button full">＋ Add category</button><h3>Backup</h3><button id="exportBtn" type="button" class="soft-button full">Export dossier</button><label class="soft-button full center">Import dossier<input id="importInput" type="file" accept="application/json,.json" hidden /></label><button id="saveSettingsBtn" type="button" class="primary-button">Save settings</button></form></dialog>
 
   <div id="toast" class="toast" aria-live="polite"></div>
-  <script src="app.js?v=4.4.0"></script>
-  <script src="hotfix.js?v=1.0.0"></script>
+  <script src="app.js?v=4.5.0"></script>
+  <script src="hotfix.js?v=1.1.0"></script>
   <script>setTimeout(()=>{const s=document.getElementById('splash'),a=document.getElementById('app');if(s&&!s.classList.contains('done')){s.classList.add('done');a?.classList.remove('hidden')}},5000)</script>
 </body>
 </html>
