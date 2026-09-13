@@ -18,3 +18,47 @@
 .splash-v2 .splash-loader-wrap{z-index:2;width:min(76vw,370px);align-self:end;text-align:center}.splash-v2 .loader{height:18px;border:2px solid rgba(239,199,255,.85);border-radius:999px;padding:3px;background:rgba(29,17,40,.54);box-shadow:0 0 16px rgba(226,181,255,.14)}.splash-v2 .loader span{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#e4b4ff,#ffc2de,#ffe0bd);box-shadow:0 0 12px rgba(255,194,222,.4);animation:loadSplash 2.15s ease forwards}.splash-v2 .loading-word{margin-top:14px;color:#e7d6ec;font-size:11px;letter-spacing:.46em;padding-left:.46em}
 @keyframes dragonFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}@keyframes loadSplash{to{width:100%}}@keyframes twinkle{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.12)}}
 @media(max-height:720px){.splash.splash-v2{padding-top:24px}.splash-v2 .splash-heading h1{font-size:48px;line-height:.88}.splash-v2 .ornament{margin:10px auto 6px}.splash-v2 .splash-heading p{font-size:13px}.splash-v2 .dragon-scene{width:min(72vw,360px);margin:-14px auto -24px}.splash-v2 .dragon-scene svg{max-height:52vh}.splash-v2 .splash-loader-wrap{width:min(70vw,300px)}}
+
+/* Ambient app sparkles */
+body::before,
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  opacity:.48;
+  background-repeat:no-repeat;
+}
+body::before{
+  background-image:
+    radial-gradient(circle at 9% 12%,rgba(255,255,255,.95) 0 1.2px,transparent 1.7px),
+    radial-gradient(circle at 84% 9%,rgba(246,214,255,.9) 0 1.6px,transparent 2.1px),
+    radial-gradient(circle at 72% 24%,rgba(255,238,251,.8) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 18% 31%,rgba(227,196,255,.85) 0 1.8px,transparent 2.3px),
+    radial-gradient(circle at 91% 38%,rgba(255,255,255,.8) 0 1.1px,transparent 1.6px),
+    radial-gradient(circle at 34% 47%,rgba(255,223,246,.9) 0 1.5px,transparent 2px),
+    radial-gradient(circle at 78% 56%,rgba(229,198,255,.8) 0 1.9px,transparent 2.5px),
+    radial-gradient(circle at 12% 64%,rgba(255,255,255,.85) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 52% 72%,rgba(255,225,246,.82) 0 1.7px,transparent 2.2px),
+    radial-gradient(circle at 88% 81%,rgba(230,202,255,.9) 0 1.2px,transparent 1.8px),
+    radial-gradient(circle at 27% 89%,rgba(255,255,255,.78) 0 1.4px,transparent 1.9px);
+  animation:appSparkleA 5.8s ease-in-out infinite;
+}
+body::after{
+  background-image:
+    radial-gradient(circle at 24% 8%,rgba(255,218,247,.75) 0 2px,transparent 2.7px),
+    radial-gradient(circle at 63% 17%,rgba(255,255,255,.8) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 43% 27%,rgba(222,190,255,.78) 0 1.4px,transparent 2px),
+    radial-gradient(circle at 6% 43%,rgba(255,255,255,.72) 0 1.6px,transparent 2.2px),
+    radial-gradient(circle at 94% 51%,rgba(255,220,246,.8) 0 1.3px,transparent 1.9px),
+    radial-gradient(circle at 61% 62%,rgba(239,212,255,.78) 0 2px,transparent 2.6px),
+    radial-gradient(circle at 21% 75%,rgba(255,255,255,.72) 0 1.1px,transparent 1.6px),
+    radial-gradient(circle at 74% 88%,rgba(255,224,246,.78) 0 1.5px,transparent 2.1px),
+    radial-gradient(circle at 42% 96%,rgba(230,197,255,.75) 0 1.7px,transparent 2.3px);
+  animation:appSparkleB 7.4s ease-in-out infinite;
+}
+.app{position:relative;z-index:1}
+@keyframes appSparkleA{0%,100%{opacity:.28;transform:translateY(0)}50%{opacity:.62;transform:translateY(-5px)}}
+@keyframes appSparkleB{0%,100%{opacity:.5;transform:translateY(0) scale(1)}50%{opacity:.22;transform:translateY(4px) scale(.98)}}
+@media(prefers-reduced-motion:reduce){body::before,body::after{animation:none;opacity:.38}}
