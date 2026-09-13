@@ -3,117 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121317" />
-  <title>People Notes</title>
+  <meta name="theme-color" content="#120f16" />
+  <title>Friend Dossier</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-mark">✦</div>
-        <div>
-          <h1>People Notes</h1>
-          <p>Your tiny human encyclopedia.</p>
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-inner">
+      <div class="dragon-wrap" aria-hidden="true">
+        <div class="dragon dragon-float">
+          <div class="dragon-body"></div>
+          <div class="dragon-head">
+            <div class="dragon-eye"></div>
+            <div class="dragon-horn left"></div>
+            <div class="dragon-horn right"></div>
+          </div>
+          <div class="dragon-wing left"></div>
+          <div class="dragon-wing right"></div>
+          <div class="dragon-tail"></div>
+          <div class="dragon-flame"></div>
         </div>
       </div>
+      <h1>Friend Dossier</h1>
+      <p>Summoning your tiny dragon archivist…</p>
+      <div class="loading-bar"><span id="loadingBarFill"></span></div>
+    </div>
+  </div>
 
-      <button id="addFriendBtn" class="primary full">＋ Add person</button>
-
-      <div class="search-wrap">
-        <input id="searchInput" type="search" placeholder="Search people…" autocomplete="off" />
+  <div id="appRoot" class="app-root hidden">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">PRIVATE NOTEBOOK</div>
+        <h1>Friend Dossier</h1>
+        <p>The dangerously useful lore book of your people.</p>
       </div>
-
-      <div class="sidebar-heading">
-        <span>People</span>
-        <span id="friendCount" class="muted">0</span>
-      </div>
-
-      <div id="friendList" class="friend-list"></div>
-
-      <div class="sidebar-footer">
-        <button id="exportBtn" class="ghost">Export backup</button>
-        <label class="ghost upload-label">
-          Import backup
+      <div class="topbar-actions">
+        <button id="exportBtn" class="ghost small">Export</button>
+        <label class="ghost small upload-label">
+          Import
           <input id="importInput" type="file" accept=".json,application/json" hidden />
         </label>
       </div>
-    </aside>
+    </header>
 
-    <main class="main">
-      <div id="emptyState" class="empty-state">
-        <div class="empty-icon">🗂️</div>
-        <h2>Start your people notebook</h2>
-        <p>Add someone, then keep the little details your brain refuses to store on command.</p>
-        <button id="emptyAddBtn" class="primary">＋ Add your first person</button>
-      </div>
+    <main>
+      <section id="homeView" class="view home-view">
+        <div class="home-card">
+          <div class="home-header">
+            <div>
+              <h2>Your people</h2>
+              <p>Tap someone to open their dossier.</p>
+            </div>
+            <div class="home-controls">
+              <input id="searchInput" type="search" placeholder="Search people…" autocomplete="off" />
+            </div>
+          </div>
+          <div id="bubbleGrid" class="bubble-grid"></div>
+        </div>
+      </section>
 
-      <section id="profileView" class="profile hidden">
-        <header class="profile-header">
-          <div class="avatar-wrap">
-            <div id="profileAvatar" class="avatar large"></div>
+      <section id="profileView" class="view profile-view hidden">
+        <div class="profile-shell">
+          <button id="backBtn" class="ghost small">← Back</button>
+
+          <div class="profile-hero card">
+            <div class="profile-hero-main">
+              <div class="profile-image-wrap">
+                <img id="profileImage" class="profile-image hidden" alt="Person photo" />
+                <div id="profileAvatar" class="profile-avatar"></div>
+              </div>
+              <div class="profile-title-wrap">
+                <div class="eyebrow">PERSON</div>
+                <h2 id="profileName">Name</h2>
+                <p id="profileSubtitle" class="muted"></p>
+              </div>
+            </div>
+            <div class="profile-actions">
+              <button id="editBtn" class="secondary">Edit</button>
+              <button id="deleteBtn" class="ghost danger">Delete</button>
+            </div>
           </div>
 
-          <div class="profile-title">
-            <div class="eyebrow">PERSON</div>
-            <h2 id="profileName">Name</h2>
-            <p id="profileSubtitle" class="muted"></p>
+          <div class="profile-grid">
+            <section class="card">
+              <div class="card-title"><span>📅</span><h3>Important dates</h3></div>
+              <div id="datesDisplay" class="tag-list"></div>
+            </section>
+
+            <section class="card">
+              <div class="card-title"><span>⚠️</span><h3>Allergies & avoid</h3></div>
+              <div id="allergiesDisplay" class="text-content"></div>
+            </section>
+
+            <section class="card">
+              <div class="card-title"><span>♥</span><h3>Things they like</h3></div>
+              <div id="likesDisplay" class="tag-list"></div>
+            </section>
+
+            <section class="card">
+              <div class="card-title"><span>🎁</span><h3>Gift ideas</h3></div>
+              <div id="giftsDisplay" class="check-list"></div>
+            </section>
+
+            <section class="card wide">
+              <div class="card-title"><span>✎</span><h3>Notes</h3></div>
+              <div id="notesDisplay" class="text-content notes"></div>
+            </section>
+
+            <section class="card wide">
+              <div class="card-title"><span>✦</span><h3>Extra details</h3></div>
+              <div id="customDisplay" class="custom-grid"></div>
+            </section>
           </div>
-
-          <div class="profile-actions">
-            <button id="editBtn" class="secondary">Edit</button>
-            <button id="deleteBtn" class="danger ghost">Delete</button>
-          </div>
-        </header>
-
-        <div class="content-grid">
-          <section class="card">
-            <div class="card-title">
-              <span>📅</span>
-              <h3>Important dates</h3>
-            </div>
-            <div id="datesDisplay" class="tag-list"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-title">
-              <span>⚠️</span>
-              <h3>Allergies & avoid</h3>
-            </div>
-            <div id="allergiesDisplay" class="text-content"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-title">
-              <span>♥</span>
-              <h3>Things they like</h3>
-            </div>
-            <div id="likesDisplay" class="tag-list"></div>
-          </section>
-
-          <section class="card">
-            <div class="card-title">
-              <span>🎁</span>
-              <h3>Gift ideas</h3>
-            </div>
-            <div id="giftsDisplay" class="check-list"></div>
-          </section>
-
-          <section class="card wide">
-            <div class="card-title">
-              <span>✎</span>
-              <h3>Notes</h3>
-            </div>
-            <div id="notesDisplay" class="text-content notes"></div>
-          </section>
-
-          <section class="card wide">
-            <div class="card-title">
-              <span>✦</span>
-              <h3>Extra details</h3>
-            </div>
-            <div id="customDisplay" class="custom-grid"></div>
-          </section>
         </div>
       </section>
     </main>
@@ -123,13 +124,28 @@
     <form id="friendForm" method="dialog">
       <div class="dialog-header">
         <div>
-          <div class="eyebrow">PEOPLE NOTES</div>
+          <div class="eyebrow">FRIEND DOSSIER</div>
           <h2 id="dialogTitle">Add person</h2>
         </div>
         <button type="button" id="closeDialogBtn" class="icon-btn" aria-label="Close">×</button>
       </div>
 
       <input type="hidden" id="friendId" />
+      <input type="hidden" id="currentImageData" />
+
+      <div class="photo-uploader">
+        <div class="photo-preview-wrap">
+          <img id="photoPreview" class="photo-preview hidden" alt="Preview" />
+          <div id="photoFallback" class="photo-fallback">+</div>
+        </div>
+        <div class="photo-controls">
+          <label class="secondary small upload-label">
+            Upload photo
+            <input id="photoInput" type="file" accept="image/*" hidden />
+          </label>
+          <button type="button" id="removePhotoBtn" class="ghost small">Remove photo</button>
+        </div>
+      </div>
 
       <div class="form-grid">
         <label class="field">
@@ -139,7 +155,7 @@
 
         <label class="field">
           <span>Relationship / label</span>
-          <input id="relationshipInput" maxlength="80" placeholder="e.g. university friend" />
+          <input id="relationshipInput" maxlength="80" placeholder="e.g. uni friend" />
         </label>
 
         <label class="field">
@@ -159,12 +175,12 @@
 
         <label class="field full-span">
           <span>Allergies / things to avoid</span>
-          <textarea id="allergiesInput" rows="3" placeholder="Food allergies, sensitivities, hates coriander with a burning passion…"></textarea>
+          <textarea id="allergiesInput" rows="3" placeholder="Food allergies, sensitivities, things they hate…"></textarea>
         </label>
 
         <label class="field full-span">
           <span>Things they like</span>
-          <input id="likesInput" placeholder="Separate with commas: matcha, pottery, frogs, horror films" />
+          <input id="likesInput" placeholder="Separate with commas: sushi, pottery, frogs" />
         </label>
 
         <label class="field full-span">
@@ -174,7 +190,7 @@
 
         <label class="field full-span">
           <span>Notes</span>
-          <textarea id="notesInput" rows="5" placeholder="Sizes, favourite order, places they want to visit, random lore…"></textarea>
+          <textarea id="notesInput" rows="5" placeholder="Favourite order, sizes, inside jokes, travel plans…"></textarea>
         </label>
       </div>
 
@@ -182,7 +198,7 @@
         <div class="custom-editor-heading">
           <div>
             <h3>Extra details</h3>
-            <p>Add whatever categories your particular collection of humans requires.</p>
+            <p>Add whatever weirdly specific categories you want.</p>
           </div>
           <button type="button" id="addCustomFieldBtn" class="secondary small">＋ Add field</button>
         </div>
