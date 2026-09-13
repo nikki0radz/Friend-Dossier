@@ -8,6 +8,30 @@
   const DATA_KEY = 'friendDossier.v4';
   const MIRROR_KEY = 'friendDossier.persistent.v1';
 
+  function parseFriends(raw){try{const p=JSON.parse(raw||'[]');return Array.isArray(p)?p:(Array.isArray(p?.friends)?p.friends:[])}catch{return []}}
+  function readFriends(){
+    const main=parseFriends(localStorage.getItem(DATA_KEY));
+    const mirror=parseFriends(localStorage.getItem(MIRROR_KEY));
+    if (!mirror.length) return main;
+    if (!main.length) return mirror;
+    const merged = new Map(main.map(f=>[f.id,f]));
+    mirror.forEach(f=>merged.set(f.id,f));
+    return [...merged.values()];
+  }
+  function writeFriends(friends){
+    const raw=JSON.stringify(friends);
+    localStorage.setItem(DATA_KEY,raw);
+    localStorage.setItem(MIRROR_KEY,raw);
+  }
+  function restoreNewest(){
+    try{
+      const friends=readFriends();
+      if(!friends.length)return;
+      writeFriends(friends);
+      if(typeof state!=='undefined'&&state?.friends){state.friends=friends;if(typeof renderHome==='function')renderHome();}
+    }catch(err){console.warn('Could not restore persisted friend data',err)}
+  }
+
   function ensureMonths() {
     ['birthdayMonth','entryMonth'].forEach(id => {
       const select = $(id);
@@ -74,21 +98,6 @@
   }
 
   function makeId(){return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}
-  function parseFriends(raw){try{const p=JSON.parse(raw||'[]');return Array.isArray(p)?p:(Array.isArray(p?.friends)?p.friends:[])}catch{return []}}
-  function readFriends(){
-    const main=parseFriends(localStorage.getItem(DATA_KEY));
-    const mirror=parseFriends(localStorage.getItem(MIRROR_KEY));
-    if (!mirror.length) return main;
-    if (!main.length) return mirror;
-    const merged = new Map(main.map(f=>[f.id,f]));
-    mirror.forEach(f=>merged.set(f.id,f));
-    return [...merged.values()];
-  }
-  function writeFriends(friends){
-    const raw=JSON.stringify(friends);
-    localStorage.setItem(DATA_KEY,raw);
-    localStorage.setItem(MIRROR_KEY,raw);
-  }
   function initials(name=''){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'?'}
   function esc(v=''){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
 
@@ -130,6 +139,7 @@
     try{if(typeof showToast==='function')showToast(idx>=0?'Person updated':'Friend added')}catch{}
   }
 
+  restoreNewest();
   ensureMonths();
   if(add)add.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openAddFriend()},{capture:true});
   if(saveBtn){saveBtn.type='button';saveBtn.addEventListener('click',saveFriendDirect,{capture:true});}
