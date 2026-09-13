@@ -3,8 +3,9 @@
   const add = $('addFriendBtn');
   const dialog = $('friendDialog');
   const form = $('friendForm');
+  const saveBtn = form?.querySelector('.primary-button');
   const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const DATA_KEY_FALLBACK = 'friendDossier.v4';
+  const DATA_KEY = 'friendDossier.v4';
 
   function ensureMonths() {
     ['birthdayMonth','entryMonth'].forEach(id => {
@@ -20,31 +21,19 @@
 
   function safeOpen(el) {
     if (!el) return;
-    try {
-      if (typeof el.showModal === 'function' && !el.open) el.showModal();
-      else if (!el.open) el.setAttribute('open', '');
-    } catch (err) {
-      console.error('Could not open dialog', err);
-      el.setAttribute('open', '');
-    }
+    try { if (typeof el.showModal === 'function' && !el.open) el.showModal(); else if (!el.open) el.setAttribute('open',''); }
+    catch { el.setAttribute('open',''); }
   }
-
   function safeClose(el) {
     if (!el) return;
-    try {
-      if (typeof el.close === 'function' && el.open) el.close();
-      else el.removeAttribute('open');
-    } catch (err) {
-      console.error('Could not close dialog', err);
-      el.removeAttribute('open');
-    }
+    try { if (typeof el.close === 'function' && el.open) el.close(); else el.removeAttribute('open'); }
+    catch { el.removeAttribute('open'); }
   }
 
   function ensureStyleFields() {
-    if (!form) return;
-    if ($('friendBubbleColour') && $('friendFrameColour') && $('friendFrameStyle')) return;
-    const saveBtn = form.querySelector('.primary-button');
-    if (!saveBtn) return;
+    if (!form || ($('friendBubbleColour') && $('friendFrameColour') && $('friendFrameStyle'))) return;
+    const target = saveBtn || form.querySelector('.primary-button');
+    if (!target) return;
     const wrap = document.createElement('div');
     wrap.id = 'personStyleEditor';
     wrap.className = 'person-style-editor';
@@ -60,159 +49,78 @@
         <button type="button" data-frame="flowers" class="frame-option"><span class="frame-preview preview-flowers"></span><b>Flowers</b></button>
         <button type="button" data-frame="shards" class="frame-option"><span class="frame-preview preview-shards"></span><b>Shards</b></button>
       </div>
-      <input id="friendFrameStyle" type="hidden" value="plain">
-    `;
-    form.insertBefore(wrap, saveBtn);
-    wrap.querySelectorAll('.frame-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        $('friendFrameStyle').value = btn.dataset.frame;
-        wrap.querySelectorAll('.frame-option').forEach(x => x.classList.toggle('active', x === btn));
-      });
-    });
+      <input id="friendFrameStyle" type="hidden" value="plain">`;
+    form.insertBefore(wrap, target);
+    wrap.querySelectorAll('.frame-option').forEach(btn => btn.addEventListener('click', () => {
+      $('friendFrameStyle').value = btn.dataset.frame;
+      wrap.querySelectorAll('.frame-option').forEach(x => x.classList.toggle('active', x === btn));
+    }));
   }
 
   function openAddFriend() {
     if (!dialog || !form) return;
-    try {
-      ensureStyleFields();
-      ensureMonths();
-      form.reset();
-      if ($('friendId')) $('friendId').value = '';
-      if ($('friendDialogTitle')) $('friendDialogTitle').textContent = 'Add friend';
-      if ($('photoData')) $('photoData').value = '';
-      if ($('photoPreviewWrap')) $('photoPreviewWrap').innerHTML = '<span>📷</span>';
-      if ($('friendBubbleColour')) $('friendBubbleColour').value = getComputedStyle(document.documentElement).getPropertyValue('--bubble').trim() || '#b9d8ff';
-      if ($('friendFrameColour')) $('friendFrameColour').value = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e2b5ff';
-      if ($('friendFrameStyle')) $('friendFrameStyle').value = 'plain';
-      const wrap = $('personStyleEditor');
-      if (wrap) wrap.querySelectorAll('.frame-option').forEach(x => x.classList.toggle('active', x.dataset.frame === 'plain'));
-    } catch (err) {
-      console.error('Add friend setup failed', err);
-    }
+    ensureStyleFields(); ensureMonths(); form.reset();
+    if ($('friendId')) $('friendId').value='';
+    if ($('friendDialogTitle')) $('friendDialogTitle').textContent='Add friend';
+    if ($('photoData')) $('photoData').value='';
+    if ($('photoPreviewWrap')) $('photoPreviewWrap').innerHTML='<span>📷</span>';
+    const cs = getComputedStyle(document.documentElement);
+    if ($('friendBubbleColour')) $('friendBubbleColour').value=cs.getPropertyValue('--bubble').trim()||'#b9d8ff';
+    if ($('friendFrameColour')) $('friendFrameColour').value=cs.getPropertyValue('--accent').trim()||'#e2b5ff';
+    if ($('friendFrameStyle')) $('friendFrameStyle').value='plain';
+    $('personStyleEditor')?.querySelectorAll('.frame-option').forEach(x=>x.classList.toggle('active',x.dataset.frame==='plain'));
     safeOpen(dialog);
   }
 
-  function makeId() {
-    return (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
-      ? globalThis.crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  function makeId(){return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}
+  function readFriends(){try{const p=JSON.parse(localStorage.getItem(DATA_KEY)||'[]');return Array.isArray(p)?p:(Array.isArray(p?.friends)?p.friends:[])}catch{return []}}
+  function initials(name=''){return name.trim().split(/\s+/).slice(0,2).map(x=>x[0]?.toUpperCase()||'').join('')||'?'}
+  function esc(v=''){return String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
+
+  function renderFriendDirect(friend){
+    const grid=$('peopleGrid'); if(!grid) return;
+    let node=grid.querySelector(`[data-friend-id="${CSS.escape(friend.id)}"]`);
+    if(!node){node=document.createElement('button');node.className=`person-bubble frame-${friend.frameStyle||'plain'}`;node.dataset.friendId=friend.id;grid.appendChild(node)}
+    node.style.setProperty('--person-bubble',friend.bubbleColor||'#b9d8ff');
+    node.style.setProperty('--frame-color',friend.frameColor||'#e2b5ff');
+    const face=friend.imageData?`<img src="${friend.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(friend.name))}</div>`;
+    node.innerHTML=`${face}<div class="bubble-label">${esc(friend.name)}${friend.relationship?`<span class="bubble-relation">${esc(friend.relationship)}</span>`:''}</div>`;
+    node.onclick=()=>{try{if(typeof openPerson==='function')openPerson(friend.id)}catch{}};
   }
 
-  function readStoredFriends() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(DATA_KEY_FALLBACK) || '[]');
-      return Array.isArray(parsed) ? parsed : Array.isArray(parsed?.friends) ? parsed.friends : [];
-    } catch {
-      return [];
-    }
+  async function shrinkDataUrl(dataUrl){
+    if(!dataUrl) return '';
+    return new Promise(resolve=>{const img=new Image();img.onload=()=>{const max=520,scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.68))};img.onerror=()=>resolve(dataUrl);img.src=dataUrl});
   }
 
-  function saveFriendFallback(event) {
-    event?.preventDefault?.();
-    event?.stopImmediatePropagation?.();
-    if (!form || !form.reportValidity()) return;
-
-    const id = $('friendId')?.value || makeId();
-    const name = $('friendName')?.value.trim() || '';
-    if (!name) return;
-
-    const existingStored = readStoredFriends();
-    const existing = existingStored.find(friend => friend.id === id);
-    const newFriend = {
-      id,
-      name,
-      relationship: $('friendRelation')?.value.trim() || '',
-      imageData: $('photoData')?.value || '',
-      birthdayDay: Number($('birthdayDay')?.value) || '',
-      birthdayMonth: Number($('birthdayMonth')?.value) || '',
-      birthdayYear: Number($('birthdayYear')?.value) || '',
-      entries: existing?.entries || [],
-      bubbleColor: $('friendBubbleColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--bubble').trim() || '#b9d8ff',
-      frameStyle: $('friendFrameStyle')?.value || 'plain',
-      frameColor: $('friendFrameColour')?.value || getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e2b5ff'
-    };
-
-    try {
-      if (typeof state !== 'undefined' && state && Array.isArray(state.friends)) {
-        const index = state.friends.findIndex(friend => friend.id === id);
-        if (index >= 0) {
-          newFriend.entries = state.friends[index].entries || newFriend.entries;
-          state.friends[index] = newFriend;
-        } else {
-          state.friends.push(newFriend);
-        }
-        localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(state.friends));
-        if (typeof renderHome === 'function') renderHome();
-      } else {
-        const index = existingStored.findIndex(friend => friend.id === id);
-        if (index >= 0) existingStored[index] = newFriend;
-        else existingStored.push(newFriend);
-        localStorage.setItem(DATA_KEY_FALLBACK, JSON.stringify(existingStored));
-      }
-    } catch (err) {
-      console.error('Could not save friend', err);
-      return;
+  async function saveFriendDirect(event){
+    event?.preventDefault?.(); event?.stopImmediatePropagation?.();
+    if(!form) return;
+    const name=$('friendName')?.value.trim()||'';
+    if(!name){$('friendName')?.reportValidity?.();return;}
+    const id=$('friendId')?.value||makeId();
+    const friends=readFriends(); const idx=friends.findIndex(f=>f.id===id); const old=idx>=0?friends[idx]:null;
+    const cs=getComputedStyle(document.documentElement);
+    const friend={id,name,relationship:$('friendRelation')?.value.trim()||'',imageData:$('photoData')?.value||'',birthdayDay:Number($('birthdayDay')?.value)||'',birthdayMonth:Number($('birthdayMonth')?.value)||'',birthdayYear:Number($('birthdayYear')?.value)||'',entries:old?.entries||[],bubbleColor:$('friendBubbleColour')?.value||cs.getPropertyValue('--bubble').trim()||'#b9d8ff',frameStyle:$('friendFrameStyle')?.value||'plain',frameColor:$('friendFrameColour')?.value||cs.getPropertyValue('--accent').trim()||'#e2b5ff'};
+    if(idx>=0)friends[idx]=friend;else friends.push(friend);
+    try{localStorage.setItem(DATA_KEY,JSON.stringify(friends));}
+    catch(err){
+      friend.imageData=await shrinkDataUrl(friend.imageData);
+      if(idx>=0)friends[idx]=friend;else friends[friends.length-1]=friend;
+      try{localStorage.setItem(DATA_KEY,JSON.stringify(friends));}
+      catch(err2){alert('Could not save this friend because browser storage is full. Try removing the photo and saving again.');return;}
     }
-
+    try{if(typeof state!=='undefined'&&state?.friends){state.friends=friends;if(typeof renderHome==='function')renderHome();else renderFriendDirect(friend)}else renderFriendDirect(friend)}catch{renderFriendDirect(friend)}
     safeClose(dialog);
-    try { if (typeof showToast === 'function') showToast(existing ? 'Person updated' : 'Friend added'); } catch {}
+    try{if(typeof showToast==='function')showToast(idx>=0?'Person updated':'Friend added')}catch{}
   }
 
   ensureMonths();
+  if(add)add.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openAddFriend()},{capture:true});
+  if(saveBtn){saveBtn.type='button';saveBtn.addEventListener('click',saveFriendDirect,{capture:true});}
+  if(form)form.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();saveFriendDirect(e)},{capture:true});
 
-  if (add) add.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    openAddFriend();
-  }, { capture: true });
-
-  if (form) {
-    const saveBtn = form.querySelector('.primary-button');
-    if (saveBtn) {
-      saveBtn.type = 'button';
-      saveBtn.addEventListener('click', saveFriendFallback, { capture: true });
-    }
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      saveFriendFallback(event);
-    }, { capture: true });
-  }
-
-  const settingsBtn = $('settingsBtn');
-  const settingsDialog = $('settingsDialog');
-  if (settingsBtn && settingsDialog) {
-    settingsBtn.addEventListener('click', event => {
-      event.preventDefault();
-      try {
-        const bg = $('bgColour'), accent = $('accentColour'), bubble = $('bubbleColour');
-        const styles = getComputedStyle(document.documentElement);
-        if (bg) bg.value = styles.getPropertyValue('--bg').trim() || '#171124';
-        if (accent) accent.value = styles.getPropertyValue('--accent').trim() || '#e2b5ff';
-        if (bubble) bubble.value = styles.getPropertyValue('--bubble').trim() || '#b9d8ff';
-        if (typeof openSettings === 'function') {
-          openSettings();
-          return;
-        }
-      } catch (err) {
-        console.error('Settings setup failed', err);
-      }
-      safeOpen(settingsDialog);
-    }, { capture: true });
-  }
-
-  document.addEventListener('click', event => {
-    const closeButton = event.target.closest('[data-close]');
-    if (!closeButton) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    safeClose($(closeButton.dataset.close));
-  }, { capture: true });
-
-  document.querySelectorAll('dialog').forEach(modal => {
-    modal.addEventListener('cancel', event => {
-      event.preventDefault();
-      safeClose(modal);
-    });
-  });
+  const settingsBtn=$('settingsBtn'),settingsDialog=$('settingsDialog');
+  if(settingsBtn&&settingsDialog)settingsBtn.addEventListener('click',e=>{e.preventDefault();try{if(typeof openSettings==='function'){openSettings();return}}catch{}safeOpen(settingsDialog)},{capture:true});
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-close]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();safeClose($(b.dataset.close))},{capture:true});
 })();
