@@ -83,7 +83,7 @@
 
   function animateArchiveSparkles(btn,track){
     const sparks=[...track.querySelectorAll('i')];
-    const duration=7600;
+    const duration=15000;
     function frame(now){
       if(!btn.isConnected || !track.isConnected) return;
       // Use untransformed layout dimensions. getBoundingClientRect() changes while
@@ -95,7 +95,7 @@
       sparks.forEach((spark,i)=>{
         const p=(now/duration + i/sparks.length)%1;
         const pt=roundedRectPoint(p,w,h,r);
-        const twinkle=.82+.22*Math.sin((now/420)+(i*1.7));
+        const twinkle=.82+.22*Math.sin((now/520)+(i*1.7));
         spark.style.left=`${pt.x}px`;
         spark.style.top=`${pt.y}px`;
         spark.style.transform=`translate(-50%,-50%) scale(${twinkle})`;
