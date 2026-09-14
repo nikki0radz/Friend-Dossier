@@ -1,11 +1,9 @@
 (() => {
-  const EMOJI_KEY = 'frameEmojis';
-
   function fallbackEmojis(friend){
     if(Array.isArray(friend?.frameEmojis) && friend.frameEmojis.filter(Boolean).length) return friend.frameEmojis.filter(Boolean).slice(0,3);
     if(friend?.frameStyle === 'flowers') return ['🌸'];
     if(friend?.frameStyle === 'shards') return ['💎'];
-    return ['🌸'];
+    return [];
   }
 
   function wreathMarkup(emojis, count=22){
@@ -53,7 +51,7 @@
     if(picker){
       picker.innerHTML=`
         <button type="button" data-frame="plain" class="frame-option"><span class="frame-preview preview-plain"></span><b>Plain</b></button>
-        <button type="button" data-frame="emoji" class="frame-option emoji-frame-option"><span class="emoji-preview-wreath"><i>🌸</i><i>✨</i><i>🌿</i><i>🌸</i><i>✨</i><i>🌿</i></span><b>Emoji wreath</b></button>`;
+        <button type="button" data-frame="emoji" class="frame-option emoji-frame-option"><span class="emoji-preview-wreath"></span><b>Emoji wreath</b></button>`;
       picker.querySelectorAll('.frame-option').forEach(btn=>btn.addEventListener('click',()=>{
         $('friendFrameStyle').value=btn.dataset.frame;
         picker.querySelectorAll('.frame-option').forEach(x=>x.classList.toggle('active',x===btn));
@@ -65,11 +63,11 @@
     fields.innerHTML=`
       <div class="emoji-frame-title"><strong>Wreath emojis</strong><small>Choose up to 3</small></div>
       <div class="emoji-frame-inputs">
-        <label><span>1</span><input id="friendFrameEmoji1" maxlength="8" inputmode="text" placeholder="🌸"></label>
-        <label><span>2</span><input id="friendFrameEmoji2" maxlength="8" inputmode="text" placeholder="🌿"></label>
-        <label><span>3</span><input id="friendFrameEmoji3" maxlength="8" inputmode="text" placeholder="✨"></label>
+        <label><span>1</span><input id="friendFrameEmoji1" maxlength="8" inputmode="text" aria-label="First wreath emoji"></label>
+        <label><span>2</span><input id="friendFrameEmoji2" maxlength="8" inputmode="text" aria-label="Second wreath emoji"></label>
+        <label><span>3</span><input id="friendFrameEmoji3" maxlength="8" inputmode="text" aria-label="Third wreath emoji"></label>
       </div>
-      <p class="emoji-frame-help">The app mixes big and small versions around the whole circle.</p>`;
+      <p class="emoji-frame-help">Use one, two or three emojis. They will repeat in mixed sizes around the circle.</p>`;
     picker?.insertAdjacentElement('afterend',fields);
     fields.querySelectorAll('input').forEach(input=>input.addEventListener('input',updateEmojiPreview));
   }
@@ -88,8 +86,7 @@
     const preview=document.querySelector('.emoji-preview-wreath');
     if(!preview) return;
     const emojis=selectedFrameEmojis();
-    const use=emojis.length?emojis:['🌸','✨','🌿'];
-    preview.querySelectorAll('i').forEach((node,i)=>node.textContent=use[i%use.length]);
+    preview.innerHTML=emojis.length?wreathMarkup(emojis,10):'<span class="empty-wreath-preview">○</span>';
   }
 
   const originalOpenFriendDialog=openFriendDialog;
@@ -114,7 +111,7 @@
       if(!friend) return;
       if($('friendFrameStyle')?.value==='emoji'){
         friend.frameStyle='emoji';
-        friend.frameEmojis=selectedFrameEmojis().length?selectedFrameEmojis():['🌸'];
+        friend.frameEmojis=selectedFrameEmojis();
       }else{
         friend.frameStyle='plain';
         friend.frameEmojis=[];
@@ -128,30 +125,17 @@
     const grid=$('peopleGrid');if(!grid)return;
     const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';
     state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
-      const style=f.frameStyle==='plain'?'plain':'emoji';
+      const emojis=fallbackEmojis(f);
+      const style=f.frameStyle==='plain'||!emojis.length?'plain':'emoji';
       const b=document.createElement('button');
       b.className=`person-bubble frame-${style}`;
       b.style.setProperty('--person-bubble',f.bubbleColor||settings.bubble);
       b.style.setProperty('--frame-color',f.frameColor||settings.accent);
       const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;
-      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(fallbackEmojis(f),22)}</span>`:`<span class="frame-layer"></span>`;
+      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,22)}</span>`:`<span class="frame-layer"></span>`;
       b.innerHTML=`${frame}${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;
       b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);
     });
-  };
-
-  renderRead=function(){
-    const f=selected(),p=$('readPanel');if(!f||!p)return;
-    const style=f.frameStyle==='plain'?'plain':'emoji';
-    const frameColor=f.frameColor||settings.accent,bubbleColor=f.bubbleColor||settings.bubble;
-    const face=f.imageData?`<img class="read-profile-photo" src="${f.imageData}" alt="">`:`<div class="read-profile-initials">${esc(initials(f.name))}</div>`;
-    const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);
-    const portraitFrame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(fallbackEmojis(f),24)}</span>`:`<span class="frame-layer"></span>`;
-    p.innerHTML=`<section class="character-sheet character-frame-${style}" style="--profile-frame:${esc(frameColor)};--profile-bubble:${esc(bubbleColor)}"><div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Back</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editReadBtn">Edit</button></div><span class="sheet-corner corner-a">✦</span><span class="sheet-corner corner-b">✦</span><span class="sheet-corner corner-c">✦</span><span class="sheet-corner corner-d">✦</span><div class="character-title-rule"><span></span><b>✧</b><span></span></div><div class="character-profile-head"><div class="character-portrait-wrap frame-${style}">${portraitFrame}${face}</div><div class="character-name-block"><div class="character-name">${esc(f.name)}</div>${f.relationship?`<div class="character-role">${esc(f.relationship)}</div>`:''}${bd?`<div class="character-birthday">🎂 ${esc(bd)}</div>`:''}</div></div><div class="character-divider"><span></span><b>◆</b><span></span></div><div id="readStory" class="character-sections"></div><div class="character-footer-ornament">✦ · ✧ · ✦</div></section>`;
-    $('backToChoices').onclick=showChoice;$('editReadBtn').onclick=renderReadEdit;
-    const story=$('readStory');if(!f.entries.length){story.innerHTML='<div class="read-empty">No lore recorded yet ✦</div>';return;}
-    const groups=new Map();f.entries.forEach(e=>{if(!groups.has(e.type))groups.set(e.type,[]);groups.get(e.type).push(e);});
-    for(const [type,entries] of groups){const c=categoryFor(type),values=entries.map(displayEntry).filter(Boolean);if(!values.length)continue;const section=document.createElement('section');section.className='character-section';section.innerHTML=`<div class="character-section-title"><span>${esc(c.emoji)}</span><strong>${esc(c.name)}</strong></div><ul>${values.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`;story.appendChild(section);}
   };
 
   const css=document.createElement('style');
@@ -161,14 +145,12 @@
     .emoji-wreath:before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid color-mix(in srgb,var(--frame-color) 62%,#d0a36b 38%);box-shadow:0 0 9px color-mix(in srgb,var(--frame-color) 25%,transparent),inset 0 0 5px rgba(255,255,255,.16)}
     .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(17px,5vw,27px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
     .character-portrait-wrap .emoji-wreath-piece{font-size:calc(clamp(20px,6.2vw,31px) * var(--emoji-size))}
-    .frame-emoji .frame-layer{inset:0}
-    .frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:72%;height:72%}
-    .character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:70%;height:70%}
+    .frame-emoji .frame-layer{inset:0}.frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:72%;height:72%}.character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:70%;height:70%}
     .emoji-frame-editor{margin-top:14px;padding:13px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035)}
     .emoji-frame-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}.emoji-frame-title small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
     .emoji-frame-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.emoji-frame-inputs label{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:4px}.emoji-frame-inputs label span{font-size:10px;color:var(--muted);text-align:center}.emoji-frame-inputs input{min-width:0;text-align:center;font-size:22px;padding:9px 4px;border-radius:12px}
     .emoji-frame-help{margin:9px 0 0;color:var(--muted);font-size:10px;line-height:1.4}
-    .emoji-frame-option .emoji-preview-wreath{position:relative;width:54px;height:54px;border-radius:50%;display:block;margin:auto}.emoji-preview-wreath i{position:absolute;font-style:normal;font-size:16px}.emoji-preview-wreath i:nth-child(1){top:0;left:18px}.emoji-preview-wreath i:nth-child(2){top:9px;right:0}.emoji-preview-wreath i:nth-child(3){bottom:5px;right:4px}.emoji-preview-wreath i:nth-child(4){bottom:0;left:17px}.emoji-preview-wreath i:nth-child(5){bottom:8px;left:0}.emoji-preview-wreath i:nth-child(6){top:8px;left:1px}
+    .emoji-frame-option .emoji-preview-wreath{position:relative;width:54px;height:54px;border-radius:50%;display:block;margin:auto}.emoji-preview-wreath .emoji-wreath-piece{font-size:14px}.empty-wreath-preview{display:grid;place-items:center;width:54px;height:54px;font-size:36px;color:var(--muted)}
   `;
   document.head.appendChild(css);
 
