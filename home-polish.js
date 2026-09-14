@@ -76,8 +76,7 @@
     #app>header,#app>main{position:relative;z-index:1}
     .grimoire-spark{position:absolute;color:color-mix(in srgb,var(--accent) 72%,white 18%);text-shadow:0 0 8px currentColor,0 0 18px color-mix(in srgb,var(--accent) 50%,transparent);opacity:.2;animation:grimoireTwinkle 6s ease-in-out infinite,grimoireFloat 9s ease-in-out infinite;will-change:transform,opacity;user-select:none}
     .spark-1{opacity:.35}.spark-2{opacity:.5}.spark-3{opacity:.24}.spark-4{opacity:.62}.spark-5{opacity:.32}
-    #homeView:before{content:'☽  ✦  ⟡  ✧  ☾';display:block;text-align:center;margin:2px 0 22px;color:color-mix(in srgb,var(--accent) 68%,white 14%);letter-spacing:.5em;font-size:13px;opacity:.78;text-shadow:0 0 10px color-mix(in srgb,var(--accent) 55%,transparent)}
-    #homeView:after{content:'✦  arcana amicorum  ✦';display:block;text-align:center;margin:12px 0 20px;color:color-mix(in srgb,var(--accent) 48%,white 12%);font-family:Georgia,serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.55}
+    #homeView:before,#homeView:after{display:none!important;content:none!important}
     @keyframes grimoireTwinkle{0%,100%{opacity:.12}35%{opacity:.7}58%{opacity:.26}75%{opacity:.55}}
     @keyframes grimoireFloat{0%,100%{transform:translate3d(0,0,0) rotate(0)}50%{transform:translate3d(0,-9px,0) rotate(7deg)}}
     @media(max-width:420px){.people-grid{gap:30px 12px!important}.person-bubble>.bubble-label{font-size:15px!important;bottom:-23px!important}}
