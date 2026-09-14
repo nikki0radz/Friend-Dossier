@@ -2,6 +2,25 @@
   const personView = $('personView');
   if(!personView) return;
 
+  const themeMeta=document.querySelector('meta[name="theme-color"]');
+  function syncSystemThemeColour(){
+    if(!themeMeta) return;
+    const homeVisible=!$('homeView')?.classList.contains('hidden');
+    const inRead=personView.classList.contains('read-mode') && !$('readPanel')?.classList.contains('hidden');
+    let colour=settings?.bg||'#171124';
+    if(inRead) colour='#000000';
+    else if(!homeVisible){
+      const friend=selected?.();
+      colour=friend?.profileBg || '#111111';
+    }
+    themeMeta.setAttribute('content',colour);
+    document.documentElement.style.setProperty('--system-bar-colour',colour);
+  }
+
+  const screenThemeObserver=new MutationObserver(()=>requestAnimationFrame(syncSystemThemeColour));
+  [$('homeView'),personView,$('readPanel')].filter(Boolean).forEach(el=>screenThemeObserver.observe(el,{attributes:true,attributeFilter:['class']}));
+  window.addEventListener('pageshow',syncSystemThemeColour);
+
   function currentMode(){
     if(personView.classList.contains('read-mode') && !$('readPanel')?.classList.contains('hidden')) return 'read';
     if(!$('addInfoPanel')?.classList.contains('hidden')) return 'add';
@@ -42,6 +61,7 @@
         renderPersonHero();
         showChoice();
       }
+      syncSystemThemeColour();
       personView.classList.remove(outClass);
       personView.classList.add(inClass);
       window.setTimeout(()=>personView.classList.remove(inClass),360);
@@ -119,6 +139,7 @@
   const observer=new MutationObserver(addArchiveSparkles);
   observer.observe($('personChoice')||personView,{childList:true,subtree:true});
   addArchiveSparkles();
+  requestAnimationFrame(syncSystemThemeColour);
 
   const css=document.createElement('style');
   css.id='magicalTransitionStyles';
