@@ -93,7 +93,7 @@
         const pt=roundedRectPoint(p,w,h,r);
         const twinkle=.82+.22*Math.sin((now/420)+(i*1.7));
         spark.style.left=`${pt.x}px`;
-        spark.style.top=`${pt.y}px`;
+        spark.style.top=`${pt.y-3}px`;
         spark.style.transform=`translate(-50%,-50%) scale(${twinkle})`;
       });
       requestAnimationFrame(frame);
