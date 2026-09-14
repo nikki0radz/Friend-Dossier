@@ -18,13 +18,6 @@
     if(!btn || btn.dataset.portalDecorated==='1') return;
     btn.dataset.portalDecorated='1';
     btn.classList.add('grand-portal-button');
-    if(!btn.querySelector('.portal-orbit')){
-      const orbit=document.createElement('span');
-      orbit.className='portal-orbit';
-      orbit.setAttribute('aria-hidden','true');
-      orbit.innerHTML='<i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✧</i>';
-      btn.appendChild(orbit);
-    }
   }
 
   const previousShowChoice=showChoice;
@@ -101,6 +94,13 @@
       animation:portalShimmer 4.8s ease-in-out infinite;
       pointer-events:none;
       z-index:0;
+      border:0!important;
+      box-shadow:none!important;
+      width:auto!important;
+      height:auto!important;
+      left:0!important;
+      top:0!important;
+      opacity:1!important;
     }
     .grand-portal-button .archive-sigil{
       font-size:18px!important;
@@ -132,9 +132,7 @@
       color:rgba(255,255,255,.58)!important;
       z-index:2;
     }
-    .portal-orbit{position:absolute!important;inset:-18px!important;pointer-events:none!important;animation:portalOrbit 8s linear infinite!important;z-index:3!important}
-    .portal-orbit i{position:absolute;font-style:normal;color:color-mix(in srgb,var(--accent) 78%,white 12%);text-shadow:0 0 8px currentColor,0 0 16px currentColor;animation:orbitTwinkle 2.8s ease-in-out infinite}
-    .portal-orbit i:nth-child(1){left:8%;top:13%;font-size:15px}.portal-orbit i:nth-child(2){left:31%;top:-3%;font-size:11px;animation-delay:-1.1s}.portal-orbit i:nth-child(3){right:22%;top:1%;font-size:9px;animation-delay:-2s}.portal-orbit i:nth-child(4){right:3%;top:35%;font-size:16px;animation-delay:-.7s}.portal-orbit i:nth-child(5){right:14%;bottom:0;font-size:11px;animation-delay:-1.5s}.portal-orbit i:nth-child(6){left:47%;bottom:-7%;font-size:9px;animation-delay:-2.3s}.portal-orbit i:nth-child(7){left:13%;bottom:5%;font-size:14px;animation-delay:-.9s}.portal-orbit i:nth-child(8){left:-1%;top:51%;font-size:10px;animation-delay:-1.8s}
+    .portal-orbit{display:none!important}
 
     .portal-burst{position:fixed;inset:0;z-index:99999;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 50% 52%,color-mix(in srgb,var(--accent) 15%,white 6%),transparent 58%);opacity:0;transition:opacity .12s ease}
     .portal-burst.active{opacity:1;animation:burstFade .58s ease forwards}
@@ -146,8 +144,6 @@
     @keyframes outerRunePulse{0%,100%{opacity:.35;transform:scale(.99)}50%{opacity:.9;transform:scale(1.015)}}
     @keyframes portalShimmer{0%,62%{transform:translateX(-125%)}82%,100%{transform:translateX(125%)}}
     @keyframes sigilFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-    @keyframes portalOrbit{to{transform:rotate(360deg)}}
-    @keyframes orbitTwinkle{0%,100%{opacity:.3;transform:scale(.86)}50%{opacity:1;transform:scale(1.16)}}
     @keyframes burstStar{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}18%{opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1.18);opacity:0}}
     @keyframes burstFade{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
 
