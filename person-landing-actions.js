@@ -10,10 +10,10 @@
     if(panel){
       const f=selected();
       panel.innerHTML=`
-        <button id="readBtn" class="px-open-dossier">
-          <span>✦</span>
-          <strong>Open dossier</strong>
-          <small>Enter ${esc(f?.name||'their')} archive</small>
+        <button id="readBtn" class="px-open-dossier" aria-label="Enter Archives">
+          <span class="archive-sigil">✦</span>
+          <strong>Enter Archives</strong>
+          <small>Step into ${esc(f?.name||'their')} archive</small>
         </button>
         <div class="px-secondary-actions">
           <button id="landingAddInfo"><span>＋</span><strong>Add info</strong></button>
