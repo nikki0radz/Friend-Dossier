@@ -33,12 +33,18 @@
   const css=document.createElement('style');
   css.id='dossierFinishingStyles';
   css.textContent=`
-    /* The dossier is a black enchanted page, independent of the profile background. */
+    /* Black canvas behind the dossier so the global app colour never clashes with a profile. */
+    #personView.read-mode,
+    #personView.read-mode #readPanel{
+      background:#000!important;
+    }
+
+    /* The dossier itself keeps the person's chosen background colour. */
     .px-dossier{
       background:
         radial-gradient(circle at 50% 4%,color-mix(in srgb,var(--profile-frame) 10%,transparent),transparent 30%),
         radial-gradient(circle at 14% 42%,color-mix(in srgb,var(--profile-sparkle) 5%,transparent),transparent 28%),
-        #000!important;
+        var(--profile-bg)!important;
       box-shadow:inset 0 0 90px rgba(255,255,255,.012),0 22px 65px rgba(0,0,0,.5)!important;
     }
 
@@ -116,7 +122,6 @@
       filter:drop-shadow(0 0 8px color-mix(in srgb,var(--profile-sparkle) 55%,transparent))!important;
     }
 
-    /* Let the chapter boxes disappear a little further into the black page. */
     .px-dossier .character-section{
       background:
         radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--profile-sparkle) 7%,transparent),transparent 36%),
