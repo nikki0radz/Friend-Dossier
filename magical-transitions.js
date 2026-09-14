@@ -86,14 +86,18 @@
     const duration=7600;
     function frame(now){
       if(!btn.isConnected || !track.isConnected) return;
-      const rect=btn.getBoundingClientRect();
-      const w=rect.width,h=rect.height,r=Math.min(30,h/2-2);
+      // Use untransformed layout dimensions. getBoundingClientRect() changes while
+      // the button's glow animation scales it, which made the sparkle path drift.
+      const w=btn.offsetWidth;
+      const h=btn.offsetHeight;
+      const computed=getComputedStyle(btn);
+      const r=Math.min(parseFloat(computed.borderTopLeftRadius)||30,w/2,h/2);
       sparks.forEach((spark,i)=>{
         const p=(now/duration + i/sparks.length)%1;
         const pt=roundedRectPoint(p,w,h,r);
         const twinkle=.82+.22*Math.sin((now/420)+(i*1.7));
         spark.style.left=`${pt.x}px`;
-        spark.style.top=`${pt.y-3}px`;
+        spark.style.top=`${pt.y}px`;
         spark.style.transform=`translate(-50%,-50%) scale(${twinkle})`;
       });
       requestAnimationFrame(frame);
@@ -131,7 +135,7 @@
     .px-open-dossier small{display:block!important;width:100%!important;margin:3px 0 0!important;text-align:center!important;font-size:10px!important;letter-spacing:.07em!important;color:rgba(255,255,255,.58)!important}
 
     .archive-orbit,.portal-orbit,.border-sparkle-track{display:none!important;animation:none!important}
-    .archive-border-sparkles{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
+    .archive-border-sparkles{position:absolute;left:-1px;top:-1px;width:calc(100% + 2px);height:calc(100% + 2px);pointer-events:none;z-index:5;overflow:visible}
     .archive-border-sparkles i{position:absolute;font-style:normal;line-height:1;color:color-mix(in srgb,var(--accent) 80%,white 20%);text-shadow:0 0 8px currentColor,0 0 16px currentColor;will-change:left,top,transform}
     .archive-border-sparkles i:nth-child(1),.archive-border-sparkles i:nth-child(4),.archive-border-sparkles i:nth-child(7){font-size:15px}
     .archive-border-sparkles i:nth-child(2),.archive-border-sparkles i:nth-child(5),.archive-border-sparkles i:nth-child(8){font-size:10px;opacity:.8}
