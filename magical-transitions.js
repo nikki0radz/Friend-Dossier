@@ -5,10 +5,13 @@
   const themeMeta=document.querySelector('meta[name="theme-color"]');
   function syncSystemThemeColour(){
     if(!themeMeta) return;
+    const splash=$('splash');
+    const splashVisible=splash && !splash.classList.contains('done');
     const homeVisible=!$('homeView')?.classList.contains('hidden');
     const inRead=personView.classList.contains('read-mode') && !$('readPanel')?.classList.contains('hidden');
     let colour=settings?.bg||'#171124';
-    if(inRead) colour='#000000';
+    if(splashVisible) colour='#120d19';
+    else if(inRead) colour='#000000';
     else if(!homeVisible){
       const friend=selected?.();
       colour=friend?.profileBg || '#111111';
@@ -18,7 +21,7 @@
   }
 
   const screenThemeObserver=new MutationObserver(()=>requestAnimationFrame(syncSystemThemeColour));
-  [$('homeView'),personView,$('readPanel')].filter(Boolean).forEach(el=>screenThemeObserver.observe(el,{attributes:true,attributeFilter:['class']}));
+  [$('splash'),$('homeView'),personView,$('readPanel')].filter(Boolean).forEach(el=>screenThemeObserver.observe(el,{attributes:true,attributeFilter:['class']}));
   window.addEventListener('pageshow',syncSystemThemeColour);
 
   function currentMode(){
