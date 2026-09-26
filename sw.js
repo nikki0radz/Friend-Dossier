@@ -1,4 +1,4 @@
-const CACHE_NAME='friend-dossier-pwa-v1';
+const CACHE_NAME='friend-dossier-pwa-v2';
 const CORE=[
   './',
   './index.html',
