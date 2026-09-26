@@ -27,6 +27,25 @@ const esc = (v='') => String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').r
 const initials = (name='') => name.trim().split(/\s+/).slice(0,2).map(x => x[0]?.toUpperCase() || '').join('') || '?';
 
 let deferredInstall=null;
+function ensureInstallCard(){
+  if($('friendDossierInstallCard'))return $('friendDossierInstallCard');
+  const card=document.createElement('div');
+  card.id='friendDossierInstallCard';
+  card.className='fd-install-card';
+  card.innerHTML=`
+    <button class="fd-install-dismiss" type="button" aria-label="Not now">×</button>
+    <div class="fd-install-icon">✦</div>
+    <div class="fd-install-copy"><strong>Install Friend Dossier</strong><small>Keep it on your phone like a normal app.</small></div>
+    <button class="fd-install-go" type="button">Install</button>`;
+  document.body.appendChild(card);
+  card.querySelector('.fd-install-dismiss').onclick=()=>card.classList.remove('show');
+  card.querySelector('.fd-install-go').onclick=installFriendDossier;
+  return card;
+}
+function showInstallCard(){
+  if(!deferredInstall)return;
+  window.setTimeout(()=>ensureInstallCard().classList.add('show'),900);
+}
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
   deferredInstall=e;
@@ -34,9 +53,11 @@ window.addEventListener('beforeinstallprompt',e=>{
   if(b)b.textContent='📲 Download Friend Dossier app';
   const hint=$('installAppHint');
   if(hint)hint.textContent='Ready to install as an app ✦';
+  showInstallCard();
 });
 window.addEventListener('appinstalled',()=>{
   deferredInstall=null;
+  $('friendDossierInstallCard')?.classList.remove('show');
   const b=$('installAppBtn');
   if(b)b.textContent='✓ Friend Dossier is installed';
   const hint=$('installAppHint');
@@ -45,11 +66,12 @@ window.addEventListener('appinstalled',()=>{
 });
 async function installFriendDossier(){
   if(deferredInstall){
+    $('friendDossierInstallCard')?.classList.remove('show');
     deferredInstall.prompt();
     try{await deferredInstall.userChoice;}catch{}
     deferredInstall=null;
   }else{
-    alert('On Android: open your browser menu and choose “Add to Home screen” or “Install app”.');
+    alert('Chrome has not offered the app install event yet. Close this tab, reopen Friend Dossier in Chrome and try again.');
   }
 }
 function registerFriendDossierApp(){
@@ -58,6 +80,20 @@ function registerFriendDossierApp(){
   }
 }
 
+function injectInstallCardStyles(){
+  if($('friendDossierInstallStyles'))return;
+  const st=document.createElement('style');
+  st.id='friendDossierInstallStyles';
+  st.textContent=`
+    .fd-install-card{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:99999;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:11px;padding:13px 14px;border-radius:20px;background:rgba(27,19,38,.96);border:1px solid color-mix(in srgb,var(--accent) 36%,rgba(255,255,255,.12));box-shadow:0 18px 50px rgba(0,0,0,.48),0 0 28px color-mix(in srgb,var(--accent) 12%,transparent);backdrop-filter:blur(18px);transform:translateY(calc(100% + 34px));opacity:0;pointer-events:none;transition:.32s cubic-bezier(.2,.8,.2,1)}
+    .fd-install-card.show{transform:none;opacity:1;pointer-events:auto}
+    .fd-install-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-size:21px;text-shadow:0 0 12px currentColor}
+    .fd-install-copy{min-width:0}.fd-install-copy strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:14px}.fd-install-copy small{display:block;margin-top:3px;color:rgba(255,255,255,.58);font-size:10px;line-height:1.3}
+    .fd-install-go{border:0;border-radius:12px;padding:10px 13px;background:var(--accent);color:#211426;font-weight:900;font-size:11px}
+    .fd-install-dismiss{position:absolute;right:5px;top:-29px;width:27px;height:27px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(20,14,27,.9);color:#fff;font-size:17px;line-height:1}
+  `;
+  document.head.appendChild(st);
+}
 function showToast(msg){
   const t = $('toast');
   if(!t) return;
@@ -179,5 +215,5 @@ function injectEntryImageStyles(){
 }
 function injectCharacterProfileStyles(){if($('characterProfileStyles'))return;const s=document.createElement('style');s.id='characterProfileStyles';s.textContent=`#personView.read-mode{padding:0!important;margin:0!important;max-width:none!important;min-height:100dvh}#personView.read-mode #readPanel{min-height:100dvh;margin:0!important;padding:0!important}#personView.read-mode .character-sheet{min-height:100dvh;border-radius:0;padding:18px 18px 26px;display:flex;flex-direction:column}.character-sheet{--profile-frame:var(--accent);--profile-bubble:var(--bubble);position:relative;isolation:isolate;overflow:hidden;border:2px solid color-mix(in srgb,var(--profile-frame) 75%,white 12%);background:radial-gradient(circle at 50% -15%,color-mix(in srgb,var(--profile-frame) 18%,transparent),transparent 42%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.018)),#1b1326;box-shadow:0 20px 48px rgba(0,0,0,.32),inset 0 0 0 4px rgba(255,255,255,.025),inset 0 0 40px color-mix(in srgb,var(--profile-frame) 8%,transparent)}.character-sheet:before{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--profile-frame) 36%,transparent);border-radius:21px;pointer-events:none}.character-sheet:after{content:"";position:absolute;inset:0;z-index:-1;opacity:.18;background-image:radial-gradient(circle at 20% 25%,currentColor 0 1px,transparent 1.5px),radial-gradient(circle at 80% 68%,currentColor 0 1px,transparent 1.5px);background-size:31px 31px,43px 43px;color:var(--profile-frame)}.character-card-actions{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative;z-index:4;margin-bottom:12px}.character-card-actions span{font-family:Georgia,serif;font-size:10px;letter-spacing:.21em;color:color-mix(in srgb,var(--profile-frame) 75%,white)}.character-back,.character-edit{border:0;background:transparent;color:#f1e8f5;font-weight:800;padding:8px 0}.character-back{justify-self:start}.character-edit{justify-self:end;color:var(--profile-frame)}.sheet-corner{position:absolute;color:var(--profile-frame);font-size:14px;opacity:.8;text-shadow:0 0 9px color-mix(in srgb,var(--profile-frame) 55%,transparent)}.corner-a{top:46px;left:12px}.corner-b{top:46px;right:12px}.corner-c{bottom:10px;left:12px}.corner-d{bottom:10px;right:12px}.character-title-rule,.character-divider{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;color:var(--profile-frame)}.character-title-rule{margin:0 24px 18px}.character-divider{margin:18px 6px 7px}.character-title-rule span,.character-divider span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--profile-frame) 70%,transparent))}.character-title-rule span:last-child,.character-divider span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--profile-frame) 70%,transparent),transparent)}.character-profile-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:13px;position:relative;z-index:2}.character-portrait-wrap{--frame-color:var(--profile-frame);position:relative;width:min(46vw,180px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 25%,rgba(255,255,255,.17),transparent 40%),color-mix(in srgb,var(--profile-bubble) 16%,transparent)}.character-portrait-wrap .frame-layer{inset:0}.character-portrait-wrap .read-profile-photo,.character-portrait-wrap .read-profile-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:78%;height:78%;border-radius:50%;z-index:3}.character-portrait-wrap .read-profile-photo{object-fit:cover;border:2px solid rgba(255,255,255,.28);box-shadow:0 8px 24px rgba(0,0,0,.32)}.character-portrait-wrap .read-profile-initials{display:grid;place-items:center;background:linear-gradient(145deg,var(--profile-frame),var(--profile-bubble));color:#281735;font-size:36px;font-weight:900}.character-name{font-family:Georgia,serif;font-size:clamp(34px,10vw,48px);line-height:.95;letter-spacing:-.035em;color:#fff8ff;text-shadow:0 2px 14px rgba(0,0,0,.35)}.character-role{margin-top:8px;color:color-mix(in srgb,var(--profile-frame) 72%,white);font-size:12px;text-transform:uppercase;letter-spacing:.13em}.character-birthday{display:inline-block;margin-top:10px;padding:6px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:rgba(255,255,255,.04);font-size:11px;color:#eadff0}.character-sections{display:grid;gap:11px;padding:10px 2px 2px;flex:1}.character-section{border:1px solid color-mix(in srgb,var(--profile-frame) 22%,rgba(255,255,255,.08));border-radius:16px;padding:12px 13px;background:linear-gradient(135deg,color-mix(in srgb,var(--profile-frame) 7%,transparent),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.035)}.character-section-title{display:flex;align-items:center;gap:7px;margin-bottom:7px;color:color-mix(in srgb,var(--profile-frame) 74%,white)}.character-section-title span{font-size:17px}.character-section-title strong{font-family:Georgia,serif;font-size:14px;letter-spacing:.04em}.character-section ul{margin:0;padding-left:21px;display:grid;gap:5px}.character-section li{color:#f0e7f4;font-size:13px;line-height:1.48;padding-left:2px}.character-section li::marker{color:var(--profile-frame);font-size:.85em}.character-footer-ornament{text-align:center;margin:14px 0 0;color:color-mix(in srgb,var(--profile-frame) 62%,transparent);font-size:11px;letter-spacing:.22em}.character-frame-flowers:before{border-style:dashed}.character-frame-shards{clip-path:polygon(2% 0,98% 0,100% 2%,100% 98%,98% 100%,2% 100%,0 98%,0 2%)}.read-empty{text-align:center;color:var(--muted);padding:30px 10px;font-family:Georgia,serif;font-style:italic}@media(min-width:700px){#personView.read-mode .character-sheet{max-width:760px;margin:0 auto!important;border-radius:28px;min-height:calc(100dvh - 30px)}#personView.read-mode{padding:15px!important}.character-portrait-wrap{width:190px}}`;document.head.appendChild(s);}
 function bind(){$('addFriendBtn').onclick=()=>openFriendDialog();$('personBackBtn').onclick=goHome;$('readBtn').onclick=showRead;$('addInfoBtn').onclick=showAddInfo;$('settingsBtn').onclick=openSettings;$('searchInput').addEventListener('input',renderHome);$('friendForm').addEventListener('submit',e=>e.preventDefault());$('friendForm').querySelector('.primary-button').addEventListener('click',saveFriend);$('entryForm').addEventListener('submit',saveEntry);$('photoInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{$('photoData').value=await resizePhoto(file);renderPhotoPreview();showToast('Photo ready');}catch{alert('That photo could not be loaded.');}finally{e.target.value='';}});$('removePhotoBtn').onclick=()=>{$('photoData').value='';renderPhotoPreview();};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>safeClose($(b.dataset.close)));document.querySelectorAll('dialog').forEach(d=>d.addEventListener('cancel',e=>{e.preventDefault();safeClose(d);}));$('addCategoryBtn').onclick=addCategory;$('saveSettingsBtn').onclick=saveSettingsFromDialog;$('exportBtn').onclick=exportData;$('installAppBtn')?.addEventListener('click',installFriendDossier);$('importInput').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importData(f);});}
-function boot(){populateMonths();injectFrameStyles();injectEntryImageStyles();injectCharacterProfileStyles();injectPersonStyleEditor();loadData();bind();registerFriendDossierApp();renderHome();ensureEditChoice();setTimeout(()=>{$('splash')?.classList.add('done');$('app')?.classList.remove('hidden');},2100);}
+function boot(){populateMonths();injectFrameStyles();injectEntryImageStyles();injectInstallCardStyles();injectCharacterProfileStyles();injectPersonStyleEditor();loadData();bind();registerFriendDossierApp();renderHome();ensureEditChoice();setTimeout(()=>{$('splash')?.classList.add('done');$('app')?.classList.remove('hidden');},2100);}
 boot();
