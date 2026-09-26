@@ -18,6 +18,11 @@
     }
     themeMeta.setAttribute('content',colour);
     document.documentElement.style.setProperty('--system-bar-colour',colour);
+
+    // Chrome/Samsung edge-to-edge navigation can sample the actual page
+    // background beneath fixed overlays, not only the theme-color meta tag.
+    document.documentElement.style.backgroundColor=colour;
+    document.body.style.backgroundColor=colour;
   }
 
   const screenThemeObserver=new MutationObserver(()=>requestAnimationFrame(syncSystemThemeColour));
