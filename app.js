@@ -44,7 +44,22 @@ function ensureInstallCard(){
 }
 function showInstallCard(){
   if(!deferredInstall)return;
-  window.setTimeout(()=>ensureInstallCard().classList.add('show'),900);
+  const reveal=()=>{
+    if(!deferredInstall)return;
+    ensureInstallCard().classList.add('show');
+  };
+  const splash=$('splash');
+  if(!splash || splash.classList.contains('done')){
+    window.setTimeout(reveal,350);
+    return;
+  }
+  const observer=new MutationObserver(()=>{
+    if(splash.classList.contains('done')){
+      observer.disconnect();
+      window.setTimeout(reveal,350);
+    }
+  });
+  observer.observe(splash,{attributes:true,attributeFilter:['class']});
 }
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
