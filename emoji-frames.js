@@ -146,6 +146,10 @@
     .preview-none{position:relative;width:54px;height:54px;border-radius:50%;display:block;margin:auto;border:1px dashed rgba(255,255,255,.18);background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.08),transparent 45%)}
     .preview-none:after{content:"×";position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:20px;font-weight:400;opacity:.7}
     .frame-none .frame-layer{display:none!important}
+    .frame-none.person-bubble{background:transparent!important;box-shadow:none!important;border-color:transparent!important}
+    .frame-none.person-bubble:before{display:none!important}
+    .frame-none.person-bubble>img{width:82%;height:82%;border:0!important;box-shadow:0 10px 28px rgba(0,0,0,.24)!important}
+    .frame-none.person-bubble>.bubble-initials{width:82%;height:82%;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--accent)!important}
     .emoji-wreath{position:absolute!important;inset:0!important;border-radius:50%;pointer-events:none;z-index:5!important;overflow:visible}
     .emoji-wreath:before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid color-mix(in srgb,var(--frame-color) 62%,#d0a36b 38%);box-shadow:0 0 9px color-mix(in srgb,var(--frame-color) 25%,transparent),inset 0 0 5px rgba(255,255,255,.16)}
     .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(17px,5vw,27px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
