@@ -50,7 +50,7 @@ window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
   deferredInstall=e;
   const b=$('installAppBtn');
-  if(b)b.textContent='📲 Download Friend Dossier app';
+  if(b)b.textContent='✦ Download Friend Dossier app';
   const hint=$('installAppHint');
   if(hint)hint.textContent='Ready to install as an app ✦';
   showInstallCard();
@@ -85,12 +85,13 @@ function injectInstallCardStyles(){
   const st=document.createElement('style');
   st.id='friendDossierInstallStyles';
   st.textContent=`
-    .fd-install-card{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:99999;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:11px;padding:13px 14px;border-radius:20px;background:rgba(27,19,38,.96);border:1px solid color-mix(in srgb,var(--accent) 36%,rgba(255,255,255,.12));box-shadow:0 18px 50px rgba(0,0,0,.48),0 0 28px color-mix(in srgb,var(--accent) 12%,transparent);backdrop-filter:blur(18px);transform:translateY(calc(100% + 34px));opacity:0;pointer-events:none;transition:.32s cubic-bezier(.2,.8,.2,1)}
+    .fd-install-card{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:99999;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:11px;padding:13px 14px;border-radius:20px;background:color-mix(in srgb,var(--bg) 94%,black 6%);border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);box-shadow:0 18px 50px rgba(0,0,0,.48),0 0 28px color-mix(in srgb,var(--accent) 12%,transparent);backdrop-filter:blur(18px);transform:translateY(calc(100% + 34px));opacity:0;pointer-events:none;transition:.32s cubic-bezier(.2,.8,.2,1)}
     .fd-install-card.show{transform:none;opacity:1;pointer-events:auto}
-    .fd-install-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-size:21px;text-shadow:0 0 12px currentColor}
+    .fd-install-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:var(--bg);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);color:var(--accent);font-size:21px;text-shadow:0 0 12px currentColor}
     .fd-install-copy{min-width:0}.fd-install-copy strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:14px}.fd-install-copy small{display:block;margin-top:3px;color:rgba(255,255,255,.58);font-size:10px;line-height:1.3}
-    .fd-install-go{border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);border-radius:12px;padding:10px 13px;background:color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.02));color:var(--accent);font-weight:900;font-size:11px;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent)}
-    .fd-install-dismiss{position:absolute;right:5px;top:-29px;width:27px;height:27px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(20,14,27,.9);color:#fff;font-size:17px;line-height:1}
+    .fd-install-go{border:1px solid var(--accent);border-radius:12px;padding:10px 13px;background:var(--bg);color:var(--accent);font-weight:900;font-size:11px;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent)}
+    .fd-install-dismiss{position:absolute;right:5px;top:-29px;width:27px;height:27px;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:50%;background:var(--bg);color:var(--accent);font-size:17px;line-height:1}
+    #installAppBtn{background:var(--bg)!important;color:var(--accent)!important;border-color:color-mix(in srgb,var(--accent) 55%,transparent)!important}
   `;
   document.head.appendChild(st);
 }
