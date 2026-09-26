@@ -16,7 +16,6 @@ const CORE=[
   './category-dividers.js',
   './dossier-finishing.js',
   './magic-intensify.js',
-  './dossier-cleanup.js',
   './colour-studio-v2.js',
   './app-icon.svg',
   './manifest.webmanifest'
