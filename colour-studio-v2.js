@@ -114,7 +114,9 @@
     if(!editor) return;
     editor.querySelector('.colour-studio')?.classList.add('v2-hidden-old-studio');
     let holder=editor.querySelector('#personColourStudioV2');
-    if(!holder){holder=document.createElement('div');holder.id='personColourStudioV2';holder.innerHTML=studioMarkup('person',PERSON_TARGETS);const old=editor.querySelector('.colour-studio');old?.insertAdjacentElement('afterend',holder);if(!old)editor.prepend(holder);}
+    if(!holder){holder=document.createElement('div');holder.id='personColourStudioV2';const old=editor.querySelector('.colour-studio');old?.insertAdjacentElement('afterend',holder);if(!old)editor.prepend(holder);}
+    // Rebuild the studio each time it opens so slider/input listeners cannot stack.
+    holder.innerHTML=studioMarkup('person',PERSON_TARGETS);
     initialiseStudio(holder.querySelector('.v2-colour-studio'),PERSON_TARGETS,personDraft,personSource(friend),(draft,active)=>{
       const preview=holder.querySelector('[data-v2-preview]');
       preview.style.setProperty('--p-bg',draft.friendProfileBg);
@@ -132,7 +134,10 @@
     if(!dialog||!grid) return;
     grid.classList.add('v2-hidden-old-studio');
     let holder=dialog.querySelector('#globalColourStudioV2');
-    if(!holder){holder=document.createElement('div');holder.id='globalColourStudioV2';holder.innerHTML=studioMarkup('global',GLOBAL_TARGETS);grid.insertAdjacentElement('afterend',holder);}
+    if(!holder){holder=document.createElement('div');holder.id='globalColourStudioV2';grid.insertAdjacentElement('afterend',holder);}
+    // Rebuild on every open. This guarantees exactly one set of listeners and
+    // prevents an old Background listener from firing while Accent is active.
+    holder.innerHTML=studioMarkup('global',GLOBAL_TARGETS);
     const source={bgColour:settings.bg,accentColour:settings.accent,bubbleColour:settings.bubble};
     initialiseStudio(holder.querySelector('.v2-colour-studio'),GLOBAL_TARGETS,globalDraft,source,(draft,active)=>{
       const preview=holder.querySelector('[data-v2-preview]');
@@ -187,5 +192,4 @@
   `;
   document.head.appendChild(style);
 
-  requestAnimationFrame(mountGlobalStudio);
 })();
