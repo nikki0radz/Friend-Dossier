@@ -26,47 +26,36 @@ const uid = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.ran
 const esc = (v='') => String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
 const initials = (name='') => name.trim().split(/\s+/).slice(0,2).map(x => x[0]?.toUpperCase() || '').join('') || '?';
 
-let deferredInstallPrompt=null;
-function isStandaloneApp(){
-  return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone===true;
-}
-function updateInstallUI(){
-  const btn=$('installAppBtn'),hint=$('installAppHint');
-  if(!btn)return;
-  const installed=isStandaloneApp();
-  btn.classList.toggle('hidden',installed);
-  if(hint){
-    hint.textContent=installed
-      ? 'Friend Dossier is installed on this device ✦'
-      : (deferredInstallPrompt?'Ready to install as an app.':'If your browser does not offer installation yet, use its menu and choose Install app or Add to Home screen.');
-  }
-}
-window.addEventListener('beforeinstallprompt',event=>{
-  event.preventDefault();
-  deferredInstallPrompt=event;
-  updateInstallUI();
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredInstall=e;
+  const b=$('installAppBtn');
+  if(b)b.textContent='📲 Download Friend Dossier app';
+  const hint=$('installAppHint');
+  if(hint)hint.textContent='Ready to install as an app ✦';
 });
 window.addEventListener('appinstalled',()=>{
-  deferredInstallPrompt=null;
-  updateInstallUI();
+  deferredInstall=null;
+  const b=$('installAppBtn');
+  if(b)b.textContent='✓ Friend Dossier is installed';
+  const hint=$('installAppHint');
+  if(hint)hint.textContent='Installed on this device ✦';
   showToast('Friend Dossier installed ✦');
 });
 async function installFriendDossier(){
-  if(isStandaloneApp()){showToast('Already installed ✦');return;}
-  if(!deferredInstallPrompt){
-    alert('Your browser has not offered the install prompt yet. Open the browser menu and choose “Install app” or “Add to Home screen”.');
-    return;
+  if(deferredInstall){
+    deferredInstall.prompt();
+    try{await deferredInstall.userChoice;}catch{}
+    deferredInstall=null;
+  }else{
+    alert('On Android: open your browser menu and choose “Add to Home screen” or “Install app”.');
   }
-  deferredInstallPrompt.prompt();
-  try{await deferredInstallPrompt.userChoice;}catch{}
-  deferredInstallPrompt=null;
-  updateInstallUI();
 }
 function registerFriendDossierApp(){
   if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Service worker registration failed',err));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}),{once:true});
   }
-  updateInstallUI();
 }
 
 function showToast(msg){
