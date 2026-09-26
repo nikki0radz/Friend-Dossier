@@ -89,7 +89,7 @@ function injectInstallCardStyles(){
     .fd-install-card.show{transform:none;opacity:1;pointer-events:auto}
     .fd-install-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-size:21px;text-shadow:0 0 12px currentColor}
     .fd-install-copy{min-width:0}.fd-install-copy strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:14px}.fd-install-copy small{display:block;margin-top:3px;color:rgba(255,255,255,.58);font-size:10px;line-height:1.3}
-    .fd-install-go{border:0;border-radius:12px;padding:10px 13px;background:var(--accent);color:#211426;font-weight:900;font-size:11px}
+    .fd-install-go{border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);border-radius:12px;padding:10px 13px;background:color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.02));color:var(--accent);font-weight:900;font-size:11px;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 12%,transparent)}
     .fd-install-dismiss{position:absolute;right:5px;top:-29px;width:27px;height:27px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(20,14,27,.9);color:#fff;font-size:17px;line-height:1}
   `;
   document.head.appendChild(st);
