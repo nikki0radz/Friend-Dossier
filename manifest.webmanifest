@@ -1,0 +1,21 @@
+{
+  "name": "Friend Dossier",
+  "short_name": "Dossier",
+  "description": "A private, magical little archive for the people you care about.",
+  "id": "/Friend-Dossier/",
+  "start_url": "/Friend-Dossier/",
+  "scope": "/Friend-Dossier/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#171124",
+  "theme_color": "#171124",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
