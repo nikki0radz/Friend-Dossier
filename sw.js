@@ -1,4 +1,4 @@
-const CACHE_NAME='friend-dossier-pwa-v2';
+const CACHE_NAME='friend-dossier-pwa-v3';
 const CORE=[
   './',
   './index.html',
@@ -18,6 +18,8 @@ const CORE=[
   './magic-intensify.js',
   './colour-studio-v2.js',
   './app-icon.svg',
+  './app-icon-192.svg',
+  './app-icon-512.svg',
   './manifest.webmanifest'
 ];
 
