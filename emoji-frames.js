@@ -50,6 +50,7 @@
     const picker=editor.querySelector('.frame-picker');
     if(picker){
       picker.innerHTML=`
+        <button type="button" data-frame="none" class="frame-option"><span class="frame-preview preview-none"></span><b>None</b></button>
         <button type="button" data-frame="plain" class="frame-option"><span class="frame-preview preview-plain"></span><b>Plain</b></button>
         <button type="button" data-frame="emoji" class="frame-option emoji-frame-option"><span class="emoji-preview-wreath"></span><b>Emoji wreath</b></button>`;
       picker.querySelectorAll('.frame-option').forEach(btn=>btn.addEventListener('click',()=>{
@@ -109,11 +110,12 @@
       const id=$('friendId')?.value;
       const friend=state.friends.find(f=>f.id===id);
       if(!friend) return;
-      if($('friendFrameStyle')?.value==='emoji'){
+      const chosenStyle=$('friendFrameStyle')?.value||'plain';
+      if(chosenStyle==='emoji'){
         friend.frameStyle='emoji';
         friend.frameEmojis=selectedFrameEmojis();
       }else{
-        friend.frameStyle='plain';
+        friend.frameStyle=chosenStyle==='none'?'none':'plain';
         friend.frameEmojis=[];
       }
       persistFriends();
@@ -126,13 +128,13 @@
     const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';
     state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
       const emojis=fallbackEmojis(f);
-      const style=f.frameStyle==='plain'||!emojis.length?'plain':'emoji';
+      const style=f.frameStyle==='none'?'none':(f.frameStyle==='plain'||!emojis.length?'plain':'emoji');
       const b=document.createElement('button');
       b.className=`person-bubble frame-${style}`;
       b.style.setProperty('--person-bubble',f.bubbleColor||settings.bubble);
       b.style.setProperty('--frame-color',f.frameColor||settings.accent);
       const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;
-      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,22)}</span>`:`<span class="frame-layer"></span>`;
+      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,22)}</span>`:(style==='none'?'':`<span class="frame-layer"></span>`);
       b.innerHTML=`${frame}${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;
       b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);
     });
@@ -141,6 +143,9 @@
   const css=document.createElement('style');
   css.id='emojiWreathStyles';
   css.textContent=`
+    .preview-none{position:relative;width:54px;height:54px;border-radius:50%;display:block;margin:auto;border:1px dashed rgba(255,255,255,.18);background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.08),transparent 45%)}
+    .preview-none:after{content:"×";position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:20px;font-weight:400;opacity:.7}
+    .frame-none .frame-layer{display:none!important}
     .emoji-wreath{position:absolute!important;inset:0!important;border-radius:50%;pointer-events:none;z-index:5!important;overflow:visible}
     .emoji-wreath:before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid color-mix(in srgb,var(--frame-color) 62%,#d0a36b 38%);box-shadow:0 0 9px color-mix(in srgb,var(--frame-color) 25%,transparent),inset 0 0 5px rgba(255,255,255,.16)}
     .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(17px,5vw,27px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
