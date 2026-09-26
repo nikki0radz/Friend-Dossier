@@ -23,7 +23,8 @@
   function portraitMarkup(friend,cls='px-hero-portrait'){
     const face=friend.imageData?`<img src="${friend.imageData}" alt="">`:`<div class="px-initials">${esc(initials(friend.name))}</div>`;
     const wreath=useWreath(friend)?`<span class="px-wreath">${wreathMarkup(friend,26)}</span>`:'';
-    return `<div class="${cls} ${useWreath(friend)?'has-wreath':'has-bubble'}" style="--px-frame:${esc(friend.frameColor||settings.accent)};--px-bubble:${esc(friend.bubbleColor||settings.bubble)}">${wreath}${face}</div>`;
+    const portraitMode=friend?.frameStyle==='none'?'has-none':(useWreath(friend)?'has-wreath':'has-bubble');
+    return `<div class="${cls} ${portraitMode}" style="--px-frame:${esc(friend.frameColor||settings.accent)};--px-bubble:${esc(friend.bubbleColor||settings.bubble)}">${wreath}${face}</div>`;
   }
 
   renderPersonHero=function(){
@@ -172,6 +173,9 @@
     .px-hero-portrait{width:min(70vw,300px);margin-top:-12px}.px-dossier-portrait{width:min(48vw,190px);margin:0 auto 15px}
     .px-hero-portrait.has-bubble,.px-dossier-portrait.has-bubble{background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.45),transparent 25%),linear-gradient(145deg,color-mix(in srgb,var(--px-bubble) 35%,transparent),color-mix(in srgb,var(--px-bubble) 12%,transparent));box-shadow:inset 0 0 28px rgba(255,255,255,.08),0 20px 60px rgba(0,0,0,.25)}
     .px-hero-portrait.has-wreath,.px-dossier-portrait.has-wreath{background:transparent!important;box-shadow:none!important}
+    .px-hero-portrait.has-none,.px-dossier-portrait.has-none{background:transparent!important;box-shadow:none!important}
+    .px-hero-portrait.has-none>img,.px-dossier-portrait.has-none>img{width:82%;height:82%;border:0!important;box-shadow:0 12px 36px rgba(0,0,0,.28)!important}
+    .px-hero-portrait.has-none>.px-initials,.px-dossier-portrait.has-none>.px-initials{width:82%;height:82%;background:transparent!important;box-shadow:none!important;color:var(--accent)!important}
     .px-hero-portrait>img,.px-hero-portrait>.px-initials,.px-dossier-portrait>img,.px-dossier-portrait>.px-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:72%;height:72%;border-radius:50%;object-fit:cover;z-index:2;box-shadow:0 12px 36px rgba(0,0,0,.32)}
     .px-hero-portrait.has-bubble>img,.px-hero-portrait.has-bubble>.px-initials,.px-dossier-portrait.has-bubble>img,.px-dossier-portrait.has-bubble>.px-initials{width:82%;height:82%}
     .px-initials{display:grid!important;place-items:center;background:linear-gradient(145deg,var(--px-frame),var(--px-bubble));font-size:42px;font-weight:900;color:#2a1833}
