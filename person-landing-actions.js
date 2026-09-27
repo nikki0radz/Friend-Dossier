@@ -32,7 +32,7 @@
     .px-secondary-actions button{min-height:48px;border-radius:15px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent);background:rgba(255,255,255,.035);color:var(--person-text);display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:800;box-shadow:0 8px 20px rgba(0,0,0,.12)}
     .px-secondary-actions button span{font-size:16px;color:var(--person-accent,var(--accent));text-shadow:0 0 9px color-mix(in srgb,var(--person-accent,var(--accent)) 55%,transparent)}
     #personChoice{display:flex;flex-direction:column;align-items:center;width:100%;position:relative;isolation:isolate;overflow:visible}
-    #personChoice:before{content:'';position:absolute;z-index:-2;left:50%;top:-24px;transform:translateX(-50%);width:100vw;height:190px;pointer-events:none;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--person-accent,var(--accent)) 8%,transparent) 0%,color-mix(in srgb,var(--person-accent,var(--accent)) 3%,transparent) 42%,transparent 72%);filter:blur(28px);opacity:.48}
+    #personChoice:before{content:'';position:absolute;z-index:-2;left:50%;top:-38px;transform:translateX(-50%);width:calc(100vw + 180px);height:230px;pointer-events:none;background:radial-gradient(ellipse at center,color-mix(in srgb,var(--person-accent,var(--accent)) 7%,transparent) 0%,color-mix(in srgb,var(--person-accent,var(--accent)) 2.5%,transparent) 38%,transparent 68%);filter:blur(34px);opacity:.42}
     @media(max-width:420px){.px-secondary-actions{gap:8px}.px-secondary-actions button{font-size:11px;min-height:46px}}
 
     .px-dossier .character-sections{gap:16px!important;padding-top:14px!important}
