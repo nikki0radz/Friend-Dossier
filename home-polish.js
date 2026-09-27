@@ -72,7 +72,8 @@
     .frame-emoji.person-bubble>img{box-shadow:0 8px 24px rgba(0,0,0,.32)}
     .delete-friend-button{width:100%;margin-top:10px;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,100,120,.28);background:rgba(120,25,45,.14);color:#ff9fb2;font-weight:850;letter-spacing:.015em}
     .delete-friend-button:hover{background:rgba(120,25,45,.24)}
-    .grimoire-ambience{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92}
+    .grimoire-ambience{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92;display:none!important}
+    #app:has(#homeView:not(.hidden))>.grimoire-ambience{display:block!important}
     #app>header,#app>main{position:relative;z-index:1}
     .grimoire-spark{position:absolute;color:var(--home-sparkle);text-shadow:0 0 8px currentColor,0 0 18px color-mix(in srgb,var(--home-sparkle) 50%,transparent);opacity:.2;animation:grimoireTwinkle 6s ease-in-out infinite,grimoireFloat 9s ease-in-out infinite;will-change:transform,opacity;user-select:none}
     .spark-1{opacity:.35}.spark-2{opacity:.5}.spark-3{opacity:.24}.spark-4{opacity:.62}.spark-5{opacity:.32}
