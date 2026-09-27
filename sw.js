@@ -1,10 +1,9 @@
-const CACHE='friend-dossier-v5';
+const CACHE='friend-dossier-v6';
 const ASSETS=[
   './',
   './index.html',
   './manifest.webmanifest',
   './app-icon.svg',
-  './dragon-archivist.webp',
   './style.css',
   './splash.css',
   './editor-polish.css',
