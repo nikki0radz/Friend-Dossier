@@ -133,7 +133,7 @@
 
   function archiveSparkleIcons(){
     const f=selected?.();
-    return Array.isArray(f?.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,20):['✦','✧','⋆','✶','☾','⟡'];
+    return Array.isArray(f?.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,30):['✦','✧','⋆','✶','☾','⟡'];
   }
   function archiveSparkleCount(){
     const density=selected?.()?.profileSparkleDensity||'constellation';
