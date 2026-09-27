@@ -1,5 +1,14 @@
 (() => {
-  const FONT_MAP={classic:"Georgia, 'Times New Roman', serif",elegant:"'Palatino Linotype','Book Antiqua',Palatino,serif",clean:"'Trebuchet MS',Arial,sans-serif",typewriter:"'Courier New',Courier,monospace"};
+  const FONT_MAP={
+    classic:"'Libre Baskerville', Georgia, serif",
+    elegant:"'Cormorant Garamond', Georgia, serif",
+    clean:"'Nunito Sans', Arial, sans-serif",
+    typewriter:"'Special Elite', 'Courier New', monospace",
+    storybook:"'IM Fell English', Georgia, serif",
+    handwritten:"'Caveat', cursive",
+    handwritten2:"'Dancing Script', cursive",
+    gothic:"'UnifrakturCook', 'Old English Text MT', cursive"
+  };
 
   function frameEmojis(friend){
     if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length) return friend.frameEmojis.filter(Boolean).slice(0,3);
