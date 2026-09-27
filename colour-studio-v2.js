@@ -24,6 +24,23 @@
 
   const personDraft={};
   const globalDraft={};
+  const GLOBAL_FONT_MAP={
+    classic:"Georgia, 'Times New Roman', serif",
+    elegant:"'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+    clean:"'Trebuchet MS', Arial, sans-serif",
+    typewriter:"'Courier New', Courier, monospace",
+    storybook:"Garamond, 'Times New Roman', serif",
+    handwritten:"'Segoe Print', 'Comic Sans MS', cursive"
+  };
+  const GLOBAL_FONT_LABELS={
+    classic:'Classic serif',elegant:'Elegant',clean:'Clean',typewriter:'Typewriter',storybook:'Storybook',handwritten:'Handwritten'
+  };
+  const opacityKey=id=>id+'Opacity';
+  function rgba(hex,pct=100){
+    const {r,g,b}=hexToRgb(hex);
+    const a=Math.max(0,Math.min(100,Number(pct)||0))/100;
+    return `rgba(${r},${g},${b},${a})`;
+  }
 
   function normalHex(v,fallback='#ffffff'){
     const s=String(v||'').trim();
@@ -56,6 +73,7 @@
         <label>Hue <span data-v2-hue-value>0°</span><input data-v2-hue type="range" min="0" max="359" value="0"></label>
         <label>Saturation <span data-v2-sat-value>100%</span><input data-v2-sat type="range" min="0" max="100" value="100"></label>
         <label>Brightness <span data-v2-val-value>100%</span><input data-v2-val type="range" min="0" max="100" value="100"></label>
+        <label class="v2-opacity-row">Transparency <span data-v2-opacity-value>0%</span><input data-v2-opacity type="range" min="0" max="100" value="0"></label>
       </div>
       <div class="v2-recent-wrap"><div class="v2-recent-title">Recently used colours</div><div class="v2-recents"></div></div>
     </div>`;
@@ -64,7 +82,10 @@
   function initialiseStudio(root,targets,draft,sourceValues,onPreview){
     if(!root) return;
     let active=targets[0][0];
-    targets.forEach(([id])=>draft[id]=normalHex(sourceValues[id]||'#ffffff'));
+    targets.forEach(([id])=>{
+      draft[id]=normalHex(sourceValues[id]||'#ffffff');
+      if(Object.prototype.hasOwnProperty.call(sourceValues,opacityKey(id))) draft[opacityKey(id)]=Math.max(0,Math.min(100,Number(sourceValues[opacityKey(id)])||0));
+    });
 
     const propertyButtons=[...root.querySelectorAll('[data-v2-target]')];
     const label=root.querySelector('[data-v2-label]');
@@ -72,6 +93,8 @@
     const hue=root.querySelector('[data-v2-hue]');
     const sat=root.querySelector('[data-v2-sat]');
     const val=root.querySelector('[data-v2-val]');
+    const opacity=root.querySelector('[data-v2-opacity]');
+    const opacityValue=root.querySelector('[data-v2-opacity-value]');
 
     function targetLabel(id){return targets.find(x=>x[0]===id)?.[1]||'Colour';}
     function refreshDots(){propertyButtons.forEach(b=>{const dot=b.querySelector('.v2-colour-dot');if(dot)dot.style.background=draft[b.dataset.v2Target]||'#fff';});}
@@ -88,6 +111,10 @@
       const colour=normalHex(draft[active]);
       const {r,g,b}=hexToRgb(colour),hsv=rgbToHsv(r,g,b);
       label.textContent=targetLabel(active); hex.value=colour; hue.value=hsv.h; sat.value=hsv.s; val.value=hsv.v;
+      const hasOpacity=Object.prototype.hasOwnProperty.call(draft,opacityKey(active));
+      const opaque=hasOpacity?(draft[opacityKey(active)]??100):100;
+      if(opacity){opacity.closest('.v2-opacity-row')?.classList.toggle('hidden-opacity',!hasOpacity);opacity.value=100-opaque;}
+      if(opacityValue)opacityValue.textContent=`${100-opaque}%`;
       sliderVisuals(hsv.h,hsv.s,hsv.v);
       propertyButtons.forEach(b=>b.classList.toggle('active',b.dataset.v2Target===active));
       refreshDots();
@@ -98,6 +125,12 @@
 
     propertyButtons.forEach(b=>b.onclick=()=>{active=b.dataset.v2Target;syncPicker();});
     [hue,sat,val].forEach(el=>el.addEventListener('input',fromSliders));
+    opacity?.addEventListener('input',()=>{
+      const transparency=Number(opacity.value);
+      draft[opacityKey(active)]=100-transparency;
+      if(opacityValue)opacityValue.textContent=`${transparency}%`;
+      onPreview?.(draft,active);
+    });
     hex.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(hex.value)){updateDraft(hex.value);const {r,g,b}=hexToRgb(hex.value),hsv=rgbToHsv(r,g,b);hue.value=hsv.h;sat.value=hsv.s;val.value=hsv.v;sliderVisuals(hsv.h,hsv.s,hsv.v);}});
     hex.addEventListener('change',()=>{hex.value=normalHex(hex.value,draft[active]);syncPicker();});
 
@@ -137,16 +170,26 @@
 
   function applyGlobalDraft(draft){
     const vars={
-      '--bg':draft.bg,'--accent':draft.accent,'--text':draft.text,'--home-sparkle':draft.sparkle,
-      '--search-bg':draft.searchBg,'--search-text':draft.searchText,'--search-placeholder':draft.searchPlaceholder,
-      '--add-bg':draft.addBg,'--add-text':draft.addText,
-      '--gear-bg':draft.gearBg,'--gear-text':draft.gearText,'--name-text':draft.nameText
+      '--bg':rgba(draft.bg,draft.bgOpacity??100),
+      '--accent':rgba(draft.accent,draft.accentOpacity??100),
+      '--text':rgba(draft.text,draft.textOpacity??100),
+      '--home-sparkle':rgba(draft.sparkle,draft.sparkleOpacity??100),
+      '--search-bg':rgba(draft.searchBg,draft.searchBgOpacity??100),
+      '--search-text':rgba(draft.searchText,draft.searchTextOpacity??100),
+      '--search-placeholder':rgba(draft.searchPlaceholder,draft.searchPlaceholderOpacity??100),
+      '--add-bg':rgba(draft.addBg,draft.addBgOpacity??100),
+      '--add-text':rgba(draft.addText,draft.addTextOpacity??100),
+      '--gear-bg':rgba(draft.gearBg,draft.gearBgOpacity??100),
+      '--gear-text':rgba(draft.gearText,draft.gearTextOpacity??100),
+      '--name-text':rgba(draft.nameText,draft.nameTextOpacity??100),
+      '--home-font':GLOBAL_FONT_MAP[draft.homeFont]||GLOBAL_FONT_MAP.clean
     };
     Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
 
     if(draft.bg){
-      document.documentElement.style.backgroundColor=draft.bg;
-      document.body.style.backgroundColor=draft.bg;
+      const pageBg=rgba(draft.bg,draft.bgOpacity??100);
+      document.documentElement.style.backgroundColor='#000000';
+      document.body.style.backgroundColor=pageBg;
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content',draft.bg);
     }
   }
@@ -155,20 +198,24 @@
     const holder=document.getElementById('globalColourStudioV2');
     if(!holder)return;
     if(commit){
-      GLOBAL_TARGETS.forEach(([key])=>{if(globalDraft[key])settings[key]=globalDraft[key];});
+      GLOBAL_TARGETS.forEach(([key])=>{
+        if(globalDraft[key])settings[key]=globalDraft[key];
+        if(globalDraft[opacityKey(key)]!==undefined) settings[opacityKey(key)]=globalDraft[opacityKey(key)];
+      });
+      settings.homeFont=globalDraft.homeFont||settings.homeFont||'clean';
       persistSettings();
       saveRecent(GLOBAL_TARGETS.map(([key])=>globalDraft[key]));
       renderHome();
       showToast('Home colours saved');
     }else{
       applySettings();
-      document.documentElement.style.backgroundColor=settings.bg;
-      document.body.style.backgroundColor=settings.bg;
+      document.documentElement.style.backgroundColor='#000000';
+      document.body.style.backgroundColor=rgba(settings.bg,settings.bgOpacity??100);
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content',settings.bg);
     }
     if(commit){
-      document.documentElement.style.backgroundColor=settings.bg;
-      document.body.style.backgroundColor=settings.bg;
+      document.documentElement.style.backgroundColor='#000000';
+      document.body.style.backgroundColor=rgba(settings.bg,settings.bgOpacity??100);
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content',settings.bg);
     }
     holder.classList.remove('show');
@@ -203,8 +250,20 @@
       const studio=holder.querySelector('.v2-colour-studio');
       studio.querySelector('.v2-preview-wrap')?.remove();
       const source={};
-      GLOBAL_TARGETS.forEach(([key])=>source[key]=settings[key]);
+      GLOBAL_TARGETS.forEach(([key])=>{
+        source[key]=settings[key];
+        source[opacityKey(key)]=settings[opacityKey(key)]??100;
+      });
+      globalDraft.homeFont=settings.homeFont||'clean';
       initialiseStudio(studio,GLOBAL_TARGETS,globalDraft,source,(draft)=>applyGlobalDraft(draft));
+
+      const fontWrap=document.createElement('div');
+      fontWrap.className='v2-home-font-picker';
+      fontWrap.innerHTML=`<div class="v2-recent-title">Home font</div><div class="v2-font-options">${Object.keys(GLOBAL_FONT_MAP).map(key=>`<button type="button" class="v2-font-option" data-home-font="${key}" style="font-family:${GLOBAL_FONT_MAP[key]}"><span>Aa Mooncakes</span><small>${GLOBAL_FONT_LABELS[key]}</small></button>`).join('')}</div>`;
+      studio.appendChild(fontWrap);
+      const syncFontButtons=()=>fontWrap.querySelectorAll('[data-home-font]').forEach(btn=>btn.classList.toggle('active',btn.dataset.homeFont===globalDraft.homeFont));
+      fontWrap.querySelectorAll('[data-home-font]').forEach(btn=>btn.onclick=()=>{globalDraft.homeFont=btn.dataset.homeFont;syncFontButtons();applyGlobalDraft(globalDraft);});
+      syncFontButtons();
       holder.querySelector('[data-v2-close]').onclick=()=>closeGlobalStudio(false);
       holder.querySelector('[data-v2-cancel]').onclick=()=>closeGlobalStudio(false);
       holder.querySelector('[data-v2-save]').onclick=()=>closeGlobalStudio(true);
@@ -244,7 +303,13 @@
     .v2-colour-editor{padding:12px;border-radius:14px;background:rgba(0,0,0,.14);border:1px solid rgba(255,255,255,.055)}
     .v2-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}.v2-editor-head strong{font-size:12px}.v2-editor-head input{width:92px!important;padding:6px 7px!important;font-family:'Courier New',monospace;text-align:center;text-transform:lowercase}
     .v2-colour-editor label{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:10px;margin:10px 0}.v2-colour-editor label input{grid-column:1/-1;width:100%;height:6px;padding:0!important;border:0!important;border-radius:999px;appearance:none}.v2-colour-editor input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.45);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    .v2-opacity-row.hidden-opacity{display:none!important}
     .v2-recent-title{font-size:10px;opacity:.6;margin:11px 0 7px}.v2-recents{display:flex;flex-wrap:wrap;gap:7px}.v2-recent{width:25px;height:25px;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:0 2px 7px rgba(0,0,0,.25)}.v2-recent-empty{font-size:10px;opacity:.45}
+    .v2-home-font-picker{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
+    .v2-font-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .v2-font-option{min-height:58px;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:var(--text);padding:8px;text-align:left}
+    .v2-font-option span{display:block;font-size:15px}.v2-font-option small{display:block;margin-top:3px;font:10px Inter,system-ui,sans-serif;opacity:.58}
+    .v2-font-option.active{border-color:color-mix(in srgb,var(--accent) 62%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 14%,transparent)}
     .home-colour-launch{margin:4px 0 12px}
     .floating-home-colour-studio{position:fixed;z-index:100001;right:14px;bottom:max(14px,env(safe-area-inset-bottom));width:min(360px,calc(100vw - 28px));max-height:min(76vh,680px);overflow:auto;padding:14px;border-radius:22px;background:color-mix(in srgb,var(--bg) 94%,black 6%);border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);box-shadow:0 22px 70px rgba(0,0,0,.56);backdrop-filter:blur(18px);transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none;transition:.28s ease}
     .floating-home-colour-studio.show{transform:none;opacity:1;pointer-events:auto}
