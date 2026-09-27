@@ -31,16 +31,31 @@
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
-    const counts={profile:{whisper:5,constellation:10,starfall:18},dossier:{whisper:4,constellation:8,starfall:14}};
+    const counts={profile:{whisper:4,constellation:7,starfall:11},dossier:{whisper:3,constellation:6,starfall:9}};
     return counts[area]?.[density]||counts[area].constellation;
+  }
+  function sparkleHash(seed=''){
+    let h=2166136261;
+    for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);}
+    return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
   }
   function sparkleMarkup(friend,area='profile'){
     const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
-    const positions=[[8,15],[88,12],[16,34],[78,31],[5,55],[92,52],[24,66],[72,68],[12,82],[86,84],[38,10],[61,18],[31,46],[68,44],[43,76],[57,88],[3,72],[96,27],[48,31],[53,58]];
-    return Array.from({length:count},(_,i)=>{
-      const icon=icons[i%icons.length],pos=positions[i%positions.length];
-      const size=9+((i*7)%15),delay=-((i*0.63)%4.6).toFixed(2);
-      return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;animation-delay:'+delay+'s">'+esc(icon)+'</i>';
+    const layouts={
+      profile:[[11,18,13],[86,16,9],[20,38,18],[77,35,11],[8,61,10],[89,58,17],[28,72,9],[70,76,14],[17,88,12],[84,86,8],[52,47,10]],
+      dossier:[[14,18,10],[83,14,15],[24,41,9],[73,38,12],[11,67,14],[88,64,9],[43,79,11],[66,83,8],[52,31,10]]
+    };
+    const slots=layouts[area]||layouts.profile;
+    const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|'+area+'|'+icons.join('|'));
+    const pool=icons.slice();
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    return Array.from({length:Math.min(count,slots.length)},(_,i)=>{
+      const pos=slots[i],icon=pool[Math.floor(rand()*pool.length)]||icons[0];
+      const size=Math.max(8,pos[2]+Math.floor(rand()*5)-2);
+      const delay=-(rand()*5.2).toFixed(2);
+      const opacity=(.46+rand()*.5).toFixed(2);
+      const rotate=Math.round(rand()*28-14);
+      return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;animation-delay:'+delay+'s;opacity:'+opacity+';transform:rotate('+rotate+'deg)">'+esc(icon)+'</i>';
     }).join('');
   }
   function frameEmojis(friend){
