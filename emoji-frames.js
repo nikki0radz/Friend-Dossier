@@ -15,7 +15,7 @@
     for(let i=0;i<count;i++){
       const angle=(360/count)*i - 90;
       const rad=angle*Math.PI/180;
-      const radius=43 + nudges[i%nudges.length];
+      const radius=38 + nudges[i%nudges.length]*.55;
       const x=50 + Math.cos(rad)*radius;
       const y=50 + Math.sin(rad)*radius;
       const size=sizes[i%sizes.length];
@@ -37,6 +37,7 @@
         state.friends.forEach(friend=>{
           const saved=map.get(friend.id);
           if(Array.isArray(saved?.frameEmojis)) friend.frameEmojis=saved.frameEmojis.slice(0,3);
+          if(friend.frameStyle==='plain'){friend.frameStyle='none';friend.frameEmojis=[];migrated=true;}
           if(friend.frameStyle==='flowers'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['🌸'];migrated=true;}
           if(friend.frameStyle==='shards'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['💎'];migrated=true;}
         });
@@ -52,8 +53,7 @@
     if(picker){
       picker.innerHTML=`
         <button type="button" data-frame="none" class="frame-option"><span class="frame-preview preview-none"></span><b>None</b></button>
-        <button type="button" data-frame="plain" class="frame-option"><span class="frame-preview preview-plain"></span><b>Plain</b></button>
-        <button type="button" data-frame="emoji" class="frame-option emoji-frame-option"><span class="emoji-preview-wreath"></span><b>Emoji wreath</b></button>`;
+        <button type="button" data-frame="emoji" class="frame-option emoji-frame-option"><span class="emoji-preview-wreath"></span><b>Emoji frame</b></button>`;
       picker.querySelectorAll('.frame-option').forEach(btn=>btn.addEventListener('click',()=>{
         $('friendFrameStyle').value=btn.dataset.frame;
         picker.querySelectorAll('.frame-option').forEach(x=>x.classList.toggle('active',x===btn));
@@ -99,7 +99,7 @@
     if($('friendFrameEmoji1')) $('friendFrameEmoji1').value=emojis[0]||'';
     if($('friendFrameEmoji2')) $('friendFrameEmoji2').value=emojis[1]||'';
     if($('friendFrameEmoji3')) $('friendFrameEmoji3').value=emojis[2]||'';
-    const style=(friend?.frameStyle==='flowers'||friend?.frameStyle==='shards')?'emoji':(friend?.frameStyle||'plain');
+    const style=(friend?.frameStyle==='flowers'||friend?.frameStyle==='shards')?'emoji':(friend?.frameStyle==='emoji'?'emoji':'none');
     if($('friendFrameStyle')) $('friendFrameStyle').value=style;
     document.querySelectorAll('.frame-option').forEach(btn=>btn.classList.toggle('active',btn.dataset.frame===style));
     updateEmojiEditorVisibility();
@@ -111,12 +111,12 @@
       const id=$('friendId')?.value;
       const friend=state.friends.find(f=>f.id===id);
       if(!friend) return;
-      const chosenStyle=$('friendFrameStyle')?.value||'plain';
+      const chosenStyle=$('friendFrameStyle')?.value||'none';
       if(chosenStyle==='emoji'){
         friend.frameStyle='emoji';
         friend.frameEmojis=selectedFrameEmojis();
       }else{
-        friend.frameStyle=chosenStyle==='none'?'none':'plain';
+        friend.frameStyle='none';
         friend.frameEmojis=[];
       }
       persistFriends();
@@ -129,7 +129,7 @@
     const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';
     state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{
       const emojis=fallbackEmojis(f);
-      const style=f.frameStyle==='none'?'none':(f.frameStyle==='plain'||!emojis.length?'plain':'emoji');
+      const style=f.frameStyle==='emoji'&&emojis.length?'emoji':'none';
       const b=document.createElement('button');
       b.className=`person-bubble frame-${style}`;
       b.style.setProperty('--frame-color',f.frameColor||settings.accent);
@@ -154,7 +154,7 @@
     .emoji-wreath:before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid color-mix(in srgb,var(--frame-color) 62%,#d0a36b 38%);box-shadow:0 0 9px color-mix(in srgb,var(--frame-color) 25%,transparent),inset 0 0 5px rgba(255,255,255,.16)}
     .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(17px,5vw,27px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
     .character-portrait-wrap .emoji-wreath-piece{font-size:calc(clamp(20px,6.2vw,31px) * var(--emoji-size))}
-    .frame-emoji .frame-layer{inset:0}.frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:72%;height:72%}.character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:70%;height:70%}
+    .frame-emoji .frame-layer{inset:0}.frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:84%;height:84%}.character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:82%;height:82%}
     .emoji-frame-editor{margin-top:14px;padding:13px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035)}
     .emoji-frame-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}.emoji-frame-title small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
     .emoji-frame-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.emoji-frame-inputs label{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:4px}.emoji-frame-inputs label span{font-size:10px;color:var(--muted);text-align:center}.emoji-frame-inputs input{min-width:0;text-align:center;font-size:22px;padding:9px 4px;border-radius:12px}
