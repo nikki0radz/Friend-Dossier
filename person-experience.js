@@ -21,7 +21,7 @@
     const nudges=[0,-3,2,-1,3,-2,1,-3];
     let html='';
     for(let i=0;i<count;i++){
-      const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=38+nudges[i%nudges.length]*.55;
+      const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=40.5+nudges[i%nudges.length]*.45;
       const x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rot=((i*37)%48)-24;
       html+=`<span class="px-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--s:${size};transform:translate(-50%,-50%) rotate(${rot}deg)">${esc(list[i%list.length])}</span>`;
     }
@@ -30,7 +30,7 @@
   function useWreath(friend){ return friend?.frameStyle==='emoji' && frameEmojis(friend).length; }
   function portraitMarkup(friend,cls='px-hero-portrait'){
     const face=friend.imageData?`<img src="${friend.imageData}" alt="">`:`<div class="px-initials">${esc(initials(friend.name))}</div>`;
-    const wreath=useWreath(friend)?`<span class="px-wreath">${wreathMarkup(friend,26)}</span>`:'';
+    const wreath=useWreath(friend)?`<span class="px-wreath">${wreathMarkup(friend,30)}</span>`:'';
     const portraitMode=useWreath(friend)?'has-wreath':'has-none';
     return `<div class="${cls} ${portraitMode}" style="--px-frame:${esc(friend.frameColor||settings.accent)}">${wreath}${face}</div>`;
   }
@@ -198,10 +198,10 @@
     .px-hero-portrait.has-none,.px-dossier-portrait.has-none{background:transparent!important;box-shadow:none!important}
     .px-hero-portrait.has-none>img,.px-dossier-portrait.has-none>img{width:82%;height:82%;border:0!important;box-shadow:0 12px 36px rgba(0,0,0,.28)!important}
     .px-hero-portrait.has-none>.px-initials,.px-dossier-portrait.has-none>.px-initials{width:82%;height:82%;background:transparent!important;box-shadow:none!important;color:var(--person-accent,var(--accent))!important}
-    .px-hero-portrait>img,.px-hero-portrait>.px-initials,.px-dossier-portrait>img,.px-dossier-portrait>.px-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:84%;height:84%;border-radius:50%;object-fit:cover;z-index:2;box-shadow:0 12px 36px rgba(0,0,0,.32)}
+    .px-hero-portrait>img,.px-hero-portrait>.px-initials,.px-dossier-portrait>img,.px-dossier-portrait>.px-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:80%;height:80%;border-radius:50%;object-fit:cover;z-index:2;box-shadow:0 12px 36px rgba(0,0,0,.32)}
     .px-hero-portrait.has-bubble>img,.px-hero-portrait.has-bubble>.px-initials,.px-dossier-portrait.has-bubble>img,.px-dossier-portrait.has-bubble>.px-initials{width:82%;height:82%}
     .px-initials{display:grid!important;place-items:center;background:linear-gradient(145deg,var(--px-frame),color-mix(in srgb,var(--px-frame) 28%,#fff));font-size:42px;font-weight:900;color:#2a1833}
-    .px-wreath{position:absolute;inset:0;z-index:4;pointer-events:none}.px-wreath-piece{position:absolute;font-size:calc(clamp(23px,7vw,38px) * var(--s));line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));white-space:nowrap}.px-dossier-portrait .px-wreath-piece{font-size:calc(clamp(20px,5.7vw,31px) * var(--s))}
+    .px-wreath{position:absolute;inset:0;z-index:4;pointer-events:none}.px-wreath-piece{position:absolute;font-size:calc(clamp(25px,7.3vw,40px) * var(--s));line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));white-space:nowrap}.px-dossier-portrait .px-wreath-piece{font-size:calc(clamp(20px,5.7vw,31px) * var(--s))}
     .px-name{font-family:var(--person-font,Georgia,serif);font-size:clamp(38px,11vw,56px);line-height:.95;margin-top:23px;text-align:center;color:var(--person-heading,var(--person-text));text-shadow:0 4px 24px rgba(0,0,0,.42)}
     .px-role{margin-top:10px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:color-mix(in srgb,var(--person-text) 78%,transparent)}.px-birthday{margin-top:10px;font-size:12px;color:var(--person-text)}
     .px-rule{width:min(70vw,330px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;color:var(--person-accent,var(--accent));margin-top:24px}.px-rule span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent))}.px-rule span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent),transparent)}
