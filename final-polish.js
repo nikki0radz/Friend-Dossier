@@ -13,23 +13,10 @@
   observer.observe(personView,{attributes:true,subtree:true,attributeFilter:['class']});
   syncReadBackdrop();
 
-  function addBorderSparkles(){
-    const btn=document.getElementById('readBtn');
-    if(!btn) return;
-    btn.querySelector('.portal-orbit')?.remove();
-    if(btn.querySelector('.border-sparkle-track')) return;
-    const track=document.createElement('span');
-    track.className='border-sparkle-track';
-    track.setAttribute('aria-hidden','true');
-    const glyphs=['✦','✧','⋆','✶','✦','✧','⋆','✦'];
-    track.innerHTML=glyphs.map((g,i)=>`<i style="--i:${i};--d:${i*-.92}s">${g}</i>`).join('');
-    btn.appendChild(track);
-  }
-
   const previousShowChoice=showChoice;
   showChoice=function(){
     previousShowChoice();
-    requestAnimationFrame(()=>{addBorderSparkles();syncReadBackdrop();});
+    requestAnimationFrame(syncReadBackdrop);
   };
 
   const previousShowRead=showRead;
@@ -71,25 +58,7 @@
     /* Replace the rigid rotating ring with individual lights chasing the rounded border. */
     .grand-portal-button .portal-orbit{display:none!important}
     .grand-portal-button{overflow:visible!important}
-    .border-sparkle-track{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
-    .border-sparkle-track i{
-      position:absolute;
-      left:0;
-      top:0;
-      font-style:normal;
-      color:color-mix(in srgb,var(--person-accent,var(--accent)) 76%,white 24%);
-      text-shadow:0 0 7px currentColor,0 0 16px currentColor,0 0 28px color-mix(in srgb,var(--person-accent,var(--accent)) 60%,transparent);
-      font-size:12px;
-      offset-path:inset(-8px round 30px);
-      offset-rotate:0deg;
-      animation:borderChase 7.4s linear infinite;
-      animation-delay:var(--d);
-      opacity:.95;
-      filter:drop-shadow(0 0 5px currentColor);
-    }
-    .border-sparkle-track i:nth-child(2n){font-size:9px;opacity:.72}
-    .border-sparkle-track i:nth-child(3n){font-size:14px;opacity:1}
-    .border-sparkle-track i:nth-child(4n){font-size:10px}
+    .border-sparkle-track{display:none!important}
 
     .grand-portal-button{
       box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
@@ -107,10 +76,6 @@
       text-align:center!important;
     }
 
-    @keyframes borderChase{
-      from{offset-distance:0%}
-      to{offset-distance:100%}
-    }
     @keyframes archiveGlow{
       0%,100%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 42%,white 5%);box-shadow:0 0 5px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 4%,transparent)}
       50%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 78%,white 12%);box-shadow:0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),0 0 24px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 9%,transparent)}
@@ -118,5 +83,4 @@
     @media(prefers-reduced-motion:reduce){.border-sparkle-track i,.grand-portal-button{animation:none!important}}
   `;
   document.head.appendChild(style);
-  requestAnimationFrame(addBorderSparkles);
 })();
