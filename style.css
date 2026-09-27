@@ -27,3 +27,7 @@ html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-f
 
 .home-tools,#homeView{font-family:var(--home-font,Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif)}
 .next-important-date{font-family:inherit}
+
+.recurring-date-toggle{display:flex!important;grid-template-columns:auto 1fr!important;align-items:center!important;gap:10px!important;margin:12px 0 1px!important;padding:10px 11px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid var(--border);cursor:pointer}
+.recurring-date-toggle input{width:18px!important;height:18px!important;margin:0!important;accent-color:var(--accent);flex:0 0 auto}
+.recurring-date-toggle span{display:block}.recurring-date-toggle strong{display:block;color:var(--text);font-size:12px}.recurring-date-toggle small{display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.3}
