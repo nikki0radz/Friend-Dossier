@@ -197,7 +197,60 @@ function applySettings(){
 }
 function selected(){return state.friends.find(f=>f.id===state.selectedId);}
 function frameMarkup(style){if(style==='flowers')return `<span class="frame-flower f1">✿</span><span class="frame-flower f2">❀</span><span class="frame-flower f3">✿</span><span class="frame-flower f4">❀</span><span class="frame-flower f5">✿</span><span class="frame-flower f6">❀</span><span class="frame-flower f7">✿</span><span class="frame-flower f8">❀</span>`;if(style==='shards')return `<span class="frame-shard s1"></span><span class="frame-shard s2"></span><span class="frame-shard s3"></span><span class="frame-shard s4"></span><span class="frame-shard s5"></span><span class="frame-shard s6"></span><span class="frame-shard s7"></span><span class="frame-shard s8"></span>`;return '';}
-function renderHome(){const grid=$('peopleGrid');if(!grid)return;const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).forEach(f=>{const b=document.createElement('button');const frame=f.frameStyle||'plain';b.className=`person-bubble frame-${frame}`;b.style.setProperty('--frame-color',f.frameColor||settings.accent);const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;b.innerHTML=`<span class="frame-layer">${frameMarkup(frame)}</span>${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);});}
+function possessiveName(name=''){
+  const n=String(name).trim()||'Someone';
+  return /s$/i.test(n)?`${n}'`:`${n}'s`;
+}
+function nextOccurrence(day,month,year){
+  day=Number(day);month=Number(month);year=Number(year)||0;
+  if(!day||!month)return null;
+  const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let candidate;
+  if(year>=today.getFullYear()){
+    candidate=new Date(year,month-1,day);
+  }else{
+    candidate=new Date(today.getFullYear(),month-1,day);
+    if(candidate<today)candidate=new Date(today.getFullYear()+1,month-1,day);
+  }
+  const days=Math.round((candidate-today)/86400000);
+  return {date:candidate,days};
+}
+function countdownWords(days){
+  if(days===0)return 'today';
+  if(days===1)return 'tomorrow';
+  if(days<14)return `in ${days} days`;
+  if(days<56){
+    const weeks=Math.max(2,Math.round(days/7));
+    return `in ${weeks} weeks`;
+  }
+  if(days<330){
+    const months=Math.max(2,Math.round(days/30.44));
+    return `in ${months} months`;
+  }
+  return 'in about a year';
+}
+function nextImportantDate(){
+  const events=[];
+  state.friends.forEach(friend=>{
+    const birthday=nextOccurrence(friend.birthdayDay,friend.birthdayMonth,friend.birthdayYear);
+    if(birthday)events.push({...birthday,friend,label:'birthday'});
+    (friend.entries||[]).filter(e=>e.type==='date').forEach(entry=>{
+      const next=nextOccurrence(entry.day,entry.month,entry.year);
+      if(next)events.push({...next,friend,label:(entry.title||'important date').trim()});
+    });
+  });
+  events.sort((x,y)=>x.days-y.days||String(x.friend.name).localeCompare(String(y.friend.name)));
+  return events[0]||null;
+}
+function renderNextImportantDate(){
+  const el=$('nextImportantDate');if(!el)return;
+  const event=nextImportantDate();
+  if(!event){el.classList.add('empty');el.textContent='No important dates coming up yet ✦';return;}
+  el.classList.remove('empty');
+  const label=event.label==='birthday'?'birthday':event.label.charAt(0).toLowerCase()+event.label.slice(1);
+  el.innerHTML=`<span class="next-date-star">✦</span><span>It’s <strong>${esc(possessiveName(event.friend.name))}</strong> ${esc(label)} <strong>${esc(countdownWords(event.days))}</strong></span>`;
+}
+function renderHome(){const grid=$('peopleGrid');if(!grid)return;renderNextImportantDate();const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{sensitivity:'base'})).forEach(f=>{const b=document.createElement('button');const frame=f.frameStyle||'plain';b.className=`person-bubble frame-${frame}`;b.style.setProperty('--frame-color',f.frameColor||settings.accent);const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;b.innerHTML=`<span class="frame-layer">${frameMarkup(frame)}</span>${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);});}
 function openPerson(id){state.selectedId=id;$('homeView')?.classList.add('hidden');$('personView')?.classList.remove('hidden');homeTools()?.classList.add('hidden');renderPersonHero();showChoice();}
 function goHome(){$('personView')?.classList.add('hidden');$('homeView')?.classList.remove('hidden');homeTools()?.classList.remove('hidden');state.selectedId=null;renderHome();}
 function renderPersonHero(){const f=selected();if(!f)return;const face=f.imageData?`<img class="hero-photo" src="${f.imageData}" alt="">`:`<div class="hero-initials">${esc(initials(f.name))}</div>`;const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);$('personHero').innerHTML=`${face}<h1>${esc(f.name)}</h1>${f.relationship?`<p>${esc(f.relationship)}</p>`:''}${bd?`<span class="birthday-pill">🎂 ${esc(bd)}</span>`:''}`;}
