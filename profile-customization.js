@@ -21,6 +21,8 @@
   const COLOUR_TARGETS=[
 ['friendFrameColour','Frame'],['friendProfileBg','Background'],['friendProfileText','Body text'],['friendProfileHeading','Headings'],['friendProfileSparkle','Sparkles']
   ];
+  const SPARKLE_OPTIONS=['✦','✧','⋆','★','☆','✶','✷','✸','✹','✺','✵','❈','❉','❊','❋','⟡','◇','☾','☽','♡'];
+  const DEFAULT_SPARKLES=['✦','✧','⋆','✶','☾','⟡'];
   let activeColourTarget='friendProfileBg';
 
   function readStoredFriends(){
@@ -85,7 +87,18 @@
         <div class="recent-colours-wrap"><div class="recent-colours-title">Recently used colours</div><div id="recentColours" class="recent-colours"></div></div>
       </div>
       <div class="font-picker-wrap"><div class="font-picker-title">Font</div><div id="fontOptions" class="font-options">${Object.keys(FONT_MAP).map(key=>`<button type="button" class="font-option" data-font="${key}" style="font-family:${FONT_MAP[key]}"><span>Aa Mooncakes</span><small>${FONT_LABELS[key]}</small></button>`).join('')}</div><input id="friendProfileFont" type="hidden" value="default"></div>
-      <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="140" step="5" value="100"></div>`;
+      <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="140" step="5" value="100"></div>
+      <div class="profile-sparkle-picker">
+        <div class="profile-theme-heading"><strong>Sparkle constellation</strong><small>Choose their symbols</small></div>
+        <div id="profileSparkleIcons" class="profile-sparkle-icons">${SPARKLE_OPTIONS.map(icon=>`<label class="profile-sparkle-icon"><input type="checkbox" value="${icon}"><span>${icon}</span></label>`).join('')}</div>
+        <div class="sparkle-density-title">Sparkle mood</div>
+        <div id="profileSparkleDensity" class="sparkle-density-options">
+          <button type="button" data-density="whisper"><b>Whisper</b><small>A delicate dusting</small></button>
+          <button type="button" data-density="constellation"><b>Constellation</b><small>Balanced & twinkly</small></button>
+          <button type="button" data-density="starfall"><b>Starfall</b><small>Maximum celestial drama</small></button>
+        </div>
+        <input id="friendProfileSparkleDensity" type="hidden" value="constellation">
+      </div>`;
     if(styleEditor) styleEditor.insertAdjacentElement('afterend',box); else form.insertBefore(box,saveBtn);
     box.querySelectorAll('.colour-property').forEach(btn=>btn.onclick=()=>selectColourTarget(btn.dataset.colourTarget));
     ['colourHue','colourSat','colourVal'].forEach(id=>$(id)?.addEventListener('input',updateColourFromHSV));
@@ -95,10 +108,23 @@
     $('friendProfileTextScale')?.addEventListener('input',()=>{
       if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${$('friendProfileTextScale').value}%`;
     });
+    box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density));
     renderRecentColours();
   }
 
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
+  function selectSparkleDensity(value){
+    const density=['whisper','constellation','starfall'].includes(value)?value:'constellation';
+    if($('friendProfileSparkleDensity')) $('friendProfileSparkleDensity').value=density;
+    document.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.classList.toggle('active',btn.dataset.density===density));
+  }
+  function selectedSparkleIcons(){
+    return [...document.querySelectorAll('#profileSparkleIcons input:checked')].map(input=>input.value).slice(0,20);
+  }
+  function setSparkleIcons(icons){
+    const chosen=new Set(Array.isArray(icons)&&icons.length?icons:DEFAULT_SPARKLES);
+    document.querySelectorAll('#profileSparkleIcons input').forEach(input=>{input.checked=chosen.has(input.value);});
+  }
   function targetLabel(id){return COLOUR_TARGETS.find(x=>x[0]===id)?.[1]||'Colour';}
   function setTargetColour(id,hex,syncPicker=false){const el=$(id);if(!el)return;el.value=normalHex(hex);const btn=document.querySelector(`[data-colour-target="${id}"]`);if(btn)btn.querySelector('.colour-dot').style.background=el.value;if(syncPicker&&id===activeColourTarget)syncPickerToColour(el.value);}
   function selectColourTarget(id){activeColourTarget=id;document.querySelectorAll('.colour-property').forEach(b=>b.classList.toggle('active',b.dataset.colourTarget===id));if($('activeColourLabel'))$('activeColourLabel').textContent=targetLabel(id);syncPickerToColour($(id)?.value||'#ffffff');}
@@ -115,6 +141,8 @@
     const textScale=Math.max(80,Math.min(140,Number(friend?.profileTextScale)||100));
     if($('friendProfileTextScale')) $('friendProfileTextScale').value=textScale;
     if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${textScale}%`;
+    setSparkleIcons(friend?.profileSparkleIcons);
+    selectSparkleDensity(friend?.profileSparkleDensity||'constellation');
     selectColourTarget('friendProfileBg');
   }
 
@@ -123,7 +151,7 @@
   function ensureIdBeforeSave(){if($('friendId')&&!$('friendId').value)$('friendId').value=uid();}
   const saveBtn=$('friendForm')?.querySelector('.primary-button');
   saveBtn?.addEventListener('click',ensureIdBeforeSave,{capture:true});
-  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(140,Number($('friendProfileTextScale')?.value)||100));COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
+  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(140,Number($('friendProfileTextScale')?.value)||100));friend.profileSparkleIcons=selectedSparkleIcons().length?selectedSparkleIcons():DEFAULT_SPARKLES.slice();friend.profileSparkleDensity=$('friendProfileSparkleDensity')?.value||'constellation';COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
 
   function fallbackEmojis(friend){if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length)return friend.frameEmojis.filter(Boolean).slice(0,3);if(friend?.frameStyle==='flowers')return['🌸'];if(friend?.frameStyle==='shards')return['💎'];return[];}
   function wreathMarkup(emojis,count=24){const list=(emojis||[]).filter(Boolean).slice(0,3);if(!list.length)return'';const sizes=[1,.78,1.13,.88,1.02,.72,1.18,.84],nudges=[0,-3,2,-1,3,-2,1,-3];let html='';for(let i=0;i<count;i++){const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=43+nudges[i%nudges.length],x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rotate=((i*37)%48)-24;html+=`<span class="emoji-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--emoji-size:${size};transform:translate(-50%,-50%) rotate(${rotate}deg)">${esc(list[i%list.length])}</span>`;}return html;}
