@@ -74,7 +74,7 @@
     .delete-friend-button:hover{background:rgba(120,25,45,.24)}
     .grimoire-ambience{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.92}
     #app>header,#app>main{position:relative;z-index:1}
-    .grimoire-spark{position:absolute;color:color-mix(in srgb,var(--accent) 72%,white 18%);text-shadow:0 0 8px currentColor,0 0 18px color-mix(in srgb,var(--accent) 50%,transparent);opacity:.2;animation:grimoireTwinkle 6s ease-in-out infinite,grimoireFloat 9s ease-in-out infinite;will-change:transform,opacity;user-select:none}
+    .grimoire-spark{position:absolute;color:var(--home-sparkle);text-shadow:0 0 8px currentColor,0 0 18px color-mix(in srgb,var(--home-sparkle) 50%,transparent);opacity:.2;animation:grimoireTwinkle 6s ease-in-out infinite,grimoireFloat 9s ease-in-out infinite;will-change:transform,opacity;user-select:none}
     .spark-1{opacity:.35}.spark-2{opacity:.5}.spark-3{opacity:.24}.spark-4{opacity:.62}.spark-5{opacity:.32}
     #homeView:before,#homeView:after{display:none!important;content:none!important}
     @keyframes grimoireTwinkle{0%,100%{opacity:.12}35%{opacity:.7}58%{opacity:.26}75%{opacity:.55}}
