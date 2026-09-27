@@ -175,6 +175,7 @@
       '--text':rgba(draft.text,draft.textOpacity??100),
       '--home-sparkle':rgba(draft.sparkle,draft.sparkleOpacity??100),
       '--search-bg':rgba(draft.searchBg,draft.searchBgOpacity??100),
+      '--search-border':rgba(draft.accent,((draft.accentOpacity??100)*(draft.searchBgOpacity??100))/100),
       '--search-text':rgba(draft.searchText,draft.searchTextOpacity??100),
       '--search-placeholder':rgba(draft.searchPlaceholder,draft.searchPlaceholderOpacity??100),
       '--add-bg':rgba(draft.addBg,draft.addBgOpacity??100),
