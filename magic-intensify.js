@@ -70,7 +70,7 @@
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 55%,white 8%)!important;
       background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;
       color:#fff!important;
-      box-shadow:0 0 9px color-mix(in srgb,var(--person-accent,var(--accent)) 32%,transparent),0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 16%,transparent),inset 0 0 20px color-mix(in srgb,var(--person-accent,var(--accent)) 11%,transparent)!important;
+      box-shadow:0 0 7px color-mix(in srgb,var(--person-accent,var(--accent)) 14%,transparent),inset 0 0 16px color-mix(in srgb,var(--person-accent,var(--accent)) 7%,transparent)!important;
       animation:portalBreath 3.2s ease-in-out infinite!important;
     }
     .grand-portal-button:before{
@@ -79,7 +79,7 @@
       inset:-8px;
       border-radius:36px;
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent);
-      box-shadow:0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent);
+      box-shadow:none;
       pointer-events:none;
       animation:outerRunePulse 3.4s ease-in-out infinite;
       z-index:-1;
@@ -112,7 +112,7 @@
     .grand-portal-button strong{
       width:100%!important;
       margin:0!important;
-      font-family:Georgia,'Times New Roman',serif!important;
+      font-family:var(--person-font,Georgia,'Times New Roman',serif)!important;
       font-size:24px!important;
       line-height:1.05!important;
       letter-spacing:.035em!important;
@@ -126,7 +126,7 @@
       width:100%!important;
       margin:3px 0 0!important;
       text-align:center!important;
-      font-family:Georgia,'Times New Roman',serif!important;
+      font-family:var(--person-font,Georgia,'Times New Roman',serif)!important;
       font-style:italic!important;
       letter-spacing:.05em!important;
       color:rgba(255,255,255,.58)!important;
