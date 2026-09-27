@@ -9,9 +9,19 @@
     ['friendProfileSparkle','Sparkles']
   ];
   const GLOBAL_TARGETS=[
-    ['bgColour','Background'],
-    ['accentColour','Accent'],
-    ['bubbleColour','Bubble tint']
+    ['bg','Main background'],
+    ['accent','Accent'],
+    ['text','Main text'],
+    ['sparkle','Floating sparkles'],
+    ['searchBg','Search box'],
+    ['searchText','Search text'],
+    ['searchPlaceholder','Search placeholder'],
+    ['bubble','Default bubble'],
+    ['addBg','Add friend button'],
+    ['addText','Add friend text'],
+    ['gearBg','Settings button'],
+    ['gearText','Settings icon'],
+    ['nameText','Friend names']
   ];
 
   const personDraft={};
@@ -129,26 +139,67 @@
     });
   }
 
+  function applyGlobalDraft(draft){
+    const vars={
+      '--bg':draft.bg,'--accent':draft.accent,'--text':draft.text,'--home-sparkle':draft.sparkle,
+      '--search-bg':draft.searchBg,'--search-text':draft.searchText,'--search-placeholder':draft.searchPlaceholder,
+      '--bubble':draft.bubble,'--add-bg':draft.addBg,'--add-text':draft.addText,
+      '--gear-bg':draft.gearBg,'--gear-text':draft.gearText,'--name-text':draft.nameText
+    };
+    Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+  }
+
+  function closeGlobalStudio(commit=false){
+    const holder=document.getElementById('globalColourStudioV2');
+    if(!holder)return;
+    if(commit){
+      GLOBAL_TARGETS.forEach(([key])=>{if(globalDraft[key])settings[key]=globalDraft[key];});
+      persistSettings();
+      saveRecent(GLOBAL_TARGETS.map(([key])=>globalDraft[key]));
+      renderHome();
+      showToast('Home colours saved');
+    }else{
+      applySettings();
+    }
+    holder.classList.remove('show');
+  }
+
   function mountGlobalStudio(){
     const dialog=document.getElementById('settingsDialog'),grid=dialog?.querySelector('.colour-grid');
     if(!dialog||!grid) return;
     grid.classList.add('v2-hidden-old-studio');
-    let holder=dialog.querySelector('#globalColourStudioV2');
-    if(!holder){holder=document.createElement('div');holder.id='globalColourStudioV2';grid.insertAdjacentElement('afterend',holder);}
-    // Rebuild on every open. This guarantees exactly one set of listeners and
-    // prevents an old Background listener from firing while Accent is active.
-    holder.innerHTML=studioMarkup('global',GLOBAL_TARGETS);
-    const source={bgColour:settings.bg,accentColour:settings.accent,bubbleColour:settings.bubble};
-    initialiseStudio(holder.querySelector('.v2-colour-studio'),GLOBAL_TARGETS,globalDraft,source,(draft,active)=>{
-      const preview=holder.querySelector('[data-v2-preview]');
-      preview.style.setProperty('--p-bg',draft.bgColour);
-      preview.style.setProperty('--p-text','#f4edf7');
-      preview.style.setProperty('--p-head',draft.accentColour);
-      preview.style.setProperty('--p-frame',draft.accentColour);
-      preview.style.setProperty('--p-bubble',draft.bubbleColour);
-      preview.style.setProperty('--p-spark',draft.accentColour);
-      preview.querySelector('.v2-preview-orb').style.background=draft[active];
-    });
+    let launch=dialog.querySelector('#openHomeColourStudio');
+    if(!launch){
+      launch=document.createElement('button');
+      launch.id='openHomeColourStudio';
+      launch.type='button';
+      launch.className='soft-button full home-colour-launch';
+      launch.textContent='🎨 Customize home screen colours';
+      grid.insertAdjacentElement('afterend',launch);
+    }
+    launch.onclick=()=>{
+      safeClose(dialog);
+      let holder=document.getElementById('globalColourStudioV2');
+      if(!holder){
+        holder=document.createElement('div');
+        holder.id='globalColourStudioV2';
+        holder.className='floating-home-colour-studio';
+        document.body.appendChild(holder);
+      }
+      holder.innerHTML=`
+        <div class="floating-studio-head"><div><strong>Home screen colours</strong><small>Changes below are only a preview until you save.</small></div><button type="button" data-v2-close>×</button></div>
+        ${studioMarkup('global',GLOBAL_TARGETS)}
+        <div class="floating-studio-actions"><button type="button" class="soft-button" data-v2-cancel>Cancel</button><button type="button" class="primary-button" data-v2-save>Save colours</button></div>`;
+      const studio=holder.querySelector('.v2-colour-studio');
+      studio.querySelector('.v2-preview-wrap')?.remove();
+      const source={};
+      GLOBAL_TARGETS.forEach(([key])=>source[key]=settings[key]);
+      initialiseStudio(studio,GLOBAL_TARGETS,globalDraft,source,(draft)=>applyGlobalDraft(draft));
+      holder.querySelector('[data-v2-close]').onclick=()=>closeGlobalStudio(false);
+      holder.querySelector('[data-v2-cancel]').onclick=()=>closeGlobalStudio(false);
+      holder.querySelector('[data-v2-save]').onclick=()=>closeGlobalStudio(true);
+      holder.classList.add('show');
+    };
   }
 
   const previousOpenFriendDialog=openFriendDialog;
@@ -158,16 +209,12 @@
   };
 
   document.getElementById('settingsBtn')?.addEventListener('click',()=>requestAnimationFrame(mountGlobalStudio),true);
+  requestAnimationFrame(mountGlobalStudio);
 
   // Commit drafts only when the actual Save buttons are pressed.
   document.getElementById('friendForm')?.querySelector('.primary-button')?.addEventListener('click',()=>{
     PERSON_TARGETS.forEach(([id])=>{const el=document.getElementById(id);if(el&&personDraft[id])el.value=personDraft[id];});
     saveRecent(PERSON_TARGETS.map(([id])=>personDraft[id]));
-  },true);
-
-  document.getElementById('saveSettingsBtn')?.addEventListener('click',()=>{
-    GLOBAL_TARGETS.forEach(([id])=>{const el=document.getElementById(id);if(el&&globalDraft[id])el.value=globalDraft[id];});
-    saveRecent(GLOBAL_TARGETS.map(([id])=>globalDraft[id]));
   },true);
 
   const style=document.createElement('style');
@@ -188,7 +235,17 @@
     .v2-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}.v2-editor-head strong{font-size:12px}.v2-editor-head input{width:92px!important;padding:6px 7px!important;font-family:'Courier New',monospace;text-align:center;text-transform:lowercase}
     .v2-colour-editor label{display:grid;grid-template-columns:1fr auto;gap:6px;font-size:10px;margin:10px 0}.v2-colour-editor label input{grid-column:1/-1;width:100%;height:6px;padding:0!important;border:0!important;border-radius:999px;appearance:none}.v2-colour-editor input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.45);box-shadow:0 2px 8px rgba(0,0,0,.35)}
     .v2-recent-title{font-size:10px;opacity:.6;margin:11px 0 7px}.v2-recents{display:flex;flex-wrap:wrap;gap:7px}.v2-recent{width:25px;height:25px;border-radius:50%;border:1px solid rgba(255,255,255,.22);box-shadow:0 2px 7px rgba(0,0,0,.25)}.v2-recent-empty{font-size:10px;opacity:.45}
-    @media(max-width:420px){.v2-colour-properties{grid-template-columns:repeat(2,1fr)}}
+    .home-colour-launch{margin:4px 0 12px}
+    .floating-home-colour-studio{position:fixed;z-index:100001;right:14px;bottom:max(14px,env(safe-area-inset-bottom));width:min(360px,calc(100vw - 28px));max-height:min(76vh,680px);overflow:auto;padding:14px;border-radius:22px;background:color-mix(in srgb,var(--bg) 94%,black 6%);border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);box-shadow:0 22px 70px rgba(0,0,0,.56);backdrop-filter:blur(18px);transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none;transition:.28s ease}
+    .floating-home-colour-studio.show{transform:none;opacity:1;pointer-events:auto}
+    .floating-studio-head{position:sticky;top:-14px;z-index:3;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:-14px -14px 10px;padding:14px;background:color-mix(in srgb,var(--bg) 96%,black 4%);border-bottom:1px solid rgba(255,255,255,.07)}
+    .floating-studio-head strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:18px;color:var(--text)}.floating-studio-head small{display:block;margin-top:3px;font-size:10px;color:var(--search-placeholder);line-height:1.35}.floating-studio-head button{width:34px;height:34px;border-radius:50%;border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);background:var(--bg);color:var(--accent);font-size:20px}
+    .floating-home-colour-studio .v2-colour-studio{margin:0;padding:0;border:0;background:transparent}
+    .floating-home-colour-studio .v2-colour-properties{grid-template-columns:repeat(2,minmax(0,1fr));max-height:190px;overflow:auto;padding-right:2px}
+    .floating-home-colour-studio .v2-colour-property{color:var(--text);background:rgba(255,255,255,.035)}
+    .floating-studio-actions{display:grid;grid-template-columns:1fr 1.3fr;gap:8px;margin-top:12px;position:sticky;bottom:-14px;padding:10px 0 14px;background:linear-gradient(transparent,color-mix(in srgb,var(--bg) 98%,black 2%) 24%)}
+    .floating-studio-actions .primary-button{background:var(--accent)!important;color:var(--bg)!important}
+    @media(max-width:420px){.v2-colour-properties{grid-template-columns:repeat(2,1fr)}.floating-home-colour-studio{left:10px;right:10px;width:auto;max-height:72vh}}
   `;
   document.head.appendChild(style);
 
