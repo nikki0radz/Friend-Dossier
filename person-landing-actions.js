@@ -57,7 +57,7 @@
 (() => {
   if(document.querySelector('script[data-final-polish]')) return;
   const s=document.createElement('script');
-  s.src='final-polish.js?v=1.0.0';
+  s.src='final-polish.js?v=1.1.0';
   s.dataset.finalPolish='1';
   document.body.appendChild(s);
 })();
