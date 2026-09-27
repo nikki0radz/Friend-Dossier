@@ -23,6 +23,7 @@
     const aura=ensureProfileAura();
     const active=friend && !$('personView')?.classList.contains('hidden') && !$('personView')?.classList.contains('read-mode');
     aura.classList.toggle('active',Boolean(active));
+    document.body.classList.toggle('person-profile-active',Boolean(active));
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
   function sparkleIcons(friend){
@@ -227,6 +228,7 @@
   if($('personView')) auraObserver.observe($('personView'),{attributes:true,attributeFilter:['class']});
 
   const css=document.createElement('style');css.id='personExperienceStyles';css.textContent=`
+    body.person-profile-active .grimoire-ambience{display:none!important}
     #profileAuraLayer{position:fixed;inset:-160px;z-index:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 72%,color-mix(in srgb,var(--profile-aura) 13%,transparent) 0%,color-mix(in srgb,var(--profile-aura) 7%,transparent) 28%,color-mix(in srgb,var(--profile-aura) 3%,transparent) 48%,transparent 70%);filter:blur(34px);transition:opacity .25s ease}
     #profileAuraLayer.active{opacity:.62;animation:profileAuraPulse 3.6s ease-in-out infinite}
     @keyframes profileAuraPulse{0%,100%{opacity:.42;transform:scale(1)}50%{opacity:.68;transform:scale(1.025)}}
