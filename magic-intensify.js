@@ -70,28 +70,11 @@
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 55%,white 8%)!important;
       background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;
       color:#fff!important;
-      box-shadow:0 0 8px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
-      animation:portalBreath 3.2s ease-in-out infinite!important;
+      box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
+      animation:archiveGlow 3.2s ease-in-out infinite!important;
     }
     .grand-portal-button:before{content:none!important}
-    .grand-portal-button:after{
-      content:'';
-      position:absolute;
-      inset:0;
-      border-radius:inherit;
-      background:linear-gradient(108deg,transparent 20%,rgba(255,255,255,.12) 47%,transparent 70%);
-      transform:translateX(-120%);
-      animation:portalShimmer 4.8s ease-in-out infinite;
-      pointer-events:none;
-      z-index:0;
-      border:0!important;
-      box-shadow:none!important;
-      width:auto!important;
-      height:auto!important;
-      left:0!important;
-      top:0!important;
-      opacity:1!important;
-    }
+    .grand-portal-button:after{content:none!important}
     .grand-portal-button .archive-sigil{
       font-size:18px!important;
       color:var(--person-accent,var(--accent))!important;
@@ -132,7 +115,7 @@
     @keyframes titleSparkTwinkle{0%,100%{opacity:.38;transform:scale(.82)}50%{opacity:1;transform:scale(1.18)}}
     @keyframes portalBreath{0%,100%{transform:translateY(0) scale(1);filter:brightness(1)}50%{transform:translateY(-1px) scale(1.008);filter:brightness(1.08)}}
     @keyframes outerRunePulse{0%,100%{opacity:.35;transform:scale(.99)}50%{opacity:.9;transform:scale(1.015)}}
-    @keyframes portalShimmer{0%,62%{transform:translateX(-125%)}82%,100%{transform:translateX(125%)}}
+    82%,100%{transform:translateX(125%)}}
     @keyframes sigilFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
     @keyframes burstStar{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}18%{opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1.18);opacity:0}}
     @keyframes burstFade{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
