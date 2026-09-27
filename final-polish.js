@@ -77,8 +77,8 @@
       left:0;
       top:0;
       font-style:normal;
-      color:color-mix(in srgb,var(--accent) 76%,white 24%);
-      text-shadow:0 0 7px currentColor,0 0 16px currentColor,0 0 28px color-mix(in srgb,var(--accent) 60%,transparent);
+      color:color-mix(in srgb,var(--person-accent,var(--accent)) 76%,white 24%);
+      text-shadow:0 0 7px currentColor,0 0 16px currentColor,0 0 28px color-mix(in srgb,var(--person-accent,var(--accent)) 60%,transparent);
       font-size:12px;
       offset-path:inset(-8px round 30px);
       offset-rotate:0deg;
@@ -93,10 +93,10 @@
 
     .grand-portal-button{
       box-shadow:
-        0 0 0 1px color-mix(in srgb,var(--accent) 24%,transparent),
-        0 0 22px color-mix(in srgb,var(--accent) 30%,transparent),
-        0 0 52px color-mix(in srgb,var(--accent) 18%,transparent),
-        inset 0 0 24px color-mix(in srgb,var(--accent) 8%,transparent)!important;
+        0 0 0 1px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),
+        0 0 22px color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent),
+        0 0 52px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent),
+        inset 0 0 24px color-mix(in srgb,var(--person-accent,var(--accent)) 8%,transparent)!important;
       animation:archiveGlow 3.1s ease-in-out infinite!important;
     }
     .grand-portal-button strong{
@@ -116,8 +116,8 @@
       to{offset-distance:100%}
     }
     @keyframes archiveGlow{
-      0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 20%,transparent),0 0 38px color-mix(in srgb,var(--accent) 12%,transparent),inset 0 0 22px color-mix(in srgb,var(--accent) 7%,transparent)}
-      50%{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 28px color-mix(in srgb,var(--accent) 38%,transparent),0 0 70px color-mix(in srgb,var(--accent) 24%,transparent),inset 0 0 32px color-mix(in srgb,var(--accent) 12%,transparent)}
+      0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 16px color-mix(in srgb,var(--person-accent,var(--accent)) 20%,transparent),0 0 38px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 22px color-mix(in srgb,var(--person-accent,var(--accent)) 7%,transparent)}
+      50%{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 28px color-mix(in srgb,var(--person-accent,var(--accent)) 38%,transparent),0 0 70px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),inset 0 0 32px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent)}
     }
     @media(prefers-reduced-motion:reduce){.border-sparkle-track i,.grand-portal-button{animation:none!important}}
   `;
