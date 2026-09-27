@@ -143,6 +143,12 @@
       '--gear-bg':draft.gearBg,'--gear-text':draft.gearText,'--name-text':draft.nameText
     };
     Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+
+    if(draft.bg){
+      document.documentElement.style.backgroundColor=draft.bg;
+      document.body.style.backgroundColor=draft.bg;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content',draft.bg);
+    }
   }
 
   function closeGlobalStudio(commit=false){
@@ -156,6 +162,14 @@
       showToast('Home colours saved');
     }else{
       applySettings();
+      document.documentElement.style.backgroundColor=settings.bg;
+      document.body.style.backgroundColor=settings.bg;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content',settings.bg);
+    }
+    if(commit){
+      document.documentElement.style.backgroundColor=settings.bg;
+      document.body.style.backgroundColor=settings.bg;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content',settings.bg);
     }
     holder.classList.remove('show');
   }
