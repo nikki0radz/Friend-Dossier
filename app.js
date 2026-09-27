@@ -207,12 +207,14 @@ function applySettings(){
     return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
   };
   const fontMap={
-    classic:"Georgia, 'Times New Roman', serif",
-    elegant:"'Palatino Linotype', 'Book Antiqua', Palatino, serif",
-    clean:"'Trebuchet MS', Arial, sans-serif",
-    typewriter:"'Courier New', Courier, monospace",
-    storybook:"Garamond, 'Times New Roman', serif",
-    handwritten:"'Segoe Print', 'Comic Sans MS', cursive"
+    classic:"'Libre Baskerville', Georgia, serif",
+    elegant:"'Cormorant Garamond', Georgia, serif",
+    clean:"'Nunito Sans', Arial, sans-serif",
+    typewriter:"'Special Elite', 'Courier New', monospace",
+    storybook:"'IM Fell English', Georgia, serif",
+    handwritten:"'Caveat', cursive",
+    handwritten2:"'Dancing Script', cursive",
+    gothic:"'UnifrakturCook', 'Old English Text MT', cursive"
   };
   const vars={
     '--bg':rgba(settings.bg,settings.bgOpacity??100),
