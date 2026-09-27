@@ -1,13 +1,12 @@
 (() => {
   const FONT_MAP={
+    default:'',
     classic:"'Libre Baskerville', Georgia, serif",
-    elegant:"'Cormorant Garamond', Georgia, serif",
+    elegant:"'Dancing Script', cursive",
     clean:"'Nunito Sans', Arial, sans-serif",
     typewriter:"'Special Elite', 'Courier New', monospace",
-    storybook:"'IM Fell English', Georgia, serif",
-    handwritten:"'Caveat', cursive",
-    handwritten2:"'Dancing Script', cursive",
-    gothic:"'UnifrakturCook', 'Old English Text MT', cursive"
+    storybook:"'UnifrakturCook', 'Old English Text MT', cursive",
+    handwritten:"'Caveat', cursive"
   };
 
   function frameEmojis(friend){
@@ -22,17 +21,17 @@
     const nudges=[0,-3,2,-1,3,-2,1,-3];
     let html='';
     for(let i=0;i<count;i++){
-      const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=43+nudges[i%nudges.length];
+      const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=38+nudges[i%nudges.length]*.55;
       const x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rot=((i*37)%48)-24;
       html+=`<span class="px-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--s:${size};transform:translate(-50%,-50%) rotate(${rot}deg)">${esc(list[i%list.length])}</span>`;
     }
     return html;
   }
-  function useWreath(friend){ return friend?.frameStyle && friend.frameStyle!=='plain' && frameEmojis(friend).length; }
+  function useWreath(friend){ return friend?.frameStyle==='emoji' && frameEmojis(friend).length; }
   function portraitMarkup(friend,cls='px-hero-portrait'){
     const face=friend.imageData?`<img src="${friend.imageData}" alt="">`:`<div class="px-initials">${esc(initials(friend.name))}</div>`;
     const wreath=useWreath(friend)?`<span class="px-wreath">${wreathMarkup(friend,26)}</span>`:'';
-    const portraitMode=friend?.frameStyle==='none'?'has-none':(useWreath(friend)?'has-wreath':'has-bubble');
+    const portraitMode=useWreath(friend)?'has-wreath':'has-none';
     return `<div class="${cls} ${portraitMode}" style="--px-frame:${esc(friend.frameColor||settings.accent)}">${wreath}${face}</div>`;
   }
 
@@ -44,6 +43,15 @@
     $('personView')?.style.setProperty('--person-accent',personAccent);
     $('personView')?.style.setProperty('--person-text',f.profileText||'#f4edf7');
     $('personView')?.style.setProperty('--person-heading',f.profileHeading||f.frameColor||personAccent);
+    const fontKey=(f.profileFont in FONT_MAP)?f.profileFont:'default';
+    const personRoot=$('personView');
+    if(fontKey==='default'){
+      personRoot?.classList.remove('custom-person-font');
+      personRoot?.style.removeProperty('--person-font');
+    }else{
+      personRoot?.classList.add('custom-person-font');
+      personRoot?.style.setProperty('--person-font',FONT_MAP[fontKey]);
+    }
     hero.innerHTML=`
       <div class="px-ambient" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✶</i><i>⋆</i><i>✧</i><i>✦</i></div>
       ${portraitMarkup(f)}
@@ -148,7 +156,7 @@
   renderRead=function(){
     const f=selected(),p=$('readPanel'); if(!f||!p) return;
     const frame=f.frameColor||settings.accent,bg=f.profileBg||'#1b1326',text=f.profileText||'#f4edf7',head=f.profileHeading||frame,spark=f.profileSparkle||frame;
-    const font=FONT_MAP[f.profileFont]||FONT_MAP.classic;
+    const font=(f.profileFont&&FONT_MAP[f.profileFont])?FONT_MAP[f.profileFont]:"Georgia, 'Times New Roman', serif";
     const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);
     p.innerHTML=`<section class="character-sheet px-dossier" style="--profile-frame:${esc(frame)};--profile-bg:${esc(bg)};--profile-text:${esc(text)};--profile-heading:${esc(head)};--profile-sparkle:${esc(spark)};--px-font:${font}">
       <div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Profile</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editEntriesBtn">Edit entries</button></div>
@@ -179,6 +187,7 @@
   };
 
   const css=document.createElement('style');css.id='personExperienceStyles';css.textContent=`
+    #personView.custom-person-font,#personView.custom-person-font *{font-family:var(--person-font)!important}
     #personView:not(.read-mode){min-height:calc(100dvh - 18px);display:flex;flex-direction:column;position:relative;overflow:hidden;padding-bottom:28px}
     #personView:not(.read-mode) #personBackBtn{position:relative;z-index:5;align-self:flex-start}
     #personView:not(.read-mode) #personHero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:18px 12px 12px;position:relative}
@@ -189,14 +198,14 @@
     .px-hero-portrait.has-none,.px-dossier-portrait.has-none{background:transparent!important;box-shadow:none!important}
     .px-hero-portrait.has-none>img,.px-dossier-portrait.has-none>img{width:82%;height:82%;border:0!important;box-shadow:0 12px 36px rgba(0,0,0,.28)!important}
     .px-hero-portrait.has-none>.px-initials,.px-dossier-portrait.has-none>.px-initials{width:82%;height:82%;background:transparent!important;box-shadow:none!important;color:var(--person-accent,var(--accent))!important}
-    .px-hero-portrait>img,.px-hero-portrait>.px-initials,.px-dossier-portrait>img,.px-dossier-portrait>.px-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:72%;height:72%;border-radius:50%;object-fit:cover;z-index:2;box-shadow:0 12px 36px rgba(0,0,0,.32)}
+    .px-hero-portrait>img,.px-hero-portrait>.px-initials,.px-dossier-portrait>img,.px-dossier-portrait>.px-initials{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:84%;height:84%;border-radius:50%;object-fit:cover;z-index:2;box-shadow:0 12px 36px rgba(0,0,0,.32)}
     .px-hero-portrait.has-bubble>img,.px-hero-portrait.has-bubble>.px-initials,.px-dossier-portrait.has-bubble>img,.px-dossier-portrait.has-bubble>.px-initials{width:82%;height:82%}
     .px-initials{display:grid!important;place-items:center;background:linear-gradient(145deg,var(--px-frame),color-mix(in srgb,var(--px-frame) 28%,#fff));font-size:42px;font-weight:900;color:#2a1833}
     .px-wreath{position:absolute;inset:0;z-index:4;pointer-events:none}.px-wreath-piece{position:absolute;font-size:calc(clamp(23px,7vw,38px) * var(--s));line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));white-space:nowrap}.px-dossier-portrait .px-wreath-piece{font-size:calc(clamp(20px,5.7vw,31px) * var(--s))}
-    .px-name{font-family:Georgia,serif;font-size:clamp(38px,11vw,56px);line-height:.95;margin-top:23px;text-align:center;color:var(--person-heading,var(--person-text));text-shadow:0 4px 24px rgba(0,0,0,.42)}
+    .px-name{font-family:var(--person-font,Georgia,serif);font-size:clamp(38px,11vw,56px);line-height:.95;margin-top:23px;text-align:center;color:var(--person-heading,var(--person-text));text-shadow:0 4px 24px rgba(0,0,0,.42)}
     .px-role{margin-top:10px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:color-mix(in srgb,var(--person-text) 78%,transparent)}.px-birthday{margin-top:10px;font-size:12px;color:var(--person-text)}
     .px-rule{width:min(70vw,330px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;color:var(--person-accent,var(--accent));margin-top:24px}.px-rule span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent))}.px-rule span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent),transparent)}
-    .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:Georgia,serif;font-size:21px;color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:11px;margin-top:2px}
+    .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:var(--person-font,Georgia,serif);font-size:21px;color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:11px;margin-top:2px}
     #personChoice{margin-top:auto!important;padding-bottom:max(8px,env(safe-area-inset-bottom))}
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
