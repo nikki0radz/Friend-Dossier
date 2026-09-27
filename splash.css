@@ -62,3 +62,8 @@ body::after{
 @keyframes appSparkleA{0%,100%{opacity:.28;transform:translateY(0)}50%{opacity:.62;transform:translateY(-5px)}}
 @keyframes appSparkleB{0%,100%{opacity:.5;transform:translateY(0) scale(1)}50%{opacity:.22;transform:translateY(4px) scale(.98)}}
 @media(prefers-reduced-motion:reduce){body::before,body::after{animation:none;opacity:.38}}
+
+body:has(#personView:not(.hidden))::before,
+body:has(#personView:not(.hidden))::after{
+  display:none!important;
+}
