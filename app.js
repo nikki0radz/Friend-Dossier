@@ -300,8 +300,25 @@ function renderNextImportantDate(){
   }
 }
 function renderHome(){const grid=$('peopleGrid');if(!grid)return;renderNextImportantDate();const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{sensitivity:'base'})).forEach(f=>{const b=document.createElement('button');const frame=f.frameStyle||'plain';b.className=`person-bubble frame-${frame}`;b.style.setProperty('--frame-color',f.frameColor||settings.accent);const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;b.innerHTML=`<span class="frame-layer">${frameMarkup(frame)}</span>${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);});}
-function openPerson(id){state.selectedId=id;$('homeView')?.classList.add('hidden');$('personView')?.classList.remove('hidden');homeTools()?.classList.add('hidden');renderPersonHero();showChoice();}
-function goHome(){$('personView')?.classList.add('hidden');$('homeView')?.classList.remove('hidden');homeTools()?.classList.remove('hidden');state.selectedId=null;renderHome();}
+function openPerson(id){
+  state.selectedId=id;
+  $('app')?.classList.add('person-mode');
+  $('grimoireAmbience')?.setAttribute('aria-hidden','true');
+  $('homeView')?.classList.add('hidden');
+  $('personView')?.classList.remove('hidden');
+  homeTools()?.classList.add('hidden');
+  renderPersonHero();
+  showChoice();
+}
+function goHome(){
+  $('app')?.classList.remove('person-mode');
+  $('grimoireAmbience')?.setAttribute('aria-hidden','false');
+  $('personView')?.classList.add('hidden');
+  $('homeView')?.classList.remove('hidden');
+  homeTools()?.classList.remove('hidden');
+  state.selectedId=null;
+  renderHome();
+}
 function renderPersonHero(){const f=selected();if(!f)return;const face=f.imageData?`<img class="hero-photo" src="${f.imageData}" alt="">`:`<div class="hero-initials">${esc(initials(f.name))}</div>`;const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);$('personHero').innerHTML=`${face}<h1>${esc(f.name)}</h1>${f.relationship?`<p>${esc(f.relationship)}</p>`:''}${bd?`<span class="birthday-pill">🎂 ${esc(bd)}</span>`:''}`;}
 function ensureEditChoice(){const panel=$('personChoice');if(!panel||$('editPersonBtn'))return;const b=document.createElement('button');b.id='editPersonBtn';b.className='big-choice edit-person-choice';b.innerHTML='<span>🎨</span><strong>Edit person</strong><small>Photo, birthday & portrait style</small>';b.addEventListener('click',()=>openFriendDialog(selected()));panel.appendChild(b);}
 function showChoice(){$('personChoice')?.classList.remove('hidden');$('readPanel')?.classList.add('hidden');$('addInfoPanel')?.classList.add('hidden');$('personHero')?.classList.remove('hidden');$('personBackBtn')?.classList.remove('hidden');$('personView')?.classList.remove('read-mode');ensureEditChoice();}
