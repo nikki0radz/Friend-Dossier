@@ -25,6 +25,23 @@
     aura.classList.toggle('active',Boolean(active));
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
+  function sparkleIcons(friend){
+    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,20):['✦','✧','⋆','✶','☾','⟡'];
+  }
+  function sparkleCount(friend,area='profile'){
+    const density=friend?.profileSparkleDensity||'constellation';
+    const counts={profile:{whisper:5,constellation:10,starfall:18},dossier:{whisper:4,constellation:8,starfall:14}};
+    return counts[area]?.[density]||counts[area].constellation;
+  }
+  function sparkleMarkup(friend,area='profile'){
+    const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
+    const positions=[[8,15],[88,12],[16,34],[78,31],[5,55],[92,52],[24,66],[72,68],[12,82],[86,84],[38,10],[61,18],[31,46],[68,44],[43,76],[57,88],[3,72],[96,27],[48,31],[53,58]];
+    return Array.from({length:count},(_,i)=>{
+      const icon=icons[i%icons.length],pos=positions[i%positions.length];
+      const size=9+((i*7)%15),delay=-((i*0.63)%4.6).toFixed(2);
+      return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;animation-delay:'+delay+'s">'+esc(icon)+'</i>';
+    }).join('');
+  }
   function frameEmojis(friend){
     if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length) return friend.frameEmojis.filter(Boolean).slice(0,3);
     if(friend?.frameStyle==='flowers') return ['🌸'];
@@ -73,7 +90,7 @@
       personRoot?.style.setProperty('--person-font',FONT_MAP[fontKey]);
     }
     hero.innerHTML=`
-      <div class="px-ambient" aria-hidden="true"><i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✶</i><i>⋆</i><i>✧</i><i>✦</i></div>
+      <div class="px-ambient" aria-hidden="true">${sparkleMarkup(f,'profile')}</div>
       ${portraitMarkup(f)}
       <div class="px-name">${esc(f.name)}</div>
       ${f.relationship?`<div class="px-role">${esc(f.relationship)}</div>`:''}
@@ -180,7 +197,7 @@
     const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);
     p.innerHTML=`<section class="character-sheet px-dossier" style="--profile-frame:${esc(frame)};--profile-bg:${esc(bg)};--profile-text:${esc(text)};--profile-heading:${esc(head)};--profile-sparkle:${esc(spark)};--px-font:${font}">
       <div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Profile</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editEntriesBtn">Edit entries</button></div>
-      <div class="px-dossier-sparks" aria-hidden="true"><i>✦</i><i>⋆</i><i>✧</i><i>✦</i><i>✶</i></div>
+      <div class="px-dossier-sparks" aria-hidden="true">${sparkleMarkup(f,'dossier')}</div>
       <div class="px-dossier-head">${portraitMarkup(f,'px-dossier-portrait')}<div class="character-name">${esc(f.name)}</div>${f.relationship?`<div class="character-role">${esc(f.relationship)}</div>`:''}${bd?`<div class="character-birthday">🎂 ${esc(bd)}</div>`:''}</div>
       <div class="character-divider"><span></span><b>◆</b><span></span></div>
       <div class="px-dossier-tools"><button id="dossierAddInfo">＋ Add info</button><button id="dossierEditPerson">✎ Edit person</button></div>
@@ -251,8 +268,8 @@
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;pointer-events:none}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;animation:pxTwinkle 4.8s ease-in-out infinite}.px-ambient i:nth-child(1){left:9%;top:18%;font-size:18px}.px-ambient i:nth-child(2){right:12%;top:14%;font-size:26px;animation-delay:-1.2s}.px-ambient i:nth-child(3){left:18%;bottom:26%;font-size:15px;animation-delay:-2.1s}.px-ambient i:nth-child(4){right:13%;bottom:29%;font-size:19px;animation-delay:-.7s}.px-ambient i:nth-child(5){left:6%;top:52%;font-size:11px;animation-delay:-3s}.px-ambient i:nth-child(6){right:7%;top:48%;font-size:13px;animation-delay:-1.7s}.px-ambient i:nth-child(7){left:31%;top:8%;font-size:10px;animation-delay:-2.6s}.px-ambient i:nth-child(8){right:31%;bottom:15%;font-size:12px;animation-delay:-.3s}
-    .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{color:var(--profile-heading)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;animation:pxTwinkle 5s ease-in-out infinite}.px-dossier-sparks i:nth-child(1){left:8%;top:20px}.px-dossier-sparks i:nth-child(2){right:10%;top:70px;animation-delay:-2s}.px-dossier-sparks i:nth-child(3){left:19%;top:120px;animation-delay:-1s}.px-dossier-sparks i:nth-child(4){right:24%;top:6px;animation-delay:-3s}.px-dossier-sparks i:nth-child(5){right:4%;top:145px;animation-delay:-1.5s}
+        .px-ambient{position:absolute;inset:0;pointer-events:none}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;animation:pxTwinkle 4.8s ease-in-out infinite}
+    .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{color:var(--profile-heading)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;animation:pxTwinkle 5s ease-in-out infinite}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxTwinkle{0%,100%{opacity:.18;transform:scale(.86) rotate(0)}50%{opacity:.9;transform:scale(1.12) rotate(7deg)}}
     .category-gallery{display:flex;gap:7px;overflow-x:auto;padding:10px 1px 2px;margin-top:7px;scroll-snap-type:x proximity;scrollbar-width:none}.category-gallery::-webkit-scrollbar{display:none}
