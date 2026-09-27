@@ -26,23 +26,19 @@
   const globalDraft={};
   const GLOBAL_FONT_MAP={
     classic:"'Libre Baskerville', Georgia, serif",
-    elegant:"'Cormorant Garamond', Georgia, serif",
+    elegant:"'Dancing Script', cursive",
     clean:"'Nunito Sans', Arial, sans-serif",
     typewriter:"'Special Elite', 'Courier New', monospace",
-    storybook:"'IM Fell English', Georgia, serif",
-    handwritten:"'Caveat', cursive",
-    handwritten2:"'Dancing Script', cursive",
-    gothic:"'UnifrakturCook', 'Old English Text MT', cursive"
+    storybook:"'UnifrakturCook', 'Old English Text MT', cursive",
+    handwritten:"'Caveat', cursive"
   };
   const GLOBAL_FONT_LABELS={
     classic:'Classic serif',
-    elegant:'Elegant',
+    elegant:'Script handwriting',
     clean:'Clean',
     typewriter:'Typewriter',
-    storybook:'Storybook',
-    handwritten:'Handwritten',
-    handwritten2:'Script handwriting',
-    gothic:'Gothic'
+    storybook:'Gothic',
+    handwritten:'Handwritten'
   };
   const opacityKey=id=>id+'Opacity';
   function rgba(hex,pct=100){
