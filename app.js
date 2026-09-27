@@ -360,7 +360,7 @@ function ensureEntryImagePicker(){
     if(!files.length)return;
     try{
       for(const file of files){
-        entryImageDraft.push(await resizePhoto(file,620,.68));
+        entryImageDraft.push(await resizePhoto(file,1200,.88));
       }
       renderEntryImagePreview();
       showToast(files.length===1?'Picture ready':`${files.length} pictures ready`);
