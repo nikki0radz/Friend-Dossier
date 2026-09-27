@@ -84,13 +84,17 @@
         </div>
         <div class="recent-colours-wrap"><div class="recent-colours-title">Recently used colours</div><div id="recentColours" class="recent-colours"></div></div>
       </div>
-      <div class="font-picker-wrap"><div class="font-picker-title">Font</div><div id="fontOptions" class="font-options">${Object.keys(FONT_MAP).map(key=>`<button type="button" class="font-option" data-font="${key}" style="font-family:${FONT_MAP[key]}"><span>Aa Mooncakes</span><small>${FONT_LABELS[key]}</small></button>`).join('')}</div><input id="friendProfileFont" type="hidden" value="default"></div>`;
+      <div class="font-picker-wrap"><div class="font-picker-title">Font</div><div id="fontOptions" class="font-options">${Object.keys(FONT_MAP).map(key=>`<button type="button" class="font-option" data-font="${key}" style="font-family:${FONT_MAP[key]}"><span>Aa Mooncakes</span><small>${FONT_LABELS[key]}</small></button>`).join('')}</div><input id="friendProfileFont" type="hidden" value="default"></div>
+      <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="140" step="5" value="100"></div>`;
     if(styleEditor) styleEditor.insertAdjacentElement('afterend',box); else form.insertBefore(box,saveBtn);
     box.querySelectorAll('.colour-property').forEach(btn=>btn.onclick=()=>selectColourTarget(btn.dataset.colourTarget));
     ['colourHue','colourSat','colourVal'].forEach(id=>$(id)?.addEventListener('input',updateColourFromHSV));
     ['colourHue','colourSat','colourVal'].forEach(id=>$(id)?.addEventListener('change',()=>addRecentColour($(activeColourTarget)?.value)));
     $('colourHex')?.addEventListener('change',()=>{const hex=normalHex($('colourHex').value,$(activeColourTarget)?.value||'#ffffff');setTargetColour(activeColourTarget,hex,true);addRecentColour(hex);});
     box.querySelectorAll('.font-option').forEach(btn=>btn.onclick=()=>selectFont(btn.dataset.font));
+    $('friendProfileTextScale')?.addEventListener('input',()=>{
+      if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${$('friendProfileTextScale').value}%`;
+    });
     renderRecentColours();
   }
 
@@ -107,7 +111,11 @@
     ensureProfileThemeEditor();
     const values={friendFrameColour:friend?.frameColor||settings.accent,friendProfileBg:friend?.profileBg||'#1b1326',friendProfileText:friend?.profileText||'#f4edf7',friendProfileHeading:friend?.profileHeading||friend?.frameColor||'#f6d5ff',friendProfileSparkle:friend?.profileSparkle||friend?.frameColor||settings.accent};
     Object.entries(values).forEach(([id,val])=>setTargetColour(id,val));
-    selectFont(friend?.profileFont||'classic');selectColourTarget('friendProfileBg');
+    selectFont(friend?.profileFont||'default');
+    const textScale=Math.max(80,Math.min(140,Number(friend?.profileTextScale)||100));
+    if($('friendProfileTextScale')) $('friendProfileTextScale').value=textScale;
+    if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${textScale}%`;
+    selectColourTarget('friendProfileBg');
   }
 
   const previousOpenFriendDialog=openFriendDialog;
@@ -115,7 +123,7 @@
   function ensureIdBeforeSave(){if($('friendId')&&!$('friendId').value)$('friendId').value=uid();}
   const saveBtn=$('friendForm')?.querySelector('.primary-button');
   saveBtn?.addEventListener('click',ensureIdBeforeSave,{capture:true});
-  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
+  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(140,Number($('friendProfileTextScale')?.value)||100));COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
 
   function fallbackEmojis(friend){if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length)return friend.frameEmojis.filter(Boolean).slice(0,3);if(friend?.frameStyle==='flowers')return['🌸'];if(friend?.frameStyle==='shards')return['💎'];return[];}
   function wreathMarkup(emojis,count=24){const list=(emojis||[]).filter(Boolean).slice(0,3);if(!list.length)return'';const sizes=[1,.78,1.13,.88,1.02,.72,1.18,.84],nudges=[0,-3,2,-1,3,-2,1,-3];let html='';for(let i=0;i<count;i++){const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=43+nudges[i%nudges.length],x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rotate=((i*37)%48)-24;html+=`<span class="emoji-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--emoji-size:${size};transform:translate(-50%,-50%) rotate(${rotate}deg)">${esc(list[i%list.length])}</span>`;}return html;}
