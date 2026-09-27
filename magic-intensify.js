@@ -70,20 +70,10 @@
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 55%,white 8%)!important;
       background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;
       color:#fff!important;
-      box-shadow:inset 0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 6%,transparent)!important;
+      box-shadow:0 0 8px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
       animation:portalBreath 3.2s ease-in-out infinite!important;
     }
-    .grand-portal-button:before{
-      content:'';
-      position:absolute;
-      inset:-7px;
-      border-radius:36px;
-      border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 22%,transparent);
-      box-shadow:none;
-      pointer-events:none;
-      animation:outerRunePulse 3.4s ease-in-out infinite;
-      z-index:-1;
-    }
+    .grand-portal-button:before{content:none!important}
     .grand-portal-button:after{
       content:'';
       position:absolute;
