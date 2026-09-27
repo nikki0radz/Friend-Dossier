@@ -161,10 +161,10 @@
   css.id='magicalTransitionStyles';
   css.textContent=`
     .px-open-dossier{
-      position:relative!important;isolation:isolate;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:4px!important;min-height:94px!important;padding:22px 28px!important;border-radius:30px!important;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 58%,white 8%)!important;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;color:var(--person-text)!important;box-shadow:0 0 8px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;animation:archiveGlow 3.2s ease-in-out infinite;
+      position:relative!important;isolation:isolate;overflow:visible!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:4px!important;min-height:94px!important;padding:22px 28px!important;border-radius:30px!important;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 48%,white 6%)!important;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;color:var(--person-text)!important;box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;animation:archiveGlow 3.2s ease-in-out infinite!important;
     }
     .px-open-dossier:before{content:none!important}
-    .px-open-dossier:after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,.13) 46%,transparent 70%);transform:translateX(-115%);animation:archiveShimmer 4.8s ease-in-out infinite;pointer-events:none;z-index:-1}
+    .px-open-dossier:after{content:none!important}
     .px-open-dossier .archive-sigil{font-size:18px!important;line-height:1!important;margin:0 0 2px!important;color:var(--person-accent,var(--accent))!important;text-shadow:0 0 10px currentColor,0 0 22px currentColor!important;animation:sigilPulse 2.4s ease-in-out infinite}
     .px-open-dossier strong{display:block!important;width:100%!important;margin:0!important;padding:0!important;font-family:var(--person-font,Georgia,'Times New Roman',serif)!important;font-size:24px!important;line-height:1.05!important;letter-spacing:.035em!important;text-align:center!important;text-transform:none!important;color:var(--person-heading,var(--person-text))!important;text-shadow:0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 32%,transparent)!important}
     .px-open-dossier small{display:block!important;width:100%!important;margin:3px 0 0!important;text-align:center!important;font-size:10px!important;letter-spacing:.07em!important;color:color-mix(in srgb,var(--person-text) 58%,transparent)!important}
@@ -182,9 +182,9 @@
     #personView.book-turn-in-right{animation:bookInRight .36s cubic-bezier(.18,.78,.25,1) both}
     #personView.book-turn-in-left{animation:bookInLeft .36s cubic-bezier(.18,.78,.25,1) both}
 
-    @keyframes archiveGlow{0%,100%{box-shadow:inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)}50%{box-shadow:inset 0 0 17px color-mix(in srgb,var(--person-accent,var(--accent)) 7%,transparent)}}
+    @keyframes archiveGlow{0%,100%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 42%,white 5%);box-shadow:0 0 5px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 4%,transparent)}50%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 78%,white 12%);box-shadow:0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),0 0 24px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 9%,transparent)}}
     @keyframes archiveAura{0%,100%{opacity:.38;transform:scale(.985)}50%{opacity:.9;transform:scale(1.015)}}
-    @keyframes archiveShimmer{0%,58%{transform:translateX(-115%)}78%,100%{transform:translateX(115%)}}
+    78%,100%{transform:translateX(115%)}}
     @keyframes sigilPulse{0%,100%{opacity:.58;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
     @keyframes bookOutLeft{0%{transform:translateX(0) rotateY(0deg) rotateZ(0deg);opacity:1;filter:blur(0)}100%{transform:translateX(-34%) rotateY(18deg) rotateZ(-1.4deg);opacity:0;filter:blur(1.2px)}}
     @keyframes bookOutRight{0%{transform:translateX(0) rotateY(0deg) rotateZ(0deg);opacity:1;filter:blur(0)}100%{transform:translateX(34%) rotateY(-18deg) rotateZ(1.4deg);opacity:0;filter:blur(1.2px)}}
