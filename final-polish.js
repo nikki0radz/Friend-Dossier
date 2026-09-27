@@ -92,11 +92,8 @@
     .border-sparkle-track i:nth-child(4n){font-size:10px}
 
     .grand-portal-button{
-      box-shadow:
-        0 0 0 1px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent),
-        0 0 8px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),
-        inset 0 0 16px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
-      animation:archiveGlow 3.1s ease-in-out infinite!important;
+      box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
+      animation:archiveGlow 3.2s ease-in-out infinite!important;
     }
     .grand-portal-button strong{
       display:block!important;
@@ -115,8 +112,8 @@
       to{offset-distance:100%}
     }
     @keyframes archiveGlow{
-      0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 8%,transparent),inset 0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 4%,transparent)}
-      50%{filter:brightness(1.025);transform:translateY(-1px);box-shadow:0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 6%,transparent)}
+      0%,100%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 42%,white 5%);box-shadow:0 0 5px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 4%,transparent)}
+      50%{border-color:color-mix(in srgb,var(--person-accent,var(--accent)) 78%,white 12%);box-shadow:0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),0 0 24px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),inset 0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 9%,transparent)}
     }
     @media(prefers-reduced-motion:reduce){.border-sparkle-track i,.grand-portal-button{animation:none!important}}
   `;
