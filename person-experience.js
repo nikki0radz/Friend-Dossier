@@ -188,7 +188,7 @@
 
   const css=document.createElement('style');css.id='personExperienceStyles';css.textContent=`
     #personView.custom-person-font,#personView.custom-person-font *{font-family:var(--person-font)!important}
-    #personView:not(.read-mode){min-height:calc(100dvh - 18px);display:flex;flex-direction:column;position:relative;overflow:hidden;padding-bottom:28px}
+    #personView:not(.read-mode){min-height:calc(100dvh - 18px);display:flex;flex-direction:column;position:relative;overflow:visible;padding-bottom:28px}
     #personView:not(.read-mode) #personBackBtn{position:relative;z-index:5;align-self:flex-start}
     #personView:not(.read-mode) #personHero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:18px 12px 12px;position:relative}
     .px-hero-portrait,.px-dossier-portrait{position:relative;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;isolation:isolate}
