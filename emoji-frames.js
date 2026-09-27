@@ -33,13 +33,14 @@
         const parsed=JSON.parse(raw);
         const arr=Array.isArray(parsed)?parsed:(Array.isArray(parsed?.friends)?parsed.friends:[]);
         const map=new Map(arr.map(f=>[f.id,f]));
+        let migrated=false;
         state.friends.forEach(friend=>{
           const saved=map.get(friend.id);
           if(Array.isArray(saved?.frameEmojis)) friend.frameEmojis=saved.frameEmojis.slice(0,3);
-          if(friend.frameStyle==='flowers'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['🌸'];}
-          if(friend.frameStyle==='shards'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['💎'];}
+          if(friend.frameStyle==='flowers'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['🌸'];migrated=true;}
+          if(friend.frameStyle==='shards'){friend.frameStyle='emoji';friend.frameEmojis=friend.frameEmojis?.length?friend.frameEmojis:['💎'];migrated=true;}
         });
-        persistFriends();
+        if(migrated) persistFriends();
       }
     }catch(err){console.warn('Emoji frame migration skipped',err);}
   }
