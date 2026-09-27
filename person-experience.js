@@ -26,7 +26,7 @@
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
   function sparkleIcons(friend){
-    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,20):['✦','✧','⋆','✶','☾','⟡'];
+    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,30):['✦','✧','⋆','✶','☾','⟡'];
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
