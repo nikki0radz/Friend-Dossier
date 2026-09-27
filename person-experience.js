@@ -31,7 +31,7 @@
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
-    const counts={profile:{whisper:4,constellation:7,starfall:11},dossier:{whisper:3,constellation:6,starfall:9}};
+    const counts={profile:{whisper:6,constellation:14,starfall:32},dossier:{whisper:4,constellation:9,starfall:18}};
     return counts[area]?.[density]||counts[area].constellation;
   }
   function sparkleHash(seed=''){
@@ -42,19 +42,37 @@
   function sparkleMarkup(friend,area='profile'){
     const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
     const layouts={
-      profile:[[11,18,13],[86,16,9],[20,38,18],[77,35,11],[8,61,10],[89,58,17],[28,72,9],[70,76,14],[17,88,12],[84,86,8],[52,47,10]],
-      dossier:[[14,18,10],[83,14,15],[24,41,9],[73,38,12],[11,67,14],[88,64,9],[43,79,11],[66,83,8],[52,31,10]]
+      profile:[
+        [8,9,10],[88,12,16],[18,23,11],[73,20,18],[95,31,9],[31,34,8],
+        [61,38,13],[6,46,17],[85,48,9],[21,55,13],[69,58,19],[94,65,11],
+        [12,70,10],[43,68,15],[78,74,8],[28,80,18],[55,84,9],[89,88,15],
+        [6,90,10],[36,14,8],[54,7,12],[47,27,10],[12,37,9],[81,29,14],
+        [35,47,16],[57,51,8],[48,62,11],[7,60,9],[88,56,15],[18,87,8],
+        [65,91,12],[75,10,9],[96,43,8],[3,28,11],[51,75,13],[30,65,9]
+      ],
+      dossier:[
+        [10,12,10],[86,11,15],[23,25,9],[72,24,13],[7,39,14],[91,38,9],
+        [31,48,11],[66,46,8],[15,60,13],[84,61,10],[43,69,9],[71,73,14],
+        [9,82,10],[92,85,8],[27,89,12],[57,86,9],[49,31,10],[37,76,8],
+        [78,52,11],[18,44,9]
+      ]
     };
     const slots=layouts[area]||layouts.profile;
     const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|'+area+'|'+icons.join('|'));
-    const pool=icons.slice();
-    for(let i=pool.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    let pool=[];
+    function nextIcon(){
+      if(!pool.length){
+        pool=icons.slice();
+        for(let i=pool.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+      }
+      return pool.pop()||icons[0];
+    }
     return Array.from({length:Math.min(count,slots.length)},(_,i)=>{
-      const pos=slots[i],icon=pool[Math.floor(rand()*pool.length)]||icons[0];
-      const size=Math.max(8,pos[2]+Math.floor(rand()*5)-2);
-      const delay=-(rand()*5.2).toFixed(2);
-      const opacity=(.46+rand()*.5).toFixed(2);
-      const rotate=Math.round(rand()*28-14);
+      const pos=slots[i],icon=nextIcon();
+      const size=Math.max(7,pos[2]+Math.floor(rand()*7)-3);
+      const delay=-(rand()*6.4).toFixed(2);
+      const opacity=(.28+rand()*.66).toFixed(2);
+      const rotate=Math.round(rand()*40-20);
       return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;animation-delay:'+delay+'s;opacity:'+opacity+';transform:rotate('+rotate+'deg)">'+esc(icon)+'</i>';
     }).join('');
   }
@@ -105,8 +123,15 @@
       personRoot?.classList.add('custom-person-font');
       personRoot?.style.setProperty('--person-font',FONT_MAP[fontKey]);
     }
+    let ambient=personRoot?.querySelector(':scope > .px-ambient');
+    if(!ambient){
+      ambient=document.createElement('div');
+      ambient.className='px-ambient';
+      ambient.setAttribute('aria-hidden','true');
+      personRoot?.prepend(ambient);
+    }
+    ambient.innerHTML=sparkleMarkup(f,'profile');
     hero.innerHTML=`
-      <div class="px-ambient" aria-hidden="true">${sparkleMarkup(f,'profile')}</div>
       ${portraitMarkup(f)}
       <div class="px-name">${esc(f.name)}</div>
       ${f.relationship?`<div class="px-role">${esc(f.relationship)}</div>`:''}
@@ -286,7 +311,7 @@
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;pointer-events:none}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;animation:pxTwinkle 4.8s ease-in-out infinite}
+        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;animation:pxTwinkle 4.8s ease-in-out infinite}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
     .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{color:var(--profile-heading)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;animation:pxTwinkle 5s ease-in-out infinite}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxTwinkle{0%,100%{opacity:.18;transform:scale(.86) rotate(0)}50%{opacity:.9;transform:scale(1.12) rotate(7deg)}}
