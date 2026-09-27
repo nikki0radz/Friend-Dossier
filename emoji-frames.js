@@ -131,7 +131,6 @@
       const style=f.frameStyle==='none'?'none':(f.frameStyle==='plain'||!emojis.length?'plain':'emoji');
       const b=document.createElement('button');
       b.className=`person-bubble frame-${style}`;
-      b.style.setProperty('--person-bubble',f.bubbleColor||settings.bubble);
       b.style.setProperty('--frame-color',f.frameColor||settings.accent);
       const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;
       const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,22)}</span>`:(style==='none'?'':`<span class="frame-layer"></span>`);
