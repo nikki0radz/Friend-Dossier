@@ -139,7 +139,44 @@ function safeClose(dialog){ if(!dialog)return; try{if(dialog.open)dialog.close()
 function populateMonths(){ ['birthdayMonth','entryMonth'].forEach(id=>{const select=$(id);if(!select)return;const current=select.value;select.innerHTML='<option value="">Month</option>'+MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');if(current)select.value=current;}); }
 function formatPartialDate(day,month,year){ if(!day||!month)return '';const base=`${Number(day)} ${MONTHS[Number(month)-1]}`;return year?`${base} ${year}`:base; }
 function toArray(v){ if(Array.isArray(v))return v;if(typeof v==='string')return v.split(/\n|,/).map(x=>x.trim()).filter(Boolean);return []; }
-function normalizeFriend(f={}){ if(Array.isArray(f.entries)){return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay:f.birthdayDay||'',birthdayMonth:f.birthdayMonth||'',birthdayYear:f.birthdayYear||'',entries:f.entries,bubbleColor:f.bubbleColor||'',frameStyle:f.frameStyle||'plain',frameColor:f.frameColor||'',photoSourceData:f.photoSourceData||f.imageData||'',photoX:Number.isFinite(Number(f.photoX))?Number(f.photoX):50,photoY:Number.isFinite(Number(f.photoY))?Number(f.photoY):50,photoZoom:Number.isFinite(Number(f.photoZoom))?Number(f.photoZoom):100};}const entries=[];const push=(type,emoji,title,value)=>{if(value)entries.push({id:uid(),type,emoji,title,value});};toArray(f.gifts).forEach(v=>push('gift','🎁','',v));toArray(f.likes).forEach(v=>push('like','💜','',v));push('allergy','⚠️','',f.allergies||'');push('note','✎','',f.notes||'');toArray(f.custom).forEach(v=>{if(v&&typeof v==='object')push('note','✦',v.label||'',v.value||'');});if(f.otherDate)entries.push({id:uid(),type:'date',emoji:'📅',title:f.otherDateLabel||'Important date',value:'',day:Number(f.otherDate.slice(8,10)),month:Number(f.otherDate.slice(5,7)),year:Number(f.otherDate.slice(0,4))});let birthdayDay='',birthdayMonth='',birthdayYear='';if(f.birthday){birthdayYear=Number(f.birthday.slice(0,4));birthdayMonth=Number(f.birthday.slice(5,7));birthdayDay=Number(f.birthday.slice(8,10));}return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay,birthdayMonth,birthdayYear,entries,bubbleColor:'',frameStyle:'plain',frameColor:''}; }
+function normalizeFriend(f={}){
+  if(Array.isArray(f.entries)){
+    return{
+      id:f.id||uid(),
+      name:f.name||'Unnamed',
+      relationship:f.relationship||'',
+      imageData:f.imageData||'',
+      birthdayDay:f.birthdayDay||'',
+      birthdayMonth:f.birthdayMonth||'',
+      birthdayYear:f.birthdayYear||'',
+      entries:f.entries,
+      bubbleColor:'',
+      frameStyle:f.frameStyle||'plain',
+      frameColor:f.frameColor||'',
+      frameEmojis:Array.isArray(f.frameEmojis)?f.frameEmojis.filter(Boolean).slice(0,3):[],
+      profileBg:f.profileBg||'#1b1326',
+      profileText:f.profileText||'#f4edf7',
+      profileHeading:f.profileHeading||f.frameColor||'#f6d5ff',
+      profileSparkle:f.profileSparkle||f.frameColor||settings.accent,
+      profileFont:f.profileFont||'classic',
+      photoSourceData:f.photoSourceData||f.imageData||'',
+      photoX:Number.isFinite(Number(f.photoX))?Number(f.photoX):50,
+      photoY:Number.isFinite(Number(f.photoY))?Number(f.photoY):50,
+      photoZoom:Number.isFinite(Number(f.photoZoom))?Number(f.photoZoom):100
+    };
+  }
+  const entries=[];
+  const push=(type,emoji,title,value)=>{if(value)entries.push({id:uid(),type,emoji,title,value});};
+  toArray(f.gifts).forEach(v=>push('gift','🎁','',v));
+  toArray(f.likes).forEach(v=>push('like','💜','',v));
+  push('allergy','⚠️','',f.allergies||'');
+  push('note','✎','',f.notes||'');
+  toArray(f.custom).forEach(v=>{if(v&&typeof v==='object')push('note','✦',v.label||'',v.value||'');});
+  if(f.otherDate)entries.push({id:uid(),type:'date',emoji:'📅',title:f.otherDateLabel||'Important date',value:'',day:Number(f.otherDate.slice(8,10)),month:Number(f.otherDate.slice(5,7)),year:Number(f.otherDate.slice(0,4))});
+  let birthdayDay='',birthdayMonth='',birthdayYear='';
+  if(f.birthday){birthdayYear=Number(f.birthday.slice(0,4));birthdayMonth=Number(f.birthday.slice(5,7));birthdayDay=Number(f.birthday.slice(8,10));}
+  return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay,birthdayMonth,birthdayYear,entries,bubbleColor:'',frameStyle:'plain',frameColor:'',frameEmojis:[],profileBg:'#1b1326',profileText:'#f4edf7',profileHeading:'#f6d5ff',profileSparkle:settings.accent,profileFont:'classic',photoSourceData:f.imageData||'',photoX:50,photoY:50,photoZoom:100};
+}
 function persistFriends(){ try{localStorage.setItem(DATA_KEY,JSON.stringify(state.friends));return true;}catch(err){console.error('Friend Dossier save failed',err);return false;} }
 function loadData(){ let migrated=false;try{let raw=localStorage.getItem(DATA_KEY);if(!raw){for(const key of LEGACY_KEYS){const candidate=localStorage.getItem(key);if(candidate){raw=candidate;migrated=true;break;}}}if(raw){const parsed=JSON.parse(raw);const arr=Array.isArray(parsed)?parsed:(Array.isArray(parsed?.friends)?parsed.friends:[]);state.friends=arr.map(normalizeFriend);if(migrated)persistFriends();}}catch(err){console.error('Friend Dossier load failed',err);state.friends=[];}try{const rawSettings=localStorage.getItem(SETTINGS_KEY);if(rawSettings){const parsed=JSON.parse(rawSettings);{
           const savedCategories=Array.isArray(parsed.categories)?parsed.categories:[];
