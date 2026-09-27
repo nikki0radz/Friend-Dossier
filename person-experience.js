@@ -9,6 +9,22 @@
     handwritten:"'Caveat', cursive"
   };
 
+  function ensureProfileAura(){
+    let aura=document.getElementById('profileAuraLayer');
+    if(!aura){
+      aura=document.createElement('div');
+      aura.id='profileAuraLayer';
+      aura.setAttribute('aria-hidden','true');
+      document.body.appendChild(aura);
+    }
+    return aura;
+  }
+  function syncProfileAura(friend){
+    const aura=ensureProfileAura();
+    const active=friend && !$('personView')?.classList.contains('hidden') && !$('personView')?.classList.contains('read-mode');
+    aura.classList.toggle('active',Boolean(active));
+    if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
+  }
   function frameEmojis(friend){
     if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length) return friend.frameEmojis.filter(Boolean).slice(0,3);
     if(friend?.frameStyle==='flowers') return ['🌸'];
@@ -45,6 +61,10 @@
     $('personView')?.style.setProperty('--person-heading',f.profileHeading||f.frameColor||personAccent);
     const fontKey=(f.profileFont in FONT_MAP)?f.profileFont:'default';
     const personRoot=$('personView');
+    const textScale=Math.max(80,Math.min(140,Number(f.profileTextScale)||100));
+    personRoot?.style.setProperty('--person-text-scale',String(textScale/100));
+    personRoot?.classList.toggle('custom-text-size',textScale!==100);
+    syncProfileAura(f);
     if(fontKey==='default'){
       personRoot?.classList.remove('custom-person-font');
       personRoot?.style.removeProperty('--person-font');
@@ -186,8 +206,29 @@
     bindCategoryGalleries(story);
   };
 
+  const auraObserver=new MutationObserver(()=>syncProfileAura(selected()));
+  if($('personView')) auraObserver.observe($('personView'),{attributes:true,attributeFilter:['class']});
+
   const css=document.createElement('style');css.id='personExperienceStyles';css.textContent=`
+    #profileAuraLayer{position:fixed;inset:-160px;z-index:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 72%,color-mix(in srgb,var(--profile-aura) 13%,transparent) 0%,color-mix(in srgb,var(--profile-aura) 7%,transparent) 28%,color-mix(in srgb,var(--profile-aura) 3%,transparent) 48%,transparent 70%);filter:blur(34px);transition:opacity .25s ease}
+    #profileAuraLayer.active{opacity:.62;animation:profileAuraPulse 3.6s ease-in-out infinite}
+    @keyframes profileAuraPulse{0%,100%{opacity:.42;transform:scale(1)}50%{opacity:.68;transform:scale(1.025)}}
+    #app{position:relative;z-index:1}
+
     #personView.custom-person-font,#personView.custom-person-font *{font-family:var(--person-font)!important}
+    #personView.custom-text-size .px-name,
+    #personView.custom-text-size .px-role,
+    #personView.custom-text-size .px-birthday,
+    #personView.custom-text-size .px-open-dossier strong,
+    #personView.custom-text-size .px-open-dossier small,
+    #personView.custom-text-size .px-secondary-actions strong,
+    #personView.custom-text-size .px-dossier .character-name,
+    #personView.custom-text-size .px-dossier .character-role,
+    #personView.custom-text-size .px-dossier .character-birthday,
+    #personView.custom-text-size .px-dossier .character-section-title strong,
+    #personView.custom-text-size .px-dossier .entry-main,
+    #personView.custom-text-size .px-dossier .entry-detail,
+    #personView.custom-text-size .px-dossier li{zoom:var(--person-text-scale)}
     #personView:not(.read-mode){min-height:calc(100dvh - 18px);display:flex;flex-direction:column;position:relative;overflow:visible;padding-bottom:28px}
     #personView:not(.read-mode) #personBackBtn{position:relative;z-index:5;align-self:flex-start}
     #personView:not(.read-mode) #personHero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:18px 12px 12px;position:relative}
