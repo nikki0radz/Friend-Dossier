@@ -12,7 +12,7 @@
   };
   const RECENT_KEY='friendDossier.recentColours.v1';
   const COLOUR_TARGETS=[
-    ['friendBubbleColour','Bubble'],['friendFrameColour','Frame'],['friendProfileBg','Background'],['friendProfileText','Body text'],['friendProfileHeading','Headings'],['friendProfileSparkle','Sparkles']
+['friendFrameColour','Frame'],['friendProfileBg','Background'],['friendProfileText','Body text'],['friendProfileHeading','Headings'],['friendProfileSparkle','Sparkles']
   ];
   let activeColourTarget='friendProfileBg';
 
@@ -61,7 +61,7 @@
     const form=$('friendForm'),styleEditor=$('personStyleEditor'),saveBtn=form?.querySelector('.primary-button');
     if(!form||!saveBtn) return;
     styleEditor?.querySelector('.person-colours')?.classList.add('native-colours-hidden');
-    ['friendBubbleColour','friendFrameColour'].forEach(id=>{const el=$(id);if(el){el.tabIndex=-1;el.setAttribute('aria-hidden','true');}});
+    ['friendFrameColour'].forEach(id=>{const el=$(id);if(el){el.tabIndex=-1;el.setAttribute('aria-hidden','true');}});
     if($('profileThemeEditor')) return;
     const box=document.createElement('div');box.id='profileThemeEditor';box.className='profile-theme-editor';
     box.innerHTML=`
@@ -98,7 +98,7 @@
 
   function setThemeFields(friend){
     ensureProfileThemeEditor();
-    const values={friendBubbleColour:friend?.bubbleColor||settings.bubble,friendFrameColour:friend?.frameColor||settings.accent,friendProfileBg:friend?.profileBg||'#1b1326',friendProfileText:friend?.profileText||'#f4edf7',friendProfileHeading:friend?.profileHeading||friend?.frameColor||'#f6d5ff',friendProfileSparkle:friend?.profileSparkle||friend?.frameColor||settings.accent};
+    const values={friendFrameColour:friend?.frameColor||settings.accent,friendProfileBg:friend?.profileBg||'#1b1326',friendProfileText:friend?.profileText||'#f4edf7',friendProfileHeading:friend?.profileHeading||friend?.frameColor||'#f6d5ff',friendProfileSparkle:friend?.profileSparkle||friend?.frameColor||settings.accent};
     Object.entries(values).forEach(([id,val])=>setTargetColour(id,val));
     selectFont(friend?.profileFont||'classic');selectColourTarget('friendProfileBg');
   }
@@ -117,9 +117,9 @@
   renderRead=function(){
     const f=selected(),p=$('readPanel');if(!f||!p)return;
     const emojis=fallbackEmojis(f),style=f.frameStyle==='plain'||!emojis.length?'plain':'emoji';
-    const frameColor=f.frameColor||settings.accent,bubbleColor=f.bubbleColor||settings.bubble,profileBg=f.profileBg||'#1b1326',profileText=f.profileText||'#f4edf7',heading=f.profileHeading||frameColor,sparkle=f.profileSparkle||frameColor,fontKey=FONT_MAP[f.profileFont]?f.profileFont:'classic';
+    const frameColor=f.frameColor||settings.accent,profileBg=f.profileBg||'#1b1326',profileText=f.profileText||'#f4edf7',heading=f.profileHeading||frameColor,sparkle=f.profileSparkle||frameColor,fontKey=FONT_MAP[f.profileFont]?f.profileFont:'classic';
     const face=f.imageData?`<img class="read-profile-photo" src="${f.imageData}" alt="">`:`<div class="read-profile-initials">${esc(initials(f.name))}</div>`,bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear),portraitFrame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,24)}</span>`:`<span class="frame-layer"></span>`;
-    p.innerHTML=`<section class="character-sheet character-frame-${style} profile-font-${fontKey}" style="--profile-frame:${esc(frameColor)};--profile-bubble:${esc(bubbleColor)};--profile-bg:${esc(profileBg)};--profile-text:${esc(profileText)};--profile-heading:${esc(heading)};--profile-sparkle:${esc(sparkle)}"><div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Back</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editReadBtn">Edit</button></div><span class="sheet-corner corner-a">✦</span><span class="sheet-corner corner-b">✦</span><span class="sheet-corner corner-c">✦</span><span class="sheet-corner corner-d">✦</span><div class="character-title-rule"><span></span><b>✧</b><span></span></div><div class="character-profile-head"><div class="character-portrait-wrap frame-${style}">${portraitFrame}${face}</div><div class="character-name-block"><div class="character-name">${esc(f.name)}</div>${f.relationship?`<div class="character-role">${esc(f.relationship)}</div>`:''}${bd?`<div class="character-birthday">🎂 ${esc(bd)}</div>`:''}</div></div><div class="character-divider"><span></span><b>◆</b><span></span></div><div id="readStory" class="character-sections"></div><div class="character-footer-ornament">✦ · ✧ · ✦</div></section>`;
+    p.innerHTML=`<section class="character-sheet character-frame-${style} profile-font-${fontKey}" style="--profile-frame:${esc(frameColor)};--profile-bg:${esc(profileBg)};--profile-text:${esc(profileText)};--profile-heading:${esc(heading)};--profile-sparkle:${esc(sparkle)}"><div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Back</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editReadBtn">Edit</button></div><span class="sheet-corner corner-a">✦</span><span class="sheet-corner corner-b">✦</span><span class="sheet-corner corner-c">✦</span><span class="sheet-corner corner-d">✦</span><div class="character-title-rule"><span></span><b>✧</b><span></span></div><div class="character-profile-head"><div class="character-portrait-wrap frame-${style}">${portraitFrame}${face}</div><div class="character-name-block"><div class="character-name">${esc(f.name)}</div>${f.relationship?`<div class="character-role">${esc(f.relationship)}</div>`:''}${bd?`<div class="character-birthday">🎂 ${esc(bd)}</div>`:''}</div></div><div class="character-divider"><span></span><b>◆</b><span></span></div><div id="readStory" class="character-sections"></div><div class="character-footer-ornament">✦ · ✧ · ✦</div></section>`;
     $('backToChoices').onclick=showChoice;$('editReadBtn').onclick=renderReadEdit;const story=$('readStory');if(!f.entries.length){story.innerHTML='<div class="read-empty">No lore recorded yet ✦</div>';return;}const groups=new Map();f.entries.forEach(e=>{if(!groups.has(e.type))groups.set(e.type,[]);groups.get(e.type).push(e);});for(const[type,entries]of groups){const c=categoryFor(type),usable=entries.filter(e=>e.type==='date'||e.title||e.value);if(!usable.length)continue;const section=document.createElement('section');section.className='character-section';section.innerHTML=`<div class="character-section-title"><strong>${esc(c.name)}</strong></div><ul>${usable.map(entryMarkup).join('')}</ul>`;story.appendChild(section);}
   };
 
