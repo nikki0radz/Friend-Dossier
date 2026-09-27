@@ -142,11 +142,21 @@
   function addArchiveSparkles(){
     const btn=$('readBtn');
     if(!btn) return;
-    btn.querySelectorAll('.archive-orbit,.portal-orbit,.border-sparkle-track,.archive-border-sparkles').forEach(el=>el.remove());
+
+    btn.querySelectorAll('.archive-orbit,.portal-orbit,.border-sparkle-track').forEach(el=>el.remove());
+
+    const icons=archiveSparkleIcons();
+    const count=archiveSparkleCount();
+    const signature=(selected?.()?.id||'none')+'|'+count+'|'+icons.join('');
+    const existing=btn.querySelector('.archive-border-sparkles');
+
+    if(existing?.dataset.sparkleSignature===signature) return;
+    existing?.remove();
+
     const track=document.createElement('span');
     track.className='archive-border-sparkles';
+    track.dataset.sparkleSignature=signature;
     track.setAttribute('aria-hidden','true');
-    const icons=archiveSparkleIcons(),count=archiveSparkleCount();
     track.innerHTML=Array.from({length:count},(_,i)=>'<i>'+esc(icons[i%icons.length])+'</i>').join('');
     btn.appendChild(track);
     animateArchiveSparkles(btn,track);
