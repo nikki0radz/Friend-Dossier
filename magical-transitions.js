@@ -131,15 +131,23 @@
     requestAnimationFrame(frame);
   }
 
+  function archiveSparkleIcons(){
+    const f=selected?.();
+    return Array.isArray(f?.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,20):['✦','✧','⋆','✶','☾','⟡'];
+  }
+  function archiveSparkleCount(){
+    const density=selected?.()?.profileSparkleDensity||'constellation';
+    return density==='whisper'?5:(density==='starfall'?14:9);
+  }
   function addArchiveSparkles(){
     const btn=$('readBtn');
     if(!btn) return;
-    btn.querySelectorAll('.archive-orbit,.portal-orbit,.border-sparkle-track').forEach(el=>el.remove());
-    if(btn.querySelector('.archive-border-sparkles')) return;
+    btn.querySelectorAll('.archive-orbit,.portal-orbit,.border-sparkle-track,.archive-border-sparkles').forEach(el=>el.remove());
     const track=document.createElement('span');
     track.className='archive-border-sparkles';
     track.setAttribute('aria-hidden','true');
-    track.innerHTML='<i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✧</i><i>⋆</i><i>✦</i><i>✧</i>';
+    const icons=archiveSparkleIcons(),count=archiveSparkleCount();
+    track.innerHTML=Array.from({length:count},(_,i)=>'<i>'+esc(icons[i%icons.length])+'</i>').join('');
     btn.appendChild(track);
     animateArchiveSparkles(btn,track);
   }
