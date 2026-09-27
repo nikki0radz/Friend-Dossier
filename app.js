@@ -33,6 +33,19 @@ let settings = {
   gearBg:'#21182e',
   gearText:'#f7f2fb',
   nameText:'#ffffff',
+  bgOpacity:100,
+  accentOpacity:100,
+  textOpacity:100,
+  sparkleOpacity:100,
+  searchBgOpacity:100,
+  searchTextOpacity:100,
+  searchPlaceholderOpacity:100,
+  addBgOpacity:58,
+  addTextOpacity:100,
+  gearBgOpacity:100,
+  gearTextOpacity:100,
+  nameTextOpacity:100,
+  homeFont:'clean',
   categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES))
 };
 
@@ -187,11 +200,34 @@ function loadData(){ let migrated=false;try{let raw=localStorage.getItem(DATA_KE
         }}}catch(err){console.warn('Settings load failed',err);}applySettings(); }
 function persistSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));applySettings();}
 function applySettings(){
+  const rgba=(hex,pct=100)=>{
+    const m=String(hex||'#000000').match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if(!m)return hex;
+    const alpha=Math.max(0,Math.min(100,Number(pct)||0))/100;
+    return `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${alpha})`;
+  };
+  const fontMap={
+    classic:"Georgia, 'Times New Roman', serif",
+    elegant:"'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+    clean:"'Trebuchet MS', Arial, sans-serif",
+    typewriter:"'Courier New', Courier, monospace",
+    storybook:"Garamond, 'Times New Roman', serif",
+    handwritten:"'Segoe Print', 'Comic Sans MS', cursive"
+  };
   const vars={
-    '--bg':settings.bg,'--accent':settings.accent,'--text':settings.text,
-    '--home-sparkle':settings.sparkle,'--search-bg':settings.searchBg,'--search-text':settings.searchText,
-    '--search-placeholder':settings.searchPlaceholder,'--add-bg':settings.addBg,'--add-text':settings.addText,
-    '--gear-bg':settings.gearBg,'--gear-text':settings.gearText,'--name-text':settings.nameText
+    '--bg':rgba(settings.bg,settings.bgOpacity??100),
+    '--accent':rgba(settings.accent,settings.accentOpacity??100),
+    '--text':rgba(settings.text,settings.textOpacity??100),
+    '--home-sparkle':rgba(settings.sparkle,settings.sparkleOpacity??100),
+    '--search-bg':rgba(settings.searchBg,settings.searchBgOpacity??100),
+    '--search-text':rgba(settings.searchText,settings.searchTextOpacity??100),
+    '--search-placeholder':rgba(settings.searchPlaceholder,settings.searchPlaceholderOpacity??100),
+    '--add-bg':rgba(settings.addBg,settings.addBgOpacity??100),
+    '--add-text':rgba(settings.addText,settings.addTextOpacity??100),
+    '--gear-bg':rgba(settings.gearBg,settings.gearBgOpacity??100),
+    '--gear-text':rgba(settings.gearText,settings.gearTextOpacity??100),
+    '--name-text':rgba(settings.nameText,settings.nameTextOpacity??100),
+    '--home-font':fontMap[settings.homeFont]||fontMap.clean
   };
   Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
 }
