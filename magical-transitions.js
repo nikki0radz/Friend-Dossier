@@ -137,7 +137,7 @@
   }
   function archiveSparkleCount(){
     const density=selected?.()?.profileSparkleDensity||'constellation';
-    return density==='whisper'?5:(density==='starfall'?14:9);
+    return density==='whisper'?4:(density==='starfall'?9:6);
   }
   function addArchiveSparkles(){
     const btn=$('readBtn');
@@ -157,7 +157,10 @@
     track.className='archive-border-sparkles';
     track.dataset.sparkleSignature=signature;
     track.setAttribute('aria-hidden','true');
-    track.innerHTML=Array.from({length:count},(_,i)=>'<i>'+esc(icons[i%icons.length])+'</i>').join('');
+    let seed=0;
+    for(const ch of signature) seed=((seed*31)+ch.charCodeAt(0))>>>0;
+    const pick=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    track.innerHTML=Array.from({length:count},()=>'<i>'+esc(icons[Math.floor(pick()*icons.length)]||icons[0])+'</i>').join('');
     btn.appendChild(track);
     animateArchiveSparkles(btn,track);
   }
@@ -182,9 +185,9 @@
     .archive-orbit,.portal-orbit,.border-sparkle-track{display:none!important;animation:none!important}
     .archive-border-sparkles{position:absolute;left:-1px;top:-1px;width:calc(100% + 2px);height:calc(100% + 2px);pointer-events:none;z-index:5;overflow:visible}
     .archive-border-sparkles i{position:absolute;font-style:normal;line-height:1;color:color-mix(in srgb,var(--person-accent,var(--accent)) 80%,white 20%);text-shadow:0 0 8px currentColor,0 0 16px currentColor;will-change:left,top,transform}
-    .archive-border-sparkles i:nth-child(1),.archive-border-sparkles i:nth-child(4),.archive-border-sparkles i:nth-child(7){font-size:15px}
-    .archive-border-sparkles i:nth-child(2),.archive-border-sparkles i:nth-child(5),.archive-border-sparkles i:nth-child(8){font-size:10px;opacity:.8}
-    .archive-border-sparkles i:nth-child(3),.archive-border-sparkles i:nth-child(6){font-size:12px;opacity:.9}
+    .archive-border-sparkles i:nth-child(3n+1){font-size:15px;opacity:.92}
+    .archive-border-sparkles i:nth-child(3n+2){font-size:9px;opacity:.58}
+    .archive-border-sparkles i:nth-child(3n){font-size:12px;opacity:.76}
 
     #personView{transform-style:preserve-3d;perspective:1100px;will-change:transform,opacity;backface-visibility:hidden}
     #personView.book-turn-out-left{animation:bookOutLeft .23s cubic-bezier(.55,.02,.85,.35) both}
