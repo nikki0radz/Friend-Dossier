@@ -208,13 +208,11 @@ function applySettings(){
   };
   const fontMap={
     classic:"'Libre Baskerville', Georgia, serif",
-    elegant:"'Cormorant Garamond', Georgia, serif",
+    elegant:"'Dancing Script', cursive",
     clean:"'Nunito Sans', Arial, sans-serif",
     typewriter:"'Special Elite', 'Courier New', monospace",
-    storybook:"'IM Fell English', Georgia, serif",
-    handwritten:"'Caveat', cursive",
-    handwritten2:"'Dancing Script', cursive",
-    gothic:"'UnifrakturCook', 'Old English Text MT', cursive"
+    storybook:"'UnifrakturCook', 'Old English Text MT', cursive",
+    handwritten:"'Caveat', cursive"
   };
   const vars={
     '--bg':rgba(settings.bg,settings.bgOpacity??100),
