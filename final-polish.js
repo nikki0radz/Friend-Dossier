@@ -93,10 +93,9 @@
 
     .grand-portal-button{
       box-shadow:
-        0 0 0 1px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),
-        0 0 22px color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent),
-        0 0 52px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent),
-        inset 0 0 24px color-mix(in srgb,var(--person-accent,var(--accent)) 8%,transparent)!important;
+        0 0 0 1px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent),
+        0 0 8px color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),
+        inset 0 0 16px color-mix(in srgb,var(--person-accent,var(--accent)) 5%,transparent)!important;
       animation:archiveGlow 3.1s ease-in-out infinite!important;
     }
     .grand-portal-button strong{
@@ -116,8 +115,8 @@
       to{offset-distance:100%}
     }
     @keyframes archiveGlow{
-      0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 16px color-mix(in srgb,var(--person-accent,var(--accent)) 20%,transparent),0 0 38px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 22px color-mix(in srgb,var(--person-accent,var(--accent)) 7%,transparent)}
-      50%{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 0 28px color-mix(in srgb,var(--person-accent,var(--accent)) 38%,transparent),0 0 70px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent),inset 0 0 32px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent)}
+      0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 6px color-mix(in srgb,var(--person-accent,var(--accent)) 8%,transparent),inset 0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 4%,transparent)}
+      50%{filter:brightness(1.025);transform:translateY(-1px);box-shadow:0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 12%,transparent),inset 0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 6%,transparent)}
     }
     @media(prefers-reduced-motion:reduce){.border-sparkle-track i,.grand-portal-button{animation:none!important}}
   `;
