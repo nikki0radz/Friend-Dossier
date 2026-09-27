@@ -67,10 +67,10 @@
       justify-content:center!important;
       gap:4px!important;
       border-radius:30px!important;
-      border:1px solid color-mix(in srgb,var(--accent) 55%,white 8%)!important;
+      border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 55%,white 8%)!important;
       background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;
       color:#fff!important;
-      box-shadow:0 0 14px color-mix(in srgb,var(--accent) 46%,transparent),0 0 34px color-mix(in srgb,var(--accent) 30%,transparent),0 0 72px color-mix(in srgb,var(--accent) 17%,transparent),inset 0 0 20px color-mix(in srgb,var(--accent) 11%,transparent)!important;
+      box-shadow:0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 46%,transparent),0 0 34px color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent),0 0 72px color-mix(in srgb,var(--person-accent,var(--accent)) 17%,transparent),inset 0 0 20px color-mix(in srgb,var(--person-accent,var(--accent)) 11%,transparent)!important;
       animation:portalBreath 3.2s ease-in-out infinite!important;
     }
     .grand-portal-button:before{
@@ -78,8 +78,8 @@
       position:absolute;
       inset:-8px;
       border-radius:36px;
-      border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
-      box-shadow:0 0 18px color-mix(in srgb,var(--accent) 24%,transparent);
+      border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent);
+      box-shadow:0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent);
       pointer-events:none;
       animation:outerRunePulse 3.4s ease-in-out infinite;
       z-index:-1;
@@ -104,7 +104,7 @@
     }
     .grand-portal-button .archive-sigil{
       font-size:18px!important;
-      color:var(--accent)!important;
+      color:var(--person-accent,var(--accent))!important;
       text-shadow:0 0 10px currentColor,0 0 22px currentColor!important;
       animation:sigilFloat 2.6s ease-in-out infinite;
       z-index:2;
@@ -119,7 +119,7 @@
       text-align:center!important;
       text-transform:none!important;
       color:#fff!important;
-      text-shadow:0 0 12px color-mix(in srgb,var(--accent) 32%,transparent)!important;
+      text-shadow:0 0 12px color-mix(in srgb,var(--person-accent,var(--accent)) 32%,transparent)!important;
       z-index:2;
     }
     .grand-portal-button small{
@@ -134,9 +134,9 @@
     }
     .portal-orbit{display:none!important}
 
-    .portal-burst{position:fixed;inset:0;z-index:99999;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 50% 52%,color-mix(in srgb,var(--accent) 15%,white 6%),transparent 58%);opacity:0;transition:opacity .12s ease}
+    .portal-burst{position:fixed;inset:0;z-index:99999;pointer-events:none;display:grid;place-items:center;background:radial-gradient(circle at 50% 52%,color-mix(in srgb,var(--person-accent,var(--accent)) 15%,white 6%),transparent 58%);opacity:0;transition:opacity .12s ease}
     .portal-burst.active{opacity:1;animation:burstFade .58s ease forwards}
-    .portal-burst span{position:absolute;left:50%;top:50%;color:color-mix(in srgb,var(--accent) 75%,white);font-size:20px;text-shadow:0 0 14px currentColor;animation:burstStar .55s cubic-bezier(.2,.8,.2,1) forwards}
+    .portal-burst span{position:absolute;left:50%;top:50%;color:color-mix(in srgb,var(--person-accent,var(--accent)) 75%,white);font-size:20px;text-shadow:0 0 14px currentColor;animation:burstStar .55s cubic-bezier(.2,.8,.2,1) forwards}
     .portal-burst span:nth-child(1){--x:-105px;--y:-72px}.portal-burst span:nth-child(2){--x:108px;--y:-64px}.portal-burst span:nth-child(3){--x:-124px;--y:34px}.portal-burst span:nth-child(4){--x:126px;--y:38px}.portal-burst span:nth-child(5){--x:-62px;--y:98px}.portal-burst span:nth-child(6){--x:64px;--y:104px}
 
     @keyframes titleSparkTwinkle{0%,100%{opacity:.38;transform:scale(.82)}50%{opacity:1;transform:scale(1.18)}}
