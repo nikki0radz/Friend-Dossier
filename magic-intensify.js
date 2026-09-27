@@ -70,7 +70,7 @@
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 55%,white 8%)!important;
       background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;
       color:#fff!important;
-      box-shadow:0 0 14px color-mix(in srgb,var(--person-accent,var(--accent)) 46%,transparent),0 0 34px color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent),0 0 72px color-mix(in srgb,var(--person-accent,var(--accent)) 17%,transparent),inset 0 0 20px color-mix(in srgb,var(--person-accent,var(--accent)) 11%,transparent)!important;
+      box-shadow:0 0 9px color-mix(in srgb,var(--person-accent,var(--accent)) 32%,transparent),0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 16%,transparent),inset 0 0 20px color-mix(in srgb,var(--person-accent,var(--accent)) 11%,transparent)!important;
       animation:portalBreath 3.2s ease-in-out infinite!important;
     }
     .grand-portal-button:before{
@@ -79,7 +79,7 @@
       inset:-8px;
       border-radius:36px;
       border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 30%,transparent);
-      box-shadow:0 0 18px color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent);
+      box-shadow:0 0 10px color-mix(in srgb,var(--person-accent,var(--accent)) 18%,transparent);
       pointer-events:none;
       animation:outerRunePulse 3.4s ease-in-out infinite;
       z-index:-1;
