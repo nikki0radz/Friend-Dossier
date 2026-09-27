@@ -248,7 +248,14 @@ function renderNextImportantDate(){
   if(!event){el.classList.add('empty');el.textContent='No important dates coming up yet ✦';return;}
   el.classList.remove('empty');
   const label=event.label==='birthday'?'birthday':event.label.charAt(0).toLowerCase()+event.label.slice(1);
-  el.innerHTML=`It’s <strong>${esc(possessiveName(event.friend.name))}</strong> ${esc(label)} <strong>${esc(countdownWords(event.days))}</strong>`;
+  {
+    const when=countdownWords(event.days);
+    let whenMarkup=esc(when);
+    const match=when.match(/^in (.+)$/);
+    if(match) whenMarkup=`in <strong class="date-emphasis">${esc(match[1])}</strong>`;
+    else whenMarkup=`<strong class="date-emphasis">${esc(when)}</strong>`;
+    el.innerHTML=`It’s <strong class="date-emphasis">${esc(possessiveName(event.friend.name))}</strong> ${esc(label)} ${whenMarkup}`;
+  }
 }
 function renderHome(){const grid=$('peopleGrid');if(!grid)return;renderNextImportantDate();const q=($('searchInput')?.value||'').trim().toLowerCase();grid.innerHTML='';state.friends.filter(f=>`${f.name} ${f.relationship}`.toLowerCase().includes(q)).sort((a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{sensitivity:'base'})).forEach(f=>{const b=document.createElement('button');const frame=f.frameStyle||'plain';b.className=`person-bubble frame-${frame}`;b.style.setProperty('--frame-color',f.frameColor||settings.accent);const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;b.innerHTML=`<span class="frame-layer">${frameMarkup(frame)}</span>${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);});}
 function openPerson(id){state.selectedId=id;$('homeView')?.classList.add('hidden');$('personView')?.classList.remove('hidden');homeTools()?.classList.add('hidden');renderPersonHero();showChoice();}
