@@ -220,6 +220,7 @@ function applySettings(){
     '--text':rgba(settings.text,settings.textOpacity??100),
     '--home-sparkle':rgba(settings.sparkle,settings.sparkleOpacity??100),
     '--search-bg':rgba(settings.searchBg,settings.searchBgOpacity??100),
+    '--search-border':rgba(settings.accent,((settings.accentOpacity??100)*(settings.searchBgOpacity??100))/100),
     '--search-text':rgba(settings.searchText,settings.searchTextOpacity??100),
     '--search-placeholder':rgba(settings.searchPlaceholder,settings.searchPlaceholderOpacity??100),
     '--add-bg':rgba(settings.addBg,settings.addBgOpacity??100),
