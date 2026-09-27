@@ -1,7 +1,6 @@
 (() => {
   const RECENT_KEY='friendDossier.recentColours.v1';
   const PERSON_TARGETS=[
-    ['friendBubbleColour','Bubble'],
     ['friendFrameColour','Frame'],
     ['friendProfileBg','Background'],
     ['friendProfileText','Body text'],
@@ -16,7 +15,6 @@
     ['searchBg','Search box'],
     ['searchText','Search text'],
     ['searchPlaceholder','Search placeholder'],
-    ['bubble','Default bubble'],
     ['addBg','Add friend button'],
     ['addText','Add friend text'],
     ['gearBg','Settings button'],
@@ -110,7 +108,6 @@
 
   function personSource(friend){
     return {
-      friendBubbleColour: friend?.bubbleColor||settings.bubble,
       friendFrameColour: friend?.frameColor||settings.accent,
       friendProfileBg: friend?.profileBg||'#1b1326',
       friendProfileText: friend?.profileText||'#f4edf7',
@@ -133,7 +130,6 @@
       preview.style.setProperty('--p-text',draft.friendProfileText);
       preview.style.setProperty('--p-head',draft.friendProfileHeading);
       preview.style.setProperty('--p-frame',draft.friendFrameColour);
-      preview.style.setProperty('--p-bubble',draft.friendBubbleColour);
       preview.style.setProperty('--p-spark',draft.friendProfileSparkle);
       preview.querySelector('.v2-preview-orb').style.background=draft[active];
     });
@@ -143,7 +139,7 @@
     const vars={
       '--bg':draft.bg,'--accent':draft.accent,'--text':draft.text,'--home-sparkle':draft.sparkle,
       '--search-bg':draft.searchBg,'--search-text':draft.searchText,'--search-placeholder':draft.searchPlaceholder,
-      '--bubble':draft.bubble,'--add-bg':draft.addBg,'--add-text':draft.addText,
+      '--add-bg':draft.addBg,'--add-text':draft.addText,
       '--gear-bg':draft.gearBg,'--gear-text':draft.gearText,'--name-text':draft.nameText
     };
     Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
