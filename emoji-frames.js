@@ -15,7 +15,7 @@
     for(let i=0;i<count;i++){
       const angle=(360/count)*i - 90;
       const rad=angle*Math.PI/180;
-      const radius=38 + nudges[i%nudges.length]*.55;
+      const radius=40.5 + nudges[i%nudges.length]*.45;
       const x=50 + Math.cos(rad)*radius;
       const y=50 + Math.sin(rad)*radius;
       const size=sizes[i%sizes.length];
@@ -88,7 +88,7 @@
     const preview=document.querySelector('.emoji-preview-wreath');
     if(!preview) return;
     const emojis=selectedFrameEmojis();
-    preview.innerHTML=emojis.length?wreathMarkup(emojis,10):'<span class="empty-wreath-preview">○</span>';
+    preview.innerHTML=emojis.length?wreathMarkup(emojis,12):'<span class="empty-wreath-preview">○</span>';
   }
 
   const originalOpenFriendDialog=openFriendDialog;
@@ -134,7 +134,7 @@
       b.className=`person-bubble frame-${style}`;
       b.style.setProperty('--frame-color',f.frameColor||settings.accent);
       const face=f.imageData?`<img src="${f.imageData}" alt="">`:`<div class="bubble-initials">${esc(initials(f.name))}</div>`;
-      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,22)}</span>`:(style==='none'?'':`<span class="frame-layer"></span>`);
+      const frame=style==='emoji'?`<span class="frame-layer emoji-wreath">${wreathMarkup(emojis,28)}</span>`:(style==='none'?'':`<span class="frame-layer"></span>`);
       b.innerHTML=`${frame}${face}<div class="bubble-label">${esc(f.name)}${f.relationship?`<span class="bubble-relation">${esc(f.relationship)}</span>`:''}</div>`;
       b.addEventListener('click',()=>openPerson(f.id));grid.appendChild(b);
     });
@@ -152,9 +152,9 @@
     .frame-none.person-bubble>.bubble-initials{width:82%;height:82%;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--accent)!important}
     .emoji-wreath{position:absolute!important;inset:0!important;border-radius:50%;pointer-events:none;z-index:5!important;overflow:visible}
     .emoji-wreath:before{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid color-mix(in srgb,var(--frame-color) 62%,#d0a36b 38%);box-shadow:0 0 9px color-mix(in srgb,var(--frame-color) 25%,transparent),inset 0 0 5px rgba(255,255,255,.16)}
-    .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(17px,5vw,27px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
+    .emoji-wreath-piece{position:absolute;display:block;font-size:calc(clamp(19px,5.5vw,29px) * var(--emoji-size));line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));transform-origin:center;white-space:nowrap}
     .character-portrait-wrap .emoji-wreath-piece{font-size:calc(clamp(20px,6.2vw,31px) * var(--emoji-size))}
-    .frame-emoji .frame-layer{inset:0}.frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:84%;height:84%}.character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:82%;height:82%}
+    .frame-emoji .frame-layer{inset:0}.frame-emoji.person-bubble>img,.frame-emoji.person-bubble>.bubble-initials{width:80%;height:80%}.character-portrait-wrap.frame-emoji .read-profile-photo,.character-portrait-wrap.frame-emoji .read-profile-initials{width:78%;height:78%}
     .emoji-frame-editor{margin-top:14px;padding:13px;border-radius:16px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035)}
     .emoji-frame-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}.emoji-frame-title small{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
     .emoji-frame-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.emoji-frame-inputs label{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:4px}.emoji-frame-inputs label span{font-size:10px;color:var(--muted);text-align:center}.emoji-frame-inputs input{min-width:0;text-align:center;font-size:22px;padding:9px 4px;border-radius:12px}
