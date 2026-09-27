@@ -185,7 +185,7 @@ function normalizeFriend(f={}){
   push('allergy','⚠️','',f.allergies||'');
   push('note','✎','',f.notes||'');
   toArray(f.custom).forEach(v=>{if(v&&typeof v==='object')push('note','✦',v.label||'',v.value||'');});
-  if(f.otherDate)entries.push({id:uid(),type:'date',emoji:'📅',title:f.otherDateLabel||'Important date',value:'',day:Number(f.otherDate.slice(8,10)),month:Number(f.otherDate.slice(5,7)),year:Number(f.otherDate.slice(0,4))});
+  if(f.otherDate)entries.push({id:uid(),type:'date',emoji:'📅',title:f.otherDateLabel||'Important date',value:'',day:Number(f.otherDate.slice(8,10)),month:Number(f.otherDate.slice(5,7)),year:Number(f.otherDate.slice(0,4)),recurring:true});
   let birthdayDay='',birthdayMonth='',birthdayYear='';
   if(f.birthday){birthdayYear=Number(f.birthday.slice(0,4));birthdayMonth=Number(f.birthday.slice(5,7));birthdayDay=Number(f.birthday.slice(8,10));}
   return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay,birthdayMonth,birthdayYear,entries,bubbleColor:'',frameStyle:'plain',frameColor:'',frameEmojis:[],profileBg:'#1b1326',profileText:'#f4edf7',profileHeading:'#f6d5ff',profileSparkle:settings.accent,profileFont:'classic',photoSourceData:f.imageData||'',photoX:50,photoY:50,photoZoom:100};
@@ -238,16 +238,18 @@ function possessiveName(name=''){
   const n=String(name).trim()||'Someone';
   return /s$/i.test(n)?`${n}'`:`${n}'s`;
 }
-function nextOccurrence(day,month,year){
+function nextOccurrence(day,month,year,recurring=true){
   day=Number(day);month=Number(month);year=Number(year)||0;
   if(!day||!month)return null;
   const now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
   let candidate;
-  if(year>=today.getFullYear()){
-    candidate=new Date(year,month-1,day);
-  }else{
+  if(recurring){
     candidate=new Date(today.getFullYear(),month-1,day);
     if(candidate<today)candidate=new Date(today.getFullYear()+1,month-1,day);
+  }else{
+    if(!year)return null;
+    candidate=new Date(year,month-1,day);
+    if(candidate<today)return null;
   }
   const days=Math.round((candidate-today)/86400000);
   return {date:candidate,days};
@@ -269,10 +271,10 @@ function countdownWords(days){
 function nextImportantDate(){
   const events=[];
   state.friends.forEach(friend=>{
-    const birthday=nextOccurrence(friend.birthdayDay,friend.birthdayMonth,friend.birthdayYear);
+    const birthday=nextOccurrence(friend.birthdayDay,friend.birthdayMonth,friend.birthdayYear,true);
     if(birthday)events.push({...birthday,friend,label:'birthday'});
     (friend.entries||[]).filter(e=>e.type==='date').forEach(entry=>{
-      const next=nextOccurrence(entry.day,entry.month,entry.year);
+      const next=nextOccurrence(entry.day,entry.month,entry.year,entry.recurring!==false);
       if(next)events.push({...next,friend,label:(entry.title||'important date').trim()});
     });
   });
@@ -440,6 +442,7 @@ function openEntryDialog(type,entry=null){
   $('entryDay').value=entry?.day||'';
   $('entryMonth').value=entry?.month||'';
   $('entryYear').value=entry?.year||'';
+  if($('entryRecurring')) $('entryRecurring').checked=entry?.recurring!==false;
   entryImageDraft=Array.isArray(entry?.images)?[...entry.images]:[];
   renderEntryImagePreview();
   const isDate=type==='date';
@@ -447,7 +450,31 @@ function openEntryDialog(type,entry=null){
   $('entryValueLabel').classList.toggle('hidden',isDate);
   safeOpen($('entryDialog'));
 }
-function saveEntry(event){event.preventDefault();const f=selected();if(!f)return;const id=$('entryId').value||uid(),type=$('entryType').value;const entry={id,type,emoji:$('entryEmoji').value.trim()||categoryFor(type).emoji,title:$('entryTitle').value.trim(),value:$('entryValue').value.trim(),day:Number($('entryDay').value)||'',month:Number($('entryMonth').value)||'',year:Number($('entryYear').value)||'',images:[...entryImageDraft]};const ix=f.entries.findIndex(x=>x.id===id);if(ix>=0)f.entries[ix]=entry;else f.entries.push(entry);if(!persistFriends()){alert('Could not save this info. Browser storage may be full. Try removing one or more pictures.');return;}safeClose($('entryDialog'));showToast(ix>=0?'Updated':'Added');if(!$('readPanel').classList.contains('hidden'))renderReadEdit();else showAddInfo();}
+function saveEntry(event){
+  event.preventDefault();
+  const f=selected();if(!f)return;
+  const id=$('entryId').value||uid(),type=$('entryType').value;
+  const recurring=type==='date'?($('entryRecurring')?.checked!==false):false;
+  const day=Number($('entryDay').value)||'',month=Number($('entryMonth').value)||'',year=Number($('entryYear').value)||'';
+  if(type==='date'&&!recurring&&!year){
+    alert('Add a year for a one-off date, or turn on “Repeats every year”.');
+    return;
+  }
+  const entry={
+    id,type,
+    emoji:$('entryEmoji').value.trim()||categoryFor(type).emoji,
+    title:$('entryTitle').value.trim(),
+    value:$('entryValue').value.trim(),
+    day,month,year,
+    recurring,
+    images:[...entryImageDraft]
+  };
+  const ix=f.entries.findIndex(x=>x.id===id);
+  if(ix>=0)f.entries[ix]=entry;else f.entries.push(entry);
+  if(!persistFriends()){alert('Could not save this info. Browser storage may be full. Try removing one or more pictures.');return;}
+  safeClose($('entryDialog'));showToast(ix>=0?'Updated':'Added');
+  if(!$('readPanel').classList.contains('hidden'))renderReadEdit();else showAddInfo();
+}
 function openSettings(){safeOpen($('settingsDialog'));}
 function saveSettingsFromDialog(){
   persistSettings();
