@@ -27,11 +27,11 @@
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
   function sparkleIcons(friend){
-    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,30):['✦','✧','⋆','✶','☾','⟡'];
+    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,100):['✦','✧','⋆','✶','☾','⟡'];
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
-    const counts={profile:{whisper:6,constellation:14,starfall:32},dossier:{whisper:4,constellation:9,starfall:18}};
+    const counts={profile:{whisper:7,constellation:18,starfall:44},dossier:{whisper:5,constellation:11,starfall:20}};
     return counts[area]?.[density]||counts[area].constellation;
   }
   function sparkleHash(seed=''){
@@ -43,12 +43,15 @@
     const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
     const layouts={
       profile:[
-        [8,9,10],[88,12,16],[18,23,11],[73,20,18],[95,31,9],[31,34,8],
-        [61,38,13],[6,46,17],[85,48,9],[21,55,13],[69,58,19],[94,65,11],
-        [12,70,10],[43,68,15],[78,74,8],[28,80,18],[55,84,9],[89,88,15],
-        [6,90,10],[36,14,8],[54,7,12],[47,27,10],[12,37,9],[81,29,14],
-        [35,47,16],[57,51,8],[48,62,11],[7,60,9],[88,56,15],[18,87,8],
-        [65,91,12],[75,10,9],[96,43,8],[3,28,11],[51,75,13],[30,65,9]
+        [3,10,18],[18,8,17],[43,9,20],[67,8,18],[92,9,19],
+        [8,18,14],[28,18,18],[55,17,15],[80,17,19],[97,23,16],
+        [4,29,20],[18,31,15],[37,28,13],[59,30,17],[76,27,15],[94,35,20],
+        [7,41,17],[25,42,19],[47,39,14],[67,42,21],[86,43,16],
+        [3,54,18],[16,55,13],[35,52,16],[54,55,14],[74,53,18],[95,57,20],
+        [7,67,15],[22,65,18],[40,68,13],[60,66,17],[81,69,15],[94,72,19],
+        [4,80,20],[18,78,14],[33,82,18],[51,79,15],[69,83,19],[87,81,16],
+        [9,91,17],[29,90,15],[48,91,18],[68,92,14],[92,90,20],
+        [50,23,11],[12,48,12],[88,33,13],[30,59,12]
       ],
       dossier:[
         [10,12,10],[86,11,15],[23,25,9],[72,24,13],[7,39,14],[91,38,9],
@@ -69,10 +72,10 @@
     }
     return Array.from({length:Math.min(count,slots.length)},(_,i)=>{
       const pos=slots[i],icon=nextIcon();
-      const size=Math.max(7,pos[2]+Math.floor(rand()*7)-3);
+      const size=Math.max(10,pos[2]+Math.floor(rand()*10)-2);
       const delay=-(rand()*7.4).toFixed(2);
-      const opacityLow=(.12+rand()*.34).toFixed(2);
-      const opacityHigh=Math.min(.98,Number(opacityLow)+.22+rand()*.38).toFixed(2);
+      const opacityLow=(.08+rand()*.34).toFixed(2);
+      const opacityHigh=Math.min(.96,Number(opacityLow)+.20+rand()*.40).toFixed(2);
       const floatX=Math.round(rand()*18-9);
       const floatY=Math.round(-(4+rand()*12));
       const rotate=Math.round(rand()*28-14);
