@@ -136,7 +136,7 @@
   }
   function archiveSparkleCount(){
     const density=selected?.()?.profileSparkleDensity||'constellation';
-    return density==='whisper'?3:(density==='starfall'?6:5);
+    return density==='whisper'?3:(density==='starfall'?5:4);
   }
   function addArchiveSparkles(){
     const btn=$('readBtn');
