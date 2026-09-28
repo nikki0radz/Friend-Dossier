@@ -46,6 +46,7 @@ let settings = {
   gearTextOpacity:100,
   nameTextOpacity:100,
   homeFont:'clean',
+  homeLayout:'2',
   categories: JSON.parse(JSON.stringify(DEFAULT_CATEGORIES))
 };
 
@@ -56,6 +57,30 @@ const esc = (v='') => String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').r
 const initials = (name='') => name.trim().split(/\s+/).slice(0,2).map(x => x[0]?.toUpperCase() || '').join('') || '?';
 
 let deferredInstall=null;
+function isFriendDossierStandalone(){
+  return Boolean(
+    window.matchMedia?.('(display-mode: standalone)')?.matches ||
+    window.navigator.standalone===true ||
+    document.referrer?.startsWith?.('android-app://')
+  );
+}
+function syncInstallUi(){
+  const installed=isFriendDossierStandalone();
+  const b=$('installAppBtn');
+  const hint=$('installAppHint');
+  if(installed){
+    deferredInstall=null;
+    $('friendDossierInstallCard')?.classList.remove('show');
+    if(b){b.textContent='✓ Friend Dossier is installed';b.disabled=true;b.setAttribute('aria-disabled','true');}
+    if(hint)hint.textContent='You’re using the installed app ✦';
+  }else if(b){
+    b.disabled=false;
+    b.removeAttribute('aria-disabled');
+  }
+  return installed;
+}
+window.addEventListener('pageshow',syncInstallUi);
+window.matchMedia?.('(display-mode: standalone)')?.addEventListener?.('change',syncInstallUi);
 function ensureInstallCard(){
   if($('friendDossierInstallCard'))return $('friendDossierInstallCard');
   const card=document.createElement('div');
@@ -72,6 +97,7 @@ function ensureInstallCard(){
   return card;
 }
 function showInstallCard(){
+  if(isFriendDossierStandalone()){syncInstallUi();return;}
   if(!deferredInstall)return;
   const reveal=()=>{
     if(!deferredInstall)return;
@@ -92,6 +118,7 @@ function showInstallCard(){
 }
 window.addEventListener('beforeinstallprompt',e=>{
   e.preventDefault();
+  if(isFriendDossierStandalone()){deferredInstall=null;syncInstallUi();return;}
   deferredInstall=e;
   const b=$('installAppBtn');
   if(b)b.textContent='✦ Download Friend Dossier app';
@@ -102,13 +129,11 @@ window.addEventListener('beforeinstallprompt',e=>{
 window.addEventListener('appinstalled',()=>{
   deferredInstall=null;
   $('friendDossierInstallCard')?.classList.remove('show');
-  const b=$('installAppBtn');
-  if(b)b.textContent='✓ Friend Dossier is installed';
-  const hint=$('installAppHint');
-  if(hint)hint.textContent='Installed on this device ✦';
+  syncInstallUi();
   showToast('Friend Dossier installed ✦');
 });
 async function installFriendDossier(){
+  if(isFriendDossierStandalone()){syncInstallUi();return;}
   if(deferredInstall){
     $('friendDossierInstallCard')?.classList.remove('show');
     deferredInstall.prompt();
@@ -236,6 +261,8 @@ function applySettings(){
     '--home-font':fontMap[settings.homeFont]||fontMap.clean
   };
   Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+  const homeLayout=['2','3','4','list'].includes(String(settings.homeLayout))?String(settings.homeLayout):'2';
+  document.documentElement.dataset.homeLayout=homeLayout;
 }
 function selected(){return state.friends.find(f=>f.id===state.selectedId);}
 function frameMarkup(style){if(style==='flowers')return `<span class="frame-flower f1">✿</span><span class="frame-flower f2">❀</span><span class="frame-flower f3">✿</span><span class="frame-flower f4">❀</span><span class="frame-flower f5">✿</span><span class="frame-flower f6">❀</span><span class="frame-flower f7">✿</span><span class="frame-flower f8">❀</span>`;if(style==='shards')return `<span class="frame-shard s1"></span><span class="frame-shard s2"></span><span class="frame-shard s3"></span><span class="frame-shard s4"></span><span class="frame-shard s5"></span><span class="frame-shard s6"></span><span class="frame-shard s7"></span><span class="frame-shard s8"></span>`;return '';}
@@ -502,7 +529,7 @@ function saveEntry(event){
   }
   if(!$('readPanel').classList.contains('hidden'))renderReadEdit();else showAddInfo();
 }
-function openSettings(){safeOpen($('settingsDialog'));}
+function openSettings(){syncInstallUi();safeOpen($('settingsDialog'));}
 function saveSettingsFromDialog(){
   persistSettings();
   safeClose($('settingsDialog'));
