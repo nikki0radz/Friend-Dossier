@@ -184,9 +184,9 @@
     .archive-orbit,.portal-orbit,.border-sparkle-track{display:none!important;animation:none!important}
     .archive-border-sparkles{position:absolute;left:-1px;top:-1px;width:calc(100% + 2px);height:calc(100% + 2px);pointer-events:none;z-index:5;overflow:visible}
     .archive-border-sparkles i{position:absolute;font-style:normal;line-height:1;color:color-mix(in srgb,var(--person-accent,var(--accent)) 80%,white 20%);text-shadow:0 0 8px currentColor,0 0 16px currentColor;will-change:left,top,transform}
-    .archive-border-sparkles i:nth-child(3n+1){font-size:15px;opacity:.92}
-    .archive-border-sparkles i:nth-child(3n+2){font-size:9px;opacity:.58}
-    .archive-border-sparkles i:nth-child(3n){font-size:12px;opacity:.76}
+    .archive-border-sparkles i:nth-child(3n+1){font-size:12px;opacity:.72}
+    .archive-border-sparkles i:nth-child(3n+2){font-size:7px;opacity:.34}
+    .archive-border-sparkles i:nth-child(3n){font-size:9px;opacity:.52}
 
     #personView{transform-style:preserve-3d;perspective:1100px;will-change:transform,opacity;backface-visibility:hidden}
     #personView.book-turn-out-left{animation:bookOutLeft .23s cubic-bezier(.55,.02,.85,.35) both}
