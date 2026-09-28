@@ -34,8 +34,42 @@
     '🦋','🐱','♫','♪','☯','∞','☮','⚜','☠','🍁'
   ];
   const DEFAULT_SPARKLES=['✦','✧','⋆','✶','☾','⟡'];
+  const CUSTOM_SPARKLE_KEY='friendDossier.customSparkles.v1';
+  let sparkleDrawingStrokes=[];
+  let activeSparkleStroke=null;
   let activeColourTarget='friendProfileBg';
 
+  function readCustomSparkles(){
+    try{
+      const parsed=JSON.parse(localStorage.getItem(CUSTOM_SPARKLE_KEY)||'[]');
+      return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x.id==='string'&&Array.isArray(x.strokes)).slice(0,24):[];
+    }catch{return [];}
+  }
+  function writeCustomSparkles(items){
+    try{localStorage.setItem(CUSTOM_SPARKLE_KEY,JSON.stringify((items||[]).slice(0,24)));return true;}catch{return false;}
+  }
+  function customSparkleById(id){return readCustomSparkles().find(x=>x.id===id)||null;}
+  function sparkleVectorSvg(strokes,cls='custom-sparkle-svg'){
+    const lines=(Array.isArray(strokes)?strokes:[]).map(stroke=>{
+      const pts=(Array.isArray(stroke)?stroke:[]).map(p=>Array.isArray(p)?`${Number(p[0]).toFixed(1)},${Number(p[1]).toFixed(1)}`:'').filter(Boolean).join(' ');
+      return pts?`<polyline points="${pts}"></polyline>`:'';
+    }).join('');
+    return `<svg class="${cls}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${lines}</svg>`;
+  }
+  function sparkleChoiceMarkup(icon){
+    if(String(icon).startsWith('custom:')){
+      const custom=customSparkleById(icon);
+      return custom?sparkleVectorSvg(custom.strokes):'✦';
+    }
+    return esc(icon);
+  }
+  function allSparkleChoices(){
+    return [...SPARKLE_OPTIONS,...readCustomSparkles().map(x=>x.id)];
+  }
+  function sparkleOptionsMarkup(){
+    const tiles=allSparkleChoices().map(icon=>`<label class="profile-sparkle-icon${String(icon).startsWith('custom:')?' custom-drawn-sparkle':''}"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>`).join('');
+    return tiles+`<button type="button" class="profile-sparkle-add" id="addCustomSparkle"><span>＋</span><small>Add sparkle</small></button>`;
+  }
   function readStoredFriends(){
     try{const parsed=JSON.parse(localStorage.getItem(DATA_KEY)||'[]');return Array.isArray(parsed)?parsed:(Array.isArray(parsed?.friends)?parsed.friends:[]);}catch{return [];}
   }
@@ -101,7 +135,7 @@
       <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="140" step="5" value="100"></div>
       <div class="profile-sparkle-picker">
         <div class="profile-theme-heading"><strong>Sparkle constellation</strong><small>Choose their symbols</small></div>
-        <div id="profileSparkleIcons" class="profile-sparkle-icons">${SPARKLE_OPTIONS.map(icon=>`<label class="profile-sparkle-icon"><input type="checkbox" value="${icon}"><span>${icon}</span></label>`).join('')}</div>
+        <div id="profileSparkleIcons" class="profile-sparkle-icons">${sparkleOptionsMarkup()}</div>
         <div class="sparkle-density-title">Sparkle mood</div>
         <div id="profileSparkleDensity" class="sparkle-density-options">
           <button type="button" data-density="whisper"><b>Whisper</b><small>A delicate dusting</small></button>
@@ -120,12 +154,104 @@
       if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${$('friendProfileTextScale').value}%`;
     });
     box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density));
-    box.querySelectorAll('#profileSparkleIcons input').forEach(input=>input.addEventListener('change',()=>{
-      input.closest('.profile-sparkle-icon')?.classList.toggle('selected',input.checked);
-    }));
+    bindSparklePicker(box);
     renderRecentColours();
   }
 
+  function bindSparklePicker(root=document){
+    root.querySelectorAll('#profileSparkleIcons input').forEach(input=>input.addEventListener('change',()=>{
+      input.closest('.profile-sparkle-icon')?.classList.toggle('selected',input.checked);
+    }));
+    root.querySelector('#addCustomSparkle')?.addEventListener('click',openSparkleDrawer);
+  }
+  function refreshSparklePicker(extraSelected=[]){
+    const grid=$('profileSparkleIcons'); if(!grid)return;
+    const selected=new Set([...selectedSparkleIcons(),...extraSelected]);
+    grid.innerHTML=sparkleOptionsMarkup();
+    bindSparklePicker(document);
+    setSparkleIcons([...selected]);
+  }
+  function ensureSparkleDrawer(){
+    let modal=$('sparkleDrawModal');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='sparkleDrawModal';
+    modal.className='sparkle-draw-modal';
+    modal.innerHTML=`
+      <section class="sparkle-draw-sheet" role="dialog" aria-modal="true" aria-label="Draw your own sparkle">
+        <div class="sparkle-draw-head"><button type="button" id="sparkleDrawCancel">‹ Back</button><strong>Draw a sparkle</strong><span></span></div>
+        <p>Draw one little symbol with your finger. It’ll inherit each person’s sparkle colour.</p>
+        <div class="sparkle-canvas-wrap"><canvas id="sparkleDrawCanvas"></canvas></div>
+        <div class="sparkle-draw-tools">
+          <button type="button" id="sparkleUndo">Undo</button>
+          <button type="button" id="sparkleClear">Clear</button>
+          <button type="button" id="sparkleSave" class="sparkle-save-drawing">Save sparkle ✦</button>
+        </div>
+      </section>`;
+    document.body.appendChild(modal);
+    $('sparkleDrawCancel').onclick=closeSparkleDrawer;
+    $('sparkleUndo').onclick=()=>{sparkleDrawingStrokes.pop();redrawSparkleCanvas();};
+    $('sparkleClear').onclick=()=>{sparkleDrawingStrokes=[];redrawSparkleCanvas();};
+    $('sparkleSave').onclick=saveSparkleDrawing;
+    const canvas=$('sparkleDrawCanvas');
+    const pointFromEvent=e=>{
+      const r=canvas.getBoundingClientRect();
+      return [Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100)),Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100))];
+    };
+    canvas.addEventListener('pointerdown',e=>{
+      e.preventDefault();canvas.setPointerCapture?.(e.pointerId);
+      activeSparkleStroke=[pointFromEvent(e)];sparkleDrawingStrokes.push(activeSparkleStroke);redrawSparkleCanvas();
+    });
+    canvas.addEventListener('pointermove',e=>{
+      if(!activeSparkleStroke)return;e.preventDefault();
+      const p=pointFromEvent(e),last=activeSparkleStroke[activeSparkleStroke.length-1];
+      if(!last||Math.hypot(p[0]-last[0],p[1]-last[1])>.65){activeSparkleStroke.push(p);redrawSparkleCanvas();}
+    });
+    const endStroke=()=>{activeSparkleStroke=null;};
+    canvas.addEventListener('pointerup',endStroke);canvas.addEventListener('pointercancel',endStroke);canvas.addEventListener('pointerleave',e=>{if(e.buttons===0)endStroke();});
+    window.addEventListener('resize',()=>{if(modal.classList.contains('open'))sizeSparkleCanvas();});
+    return modal;
+  }
+  function sizeSparkleCanvas(){
+    const canvas=$('sparkleDrawCanvas'); if(!canvas)return;
+    const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+    const w=Math.max(240,Math.round(rect.width*dpr)),h=Math.max(240,Math.round(rect.height*dpr));
+    if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
+    redrawSparkleCanvas();
+  }
+  function redrawSparkleCanvas(){
+    const canvas=$('sparkleDrawCanvas');if(!canvas)return;
+    const ctx=canvas.getContext('2d');if(!ctx)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.save();ctx.scale(canvas.width/100,canvas.height/100);
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=2.3;ctx.lineCap='round';ctx.lineJoin='round';
+    sparkleDrawingStrokes.forEach(stroke=>{
+      if(!stroke?.length)return;
+      ctx.beginPath();ctx.moveTo(stroke[0][0],stroke[0][1]);
+      for(let i=1;i<stroke.length;i++)ctx.lineTo(stroke[i][0],stroke[i][1]);
+      if(stroke.length===1){ctx.lineTo(stroke[0][0]+.01,stroke[0][1]+.01);}
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+  function openSparkleDrawer(){
+    sparkleDrawingStrokes=[];activeSparkleStroke=null;
+    const modal=ensureSparkleDrawer();modal.classList.add('open');document.body.classList.add('sparkle-drawing-open');
+    requestAnimationFrame(sizeSparkleCanvas);
+  }
+  function closeSparkleDrawer(){
+    $('sparkleDrawModal')?.classList.remove('open');document.body.classList.remove('sparkle-drawing-open');activeSparkleStroke=null;
+  }
+  function saveSparkleDrawing(){
+    const useful=sparkleDrawingStrokes.filter(s=>Array.isArray(s)&&s.length);
+    if(!useful.length){alert('Draw something first ✦');return;}
+    const cleaned=useful.map(stroke=>stroke.map(([x,y])=>[Math.round(x*10)/10,Math.round(y*10)/10]));
+    const item={id:'custom:'+Date.now().toString(36),strokes:cleaned};
+    const items=readCustomSparkles();
+    items.push(item);
+    if(!writeCustomSparkles(items)){alert('Couldn’t save that sparkle. Your browser storage may be full.');return;}
+    refreshSparklePicker([item.id]);closeSparkleDrawer();
+  }
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
   function selectSparkleDensity(value){
     const density=['whisper','constellation','starfall'].includes(value)?value:'constellation';
@@ -226,6 +352,17 @@
     .sparkle-density-options button small{display:block!important;margin-top:5px!important;font-size:8px!important;line-height:1.25!important;color:var(--muted)!important;font-weight:500!important}
     .sparkle-density-options button.active{border-color:color-mix(in srgb,var(--accent) 78%,white 8%)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),rgba(255,255,255,.025))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 16px color-mix(in srgb,var(--accent) 13%,transparent)!important}
     .sparkle-density-options button.active b{color:color-mix(in srgb,var(--accent) 72%,white 28%)!important}
+    .profile-sparkle-icon .custom-sparkle-svg{width:72%!important;height:72%!important;overflow:visible!important}
+    .profile-sparkle-icon .custom-sparkle-svg polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    .profile-sparkle-add{aspect-ratio:1!important;border:1px dashed color-mix(in srgb,var(--accent) 48%,rgba(255,255,255,.12))!important;border-radius:13px!important;background:color-mix(in srgb,var(--accent) 6%,transparent)!important;color:var(--text)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;padding:4px!important}
+    .profile-sparkle-add span{font-size:22px!important;line-height:1!important;color:var(--accent)!important}.profile-sparkle-add small{font:700 8px/1.05 system-ui,sans-serif!important;color:var(--muted)!important}
+    .sparkle-draw-modal{position:fixed;inset:0;z-index:120000;display:none;align-items:stretch;justify-content:center;background:rgba(9,6,14,.82);backdrop-filter:blur(18px);padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom))}
+    .sparkle-draw-modal.open{display:flex}.sparkle-draw-sheet{width:min(100%,520px);min-height:100%;display:flex;flex-direction:column;justify-content:center;color:#f7f2fb}
+    .sparkle-draw-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:8px}.sparkle-draw-head button{justify-self:start;border:0;background:transparent;color:#f7f2fb;font:700 14px system-ui;padding:8px 0}.sparkle-draw-head strong{font:700 22px Georgia,serif}.sparkle-draw-sheet>p{text-align:center;margin:4px auto 18px;max-width:330px;color:rgba(247,242,251,.62);font:12px/1.45 system-ui}
+    .sparkle-canvas-wrap{width:min(82vw,360px);aspect-ratio:1;margin:0 auto;border-radius:24px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 65%),rgba(255,255,255,.025);box-shadow:inset 0 0 40px rgba(255,255,255,.025),0 18px 50px rgba(0,0,0,.28);overflow:hidden}
+    #sparkleDrawCanvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+    .sparkle-draw-tools{width:min(82vw,360px);margin:14px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}.sparkle-draw-tools button{min-height:44px;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f2fb;font-weight:800}.sparkle-draw-tools .sparkle-save-drawing{grid-column:1/-1;border-color:color-mix(in srgb,var(--accent) 58%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:color-mix(in srgb,var(--accent) 70%,white 30%)}
+    body.sparkle-drawing-open{overflow:hidden!important}
     .character-choice-panel{grid-template-columns:1fr 1fr!important;gap:10px!important}.read-primary-choice{grid-column:1/-1!important;min-height:150px!important;position:relative!important;overflow:hidden!important;border:1px solid color-mix(in srgb,var(--accent) 48%,transparent)!important;background:radial-gradient(circle at 80% 20%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 35%),linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025))!important}.read-primary-choice .choice-book{font-size:38px!important}.read-primary-choice strong{font-size:22px!important;font-family:Georgia,serif}.read-primary-choice small{font-size:11px!important;letter-spacing:.04em}.read-primary-choice i{position:absolute;right:18px;top:14px;color:var(--accent);font-style:normal;opacity:.75}.secondary-person-choice{grid-column:auto!important;min-height:64px!important;padding:10px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important}.secondary-person-choice span{font-size:16px!important}.secondary-person-choice strong{font-size:12px!important}.secondary-person-choice small{display:none!important}.edit-person-choice{margin-top:0!important}.swipe-pop{animation:swipePop .22s ease}@keyframes swipePop{from{opacity:.65;transform:translateX(8px)}to{opacity:1;transform:none}}
   `;document.head.appendChild(css);
 
