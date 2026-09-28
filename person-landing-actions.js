@@ -9,11 +9,15 @@
     panel?.classList.remove('hidden');
     if(panel){
       const f=selected();
+      const textScale=Math.max(80,Math.min(200,Number(f?.profileTextScale)||100));
+      const headingScale=1+(textScale/100-1)*1.08;
+      const archiveTitleSize=Math.min(58,24*headingScale);
+      const archiveSubSize=10*(1+(textScale/100-1)*.55);
       panel.innerHTML=`
         <button id="readBtn" class="px-open-dossier" aria-label="Enter Archives">
           <span class="archive-sigil">✦</span>
-          <strong>Enter Archives</strong>
-          <small>Step into ${esc(f?.name||'their')} archive</small>
+          <strong style="font-size:${archiveTitleSize}px!important">Enter Archives</strong>
+          <small style="font-size:${archiveSubSize}px!important">Step into ${esc(f?.name||'their')} archive</small>
         </button>
         <div class="px-secondary-actions">
           <button id="landingAddInfo"><span>＋</span><strong>Add info</strong></button>
