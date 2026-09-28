@@ -191,6 +191,8 @@
       '--home-font':GLOBAL_FONT_MAP[draft.homeFont]||GLOBAL_FONT_MAP.clean
     };
     Object.entries(vars).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+    const homeLayout=['2','3','4','list'].includes(String(draft.homeLayout))?String(draft.homeLayout):'2';
+    document.documentElement.dataset.homeLayout=homeLayout;
 
     if(draft.bg){
       const pageBg=rgba(draft.bg,draft.bgOpacity??100);
@@ -209,10 +211,11 @@
         if(globalDraft[opacityKey(key)]!==undefined) settings[opacityKey(key)]=globalDraft[opacityKey(key)];
       });
       settings.homeFont=globalDraft.homeFont||settings.homeFont||'clean';
+      settings.homeLayout=['2','3','4','list'].includes(String(globalDraft.homeLayout))?String(globalDraft.homeLayout):'2';
       persistSettings();
       saveRecent(GLOBAL_TARGETS.map(([key])=>globalDraft[key]));
       renderHome();
-      showToast('Home colours saved');
+      showToast('Home screen saved');
     }else{
       applySettings();
       document.documentElement.style.backgroundColor='#000000';
@@ -237,7 +240,7 @@
       launch.id='openHomeColourStudio';
       launch.type='button';
       launch.className='soft-button full home-colour-launch';
-      launch.textContent='🎨 Customize home screen colours';
+      launch.textContent='🎨 Customize home screen';
       grid.insertAdjacentElement('afterend',launch);
     }
     launch.onclick=()=>{
@@ -250,9 +253,9 @@
         document.body.appendChild(holder);
       }
       holder.innerHTML=`
-        <div class="floating-studio-head"><div><strong>Home screen colours</strong><small>Changes below are only a preview until you save.</small></div><button type="button" data-v2-close>×</button></div>
+        <div class="floating-studio-head"><div><strong>Customize home screen</strong><small>Preview colours, font and profile layout before you save.</small></div><button type="button" data-v2-close>×</button></div>
         ${studioMarkup('global',GLOBAL_TARGETS)}
-        <div class="floating-studio-actions"><button type="button" class="soft-button" data-v2-cancel>Cancel</button><button type="button" class="primary-button" data-v2-save>Save colours</button></div>`;
+        <div class="floating-studio-actions"><button type="button" class="soft-button" data-v2-cancel>Cancel</button><button type="button" class="primary-button" data-v2-save>Save home screen</button></div>`;
       const studio=holder.querySelector('.v2-colour-studio');
       studio.querySelector('.v2-preview-wrap')?.remove();
       const source={};
@@ -261,6 +264,7 @@
         source[opacityKey(key)]=settings[opacityKey(key)]??100;
       });
       globalDraft.homeFont=settings.homeFont||'clean';
+      globalDraft.homeLayout=['2','3','4','list'].includes(String(settings.homeLayout))?String(settings.homeLayout):'2';
       initialiseStudio(studio,GLOBAL_TARGETS,globalDraft,source,(draft)=>applyGlobalDraft(draft));
 
       const fontWrap=document.createElement('div');
@@ -270,6 +274,20 @@
       const syncFontButtons=()=>fontWrap.querySelectorAll('[data-home-font]').forEach(btn=>btn.classList.toggle('active',btn.dataset.homeFont===globalDraft.homeFont));
       fontWrap.querySelectorAll('[data-home-font]').forEach(btn=>btn.onclick=()=>{globalDraft.homeFont=btn.dataset.homeFont;syncFontButtons();applyGlobalDraft(globalDraft);});
       syncFontButtons();
+
+      const layoutWrap=document.createElement('div');
+      layoutWrap.className='v2-home-layout-picker';
+      layoutWrap.innerHTML=`<div class="v2-recent-title">Profiles per row</div><div class="v2-layout-options">
+        <button type="button" data-home-layout="2"><span class="v2-layout-icon">● ●</span><small>2</small></button>
+        <button type="button" data-home-layout="3"><span class="v2-layout-icon">● ● ●</span><small>3</small></button>
+        <button type="button" data-home-layout="4"><span class="v2-layout-icon">●●●●</span><small>4</small></button>
+        <button type="button" data-home-layout="list"><span class="v2-layout-icon">☰</span><small>List</small></button>
+      </div>`;
+      studio.appendChild(layoutWrap);
+      const syncLayoutButtons=()=>layoutWrap.querySelectorAll('[data-home-layout]').forEach(btn=>btn.classList.toggle('active',btn.dataset.homeLayout===globalDraft.homeLayout));
+      layoutWrap.querySelectorAll('[data-home-layout]').forEach(btn=>btn.onclick=()=>{globalDraft.homeLayout=btn.dataset.homeLayout;syncLayoutButtons();applyGlobalDraft(globalDraft);});
+      syncLayoutButtons();
+
       holder.querySelector('[data-v2-close]').onclick=()=>closeGlobalStudio(false);
       holder.querySelector('[data-v2-cancel]').onclick=()=>closeGlobalStudio(false);
       holder.querySelector('[data-v2-save]').onclick=()=>closeGlobalStudio(true);
@@ -316,6 +334,27 @@
     .v2-font-option{min-height:58px;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:var(--text);padding:8px;text-align:left}
     .v2-font-option span{display:block;font-size:15px}.v2-font-option small{display:block;margin-top:3px;font:10px Inter,system-ui,sans-serif;opacity:.58}
     .v2-font-option.active{border-color:color-mix(in srgb,var(--accent) 62%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 14%,transparent)}
+    .v2-home-layout-picker{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
+    .v2-layout-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+    .v2-layout-options button{min-height:58px;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:var(--text);padding:7px 4px;display:grid;place-items:center;gap:3px}
+    .v2-layout-options button.active{border-color:color-mix(in srgb,var(--accent) 62%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 14%,transparent)}
+    .v2-layout-icon{font-size:11px;letter-spacing:-1px;white-space:nowrap;color:var(--accent)}.v2-layout-options small{font-size:9px;opacity:.68}
+    html[data-home-layout="2"] .people-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+    html[data-home-layout="3"] .people-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:31px 10px!important}
+    html[data-home-layout="3"] .person-bubble{margin-bottom:20px!important}
+    html[data-home-layout="3"] .person-bubble>.bubble-label{font-size:12px!important;bottom:-21px!important;width:138%!important}
+    html[data-home-layout="3"] .person-bubble>.bubble-label .bubble-relation{font-size:8px!important}
+    html[data-home-layout="4"] .people-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:29px 7px!important}
+    html[data-home-layout="4"] .person-bubble{margin-bottom:18px!important}
+    html[data-home-layout="4"] .person-bubble>.bubble-label{font-size:10px!important;bottom:-19px!important;width:152%!important}
+    html[data-home-layout="4"] .person-bubble>.bubble-label .bubble-relation{font-size:7px!important}
+    html[data-home-layout="list"] .people-grid{grid-template-columns:1fr!important;gap:10px!important}
+    html[data-home-layout="list"] .person-bubble{width:100%!important;max-width:none!important;height:82px!important;min-height:82px!important;aspect-ratio:auto!important;border-radius:20px!important;margin:0!important;overflow:visible!important;display:block!important;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))!important;border:1px solid color-mix(in srgb,var(--accent) 18%,rgba(255,255,255,.08))!important;box-shadow:0 8px 22px rgba(0,0,0,.14)!important}
+    html[data-home-layout="list"] .person-bubble:before{display:none!important}
+    html[data-home-layout="list"] .person-bubble>.frame-layer{inset:auto!important;left:6px!important;top:6px!important;width:70px!important;height:70px!important;border-radius:50%!important}
+    html[data-home-layout="list"] .person-bubble>img,html[data-home-layout="list"] .person-bubble>.bubble-initials{position:absolute!important;inset:auto!important;left:41px!important;top:41px!important;width:60px!important;height:60px!important;transform:translate(-50%,-50%)!important}
+    html[data-home-layout="list"] .person-bubble>.bubble-label{position:absolute!important;left:92px!important;right:14px!important;top:50%!important;bottom:auto!important;width:auto!important;transform:translateY(-50%)!important;text-align:left!important;font-size:15px!important;line-height:1.1!important}
+    html[data-home-layout="list"] .person-bubble>.bubble-label .bubble-relation{font-size:10px!important;margin-top:4px!important}
     .home-colour-launch{margin:4px 0 12px}
     .floating-home-colour-studio{position:fixed;z-index:100001;right:14px;bottom:max(14px,env(safe-area-inset-bottom));width:min(360px,calc(100vw - 28px));max-height:min(76vh,680px);overflow:auto;padding:14px;border-radius:22px;background:color-mix(in srgb,var(--bg) 94%,black 6%);border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);box-shadow:0 22px 70px rgba(0,0,0,.56);backdrop-filter:blur(18px);transform:translateY(calc(100% + 40px));opacity:0;pointer-events:none;transition:.28s ease}
     .floating-home-colour-studio.show{transform:none;opacity:1;pointer-events:auto}
