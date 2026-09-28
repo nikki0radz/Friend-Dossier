@@ -91,7 +91,8 @@
     const source=area==='archive'?friend?.archiveSparkleLayouts:friend?.profileSparkleLayouts;
     const saved=overrideLayout||source?.[density];
     const fallbackAmount=defaultSparkleAmount(density,area);
-    const amount=Math.max(1,Math.min(100,Number(saved?.amount)||fallbackAmount));
+    const rawAmount=Number(saved?.amount);
+    const amount=Math.max(0,Math.min(100,Number.isFinite(rawAmount)?rawAmount:fallbackAmount));
     const size=Math.max(50,Math.min(220,Number(saved?.size)||100));
     let points=Array.isArray(saved?.points)
       ? saved.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
