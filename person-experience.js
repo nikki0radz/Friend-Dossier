@@ -189,12 +189,13 @@
     const personRoot=$('personView');
     const textScale=Math.max(80,Math.min(200,Number(f.profileTextScale)||100));
     const scale=textScale/100;
-    const headingScale=1+(scale-1)*1.08;
+    const headingScale=1+(scale-1)*1.16;
+    const archiveScale=1+(scale-1)*.45;
     const bodyScale=1+(scale-1)*.55;
     const vw=window.innerWidth||390;
     personRoot?.style.setProperty('--person-text-scale',String(scale));
-    const nameSize=Math.min(112,Math.min(56,Math.max(38,vw*.11))*headingScale);
-    const archiveTitleSize=Math.min(42,20*headingScale);
+    const nameSize=Math.min(120,Math.min(58,Math.max(40,vw*.115))*headingScale);
+    const archiveTitleSize=Math.min(32,20*archiveScale);
     personRoot?.style.setProperty('--person-name-size',`${nameSize}px`);
     personRoot?.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
     personRoot?.style.setProperty('--person-archive-title-size',`${archiveTitleSize}px`);
