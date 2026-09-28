@@ -21,7 +21,18 @@
   const COLOUR_TARGETS=[
 ['friendFrameColour','Frame'],['friendProfileBg','Background'],['friendProfileText','Body text'],['friendProfileHeading','Headings'],['friendProfileSparkle','Sparkles']
   ];
-  const SPARKLE_OPTIONS=['✦','✧','⋆','★','☆','✶','✷','✸','✹','✺','✵','❈','❉','❊','❋','⟡','◇','☾','☽','♡','☼','❂','✣','✤','✥','✱','✲','✳','✴','✿'];
+  const SPARKLE_OPTIONS=[
+    '✦','✧','⋆','★','☆','✶','✷','✸','✹','✺',
+    '✵','✴','✳','✲','✱','❈','❉','❊','❋','※',
+    '⟡','◇','◆','◈','♢','♦','⬥','⬦','⬧','❖',
+    '♡','♥','❤','❣','❥','❦','❧','ღ','ෆ','🖤',
+    '♠','♤','♣','♧','♦️','🃏','⚄','⚅','🎲',
+    '○','●','◌','◍','◎','◉','◯','⊙','⦿','⚬',
+    '☾','☽','☼','☀','☉','☄','☁','☂','☃','⚡',
+    '❀','✿','❁','✾','✽','⚘','❃','☘','🍀',
+    '🐟','𓆟','𓆝','𓆞','🫧','🐚','🐶','🐠','❄️','🪼',
+    '🦋','🐱','♫','♪','☯','∞','☮','⚜','☠','🍁'
+  ];
   const DEFAULT_SPARKLES=['✦','✧','⋆','✶','☾','⟡'];
   let activeColourTarget='friendProfileBg';
 
@@ -122,7 +133,7 @@
     document.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.classList.toggle('active',btn.dataset.density===density));
   }
   function selectedSparkleIcons(){
-    return [...document.querySelectorAll('#profileSparkleIcons input:checked')].map(input=>input.value).slice(0,30);
+    return [...document.querySelectorAll('#profileSparkleIcons input:checked')].map(input=>input.value).slice(0,100);
   }
   function setSparkleIcons(icons){
     const chosen=new Set(Array.isArray(icons)&&icons.length?icons:DEFAULT_SPARKLES);
@@ -200,11 +211,11 @@
     .font-picker-wrap{margin-top:15px}.font-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.font-option{min-height:68px;border-radius:13px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--text);padding:8px;display:grid;place-items:center;gap:3px}.font-option span{font-size:17px}.font-option small{font-family:system-ui,sans-serif!important;font-size:9px;color:var(--muted)}.font-option.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
     .profile-sparkle-picker{margin-top:16px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))}
     .profile-sparkle-picker .profile-theme-heading{margin-bottom:10px}
-    .profile-sparkle-icons{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:8px 0 0!important}
+    .profile-sparkle-icons{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:8px 0 0!important}
     .profile-sparkle-icon{display:grid!important;place-items:center!important;position:relative!important;aspect-ratio:1!important;min-width:0!important;width:100%!important;padding:0!important;margin:0!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:13px!important;background:rgba(255,255,255,.025)!important;cursor:pointer!important;overflow:hidden!important;transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .12s ease!important}
     .profile-sparkle-icon:active{transform:scale(.95)!important}
     .profile-sparkle-icon input{position:absolute!important;opacity:0!important;width:1px!important;height:1px!important;pointer-events:none!important;margin:0!important;padding:0!important}
-    .profile-sparkle-icon span{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;font-size:24px!important;line-height:1!important;color:color-mix(in srgb,var(--text) 82%,var(--accent) 18%)!important;text-shadow:0 0 9px color-mix(in srgb,var(--accent) 22%,transparent)!important}
+    .profile-sparkle-icon span{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;font-size:22px!important;line-height:1!important;color:color-mix(in srgb,var(--text) 82%,var(--accent) 18%)!important;text-shadow:0 0 9px color-mix(in srgb,var(--accent) 22%,transparent)!important}
     .profile-sparkle-icon.selected{border-color:color-mix(in srgb,var(--accent) 82%,white 8%)!important;background:color-mix(in srgb,var(--accent) 13%,transparent)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 26%,transparent),0 0 15px color-mix(in srgb,var(--accent) 16%,transparent)!important}
     .profile-sparkle-icon.selected span{color:color-mix(in srgb,var(--accent) 72%,white 28%)!important;text-shadow:0 0 10px currentColor!important}
     .sparkle-density-title{margin:16px 0 8px!important;font-size:10px!important;text-transform:uppercase!important;letter-spacing:.1em!important;color:var(--muted)!important}
