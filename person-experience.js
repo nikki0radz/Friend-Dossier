@@ -60,57 +60,58 @@
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
-    const counts={profile:{whisper:7,constellation:44,starfall:80},dossier:{whisper:5,constellation:20,starfall:30}};
-    return counts[area]?.[density]||counts[area].constellation;
+    if(area==='profile'){
+      const saved=friend?.profileSparkleLayouts?.[density];
+      const fallback=density==='whisper'?7:(density==='starfall'?80:44);
+      return Math.max(1,Math.min(100,Number(saved?.amount)||fallback));
+    }
+    const counts={dossier:{whisper:5,constellation:20,starfall:30}};
+    return counts.dossier[density]||counts.dossier.constellation;
   }
   function sparkleHash(seed=''){
     let h=2166136261;
     for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);}
     return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
   }
-  function profileSparkleSlots(friend,count){
+  function makeDefaultProfilePoints(friend,density,amount){
+    const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|sparkle-layout|'+density+'|'+amount);
+    const points=[];
+    for(let i=0;i<amount;i++){
+      const y=Math.max(1,Math.min(99,1+((i+.18+rand()*.64)/amount)*98));
+      let x;
+      if(y>9&&y<43){
+        x=rand()<.5 ? 1+rand()*15 : 84+rand()*15;
+      }else{
+        x=1+rand()*98;
+      }
+      points.push([x,y]);
+    }
+    for(let i=points.length-1;i>0;i--){
+      const j=Math.floor(rand()*(i+1));
+      [points[i],points[j]]=[points[j],points[i]];
+    }
+    return points;
+  }
+  function profileSparkleLayout(friend){
     const density=friend?.profileSparkleDensity||'constellation';
-    const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|profile-layout|'+density);
-    const bands=Array.from({length:10},()=>[]);
-    const rows=10,cols=12;
-
-    for(let row=0;row<rows;row++){
-      for(let col=0;col<cols;col++){
-        let x=((col+.5)/cols)*100+(rand()-.5)*5.8;
-        let y=((row+.5)/rows)*100+(rand()-.5)*5.6;
-        x=Math.max(1,Math.min(99,x));
-        y=Math.max(.8,Math.min(99.2,y));
-
-        // Keep sparkles out from behind the opaque portrait,
-        // but deliberately allow the band immediately beneath it.
-        const behindPortrait=y>9&&y<43&&x>18&&x<82;
-        if(behindPortrait)continue;
-
-        bands[row].push([x,y]);
-      }
+    const fallbackAmount=density==='whisper'?7:(density==='starfall'?80:44);
+    const saved=friend?.profileSparkleLayouts?.[density];
+    const amount=Math.max(1,Math.min(100,Number(saved?.amount)||fallbackAmount));
+    const size=Math.max(60,Math.min(200,Number(saved?.size)||100));
+    let points=Array.isArray(saved?.points)
+      ? saved.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
+          Math.max(1,Math.min(99,Number(p[0]))),
+          Math.max(1,Math.min(99,Number(p[1])))
+        ]).slice(0,100)
+      : [];
+    if(points.length<amount){
+      const generated=makeDefaultProfilePoints(friend,density,amount);
+      points=points.concat(generated.slice(points.length,amount));
     }
-
-    // Shuffle each band so positions feel organic but stay stable for this person.
-    bands.forEach(list=>{
-      for(let i=list.length-1;i>0;i--){
-        const j=Math.floor(rand()*(i+1));
-        [list[i],list[j]]=[list[j],list[i]];
-      }
-    });
-
-    // Jump around the page vertically instead of filling top-to-bottom.
-    const bandOrder=[0,5,2,8,4,9,6,1,7,3];
-    const slots=[];
-    let guard=0;
-    while(slots.length<count&&guard++<20){
-      for(const bandIndex of bandOrder){
-        if(slots.length>=count)break;
-        const list=bands[bandIndex];
-        if(!list.length)continue;
-        slots.push(list.shift());
-      }
-    }
-    return slots;
+    return{amount,size,points};
+  }
+  function profileSparkleSlots(friend,count){
+    return profileSparkleLayout(friend).points.slice(0,count);
   }
   function sparkleMarkup(friend,area='profile'){
     const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
@@ -120,7 +121,9 @@
       [43,69],[71,73],[9,82],[92,85],[27,89],[57,86],[49,31],[37,76],[78,52],[18,44],
       [5,8],[34,9],[58,7],[95,18],[48,43],[6,56],[93,73],[34,84],[63,92],[80,31]
     ];
-    const slots=area==='profile'?profileSparkleSlots(friend,count):dossierSlots.slice(0,count);
+    const profileLayout=area==='profile'?profileSparkleLayout(friend):null;
+    const slots=area==='profile'?profileLayout.points.slice(0,count):dossierSlots.slice(0,count);
+    const sizeScale=profileLayout?profileLayout.size/100:1;
 
     let pool=[];
     function nextIcon(){
@@ -136,19 +139,19 @@
 
     return slots.map(pos=>{
       const icon=nextIcon();
-      let size=Math.round(9+Math.pow(rand(),.7)*23);
-      if(rand()<.16)size+=Math.round(6+rand()*7);
-      size=Math.min(size,42);
+      let size=Math.round(8+Math.pow(rand(),.62)*27);
+      if(rand()<.20)size+=Math.round(8+rand()*11);
+      size=Math.max(7,Math.min(72,Math.round(size*sizeScale)));
 
-      const delay=-(rand()*10).toFixed(2);
-      const opacityLow=(.10+rand()*.38).toFixed(2);
-      const opacityHigh=Math.min(.98,Number(opacityLow)+.22+rand()*.34).toFixed(2);
-      const x1=Math.round(rand()*34-17),y1=Math.round(rand()*34-17);
-      const x2=Math.round(rand()*40-20),y2=Math.round(rand()*40-20);
-      const rotate=Math.round(rand()*34-17);
-      const rot1=Math.round(rand()*30-15),rot2=Math.round(rand()*34-17);
-      const floatDur=(6.2+rand()*7.8).toFixed(2);
-      const fadeDur=(4.4+rand()*6.6).toFixed(2);
+      const delay=-(rand()*11).toFixed(2);
+      const opacityLow=(.08+rand()*.40).toFixed(2);
+      const opacityHigh=Math.min(.98,Number(opacityLow)+.20+rand()*.38).toFixed(2);
+      const x1=Math.round(rand()*48-24),y1=Math.round(rand()*48-24);
+      const x2=Math.round(rand()*56-28),y2=Math.round(rand()*56-28);
+      const rotate=Math.round(rand()*40-20);
+      const rot1=Math.round(rand()*38-19),rot2=Math.round(rand()*42-21);
+      const floatDur=(5.6+rand()*8.8).toFixed(2);
+      const fadeDur=(4.0+rand()*7.2).toFixed(2);
 
       return '<i style="left:'+pos[0].toFixed(2)+'%;top:'+pos[1].toFixed(2)+'%;font-size:'+size+'px;--spark-delay:'+delay+'s;--spark-opacity-low:'+opacityLow+';--spark-opacity-high:'+opacityHigh+';--spark-x1:'+x1+'px;--spark-y1:'+y1+'px;--spark-x2:'+x2+'px;--spark-y2:'+y2+'px;--spark-rotate:'+rotate+'deg;--spark-r1:'+rot1+'deg;--spark-r2:'+rot2+'deg;--spark-float-dur:'+floatDur+'s;--spark-fade-dur:'+fadeDur+'s">'+sparkleSymbolMarkup(icon)+'</i>';
     }).join('');
@@ -195,12 +198,12 @@
     const bodyScale=1+(scale-1)*.55;
     const vw=window.innerWidth||390;
     personRoot?.style.setProperty('--person-text-scale',String(scale));
-    personRoot?.style.setProperty('--person-name-size',`${Math.min(98,Math.min(56,Math.max(38,vw*.11))*headingScale)}px`);
+    personRoot?.style.setProperty('--person-name-size',`${Math.min(104,Math.min(56,Math.max(38,vw*.11))*headingScale)}px`);
     personRoot?.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
-    personRoot?.style.setProperty('--person-archive-title-size',`${Math.min(54,24*headingScale)}px`);
+    personRoot?.style.setProperty('--person-archive-title-size',`${Math.min(58,24*headingScale)}px`);
     personRoot?.style.setProperty('--person-archive-sub-size',`${10*bodyScale}px`);
     personRoot?.style.setProperty('--person-action-size',`${12*bodyScale}px`);
-    personRoot?.style.setProperty('--person-dossier-name-size',`${Math.min(88,Math.min(48,Math.max(34,vw*.10))*headingScale)}px`);
+    personRoot?.style.setProperty('--person-dossier-name-size',`${Math.min(92,Math.min(48,Math.max(34,vw*.10))*headingScale)}px`);
     personRoot?.style.setProperty('--person-dossier-role-size',`${12*bodyScale}px`);
     personRoot?.style.setProperty('--person-dossier-birthday-size',`${11*bodyScale}px`);
     personRoot?.style.setProperty('--person-section-title-size',`${17*bodyScale}px`);
@@ -387,10 +390,10 @@
     .px-rule{width:min(70vw,330px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;color:var(--person-accent,var(--accent));margin-top:24px}.px-rule span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent))}.px-rule span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent),transparent)}
     .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:var(--person-font,Georgia,serif);font-size:var(--person-archive-title-size,21px);color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:var(--person-archive-sub-size,11px);margin-top:2px}
     #personChoice{margin-top:auto!important;padding-bottom:max(8px,env(safe-area-inset-bottom))}
-    #personView:not(.read-mode){color:var(--person-text)}
+    #personView:not(.read-mode){color:var(--person-text);overflow-x:clip!important}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-custom-emoji{display:block;width:1em;height:1em;line-height:1em;text-align:center}.px-custom-image{display:block;width:1em;height:1em;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.14))}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
+        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:paint}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-custom-emoji{display:block;width:1em;height:1em;line-height:1em;text-align:center}.px-custom-image{display:block;width:1em;height:1em;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.14))}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
     .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxSparkFloat{0%,100%{transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg))}32%{transform:translate3d(var(--spark-x1,7px),var(--spark-y1,-10px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-r1,7deg)))}68%{transform:translate3d(var(--spark-x2,-8px),var(--spark-y2,9px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-r2,-6deg)))}}@keyframes pxSparkFade{0%,100%{opacity:var(--spark-opacity-low,.22)}42%{opacity:var(--spark-opacity-high,.78)}72%{opacity:calc((var(--spark-opacity-low,.22) + var(--spark-opacity-high,.78))/2)}}
