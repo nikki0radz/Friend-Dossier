@@ -126,7 +126,7 @@
       background:
         radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--profile-sparkle) 7%,transparent),transparent 36%),
         rgba(255,255,255,.012)!important;
-      border:0!important;
+      border-color:color-mix(in srgb,var(--profile-frame) 18%,transparent)!important;
       box-shadow:inset 0 1px rgba(255,255,255,.025),0 8px 25px rgba(0,0,0,.28)!important;
     }
   `;
