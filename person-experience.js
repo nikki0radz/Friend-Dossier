@@ -27,6 +27,15 @@
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
   const CUSTOM_SPARKLE_KEY='friendDossier.customSparkles.v1';
+  const BUILTIN_SPARKLE_OPTIONS=[
+    '✦','✧','⋆','★','☆','✶','✷','✸','✹','✺','✵','✴','✳','✲','✱','※',
+    '⟡','◇','◆','◈','♢','♦','⬥','⬦','⬧','❖',
+    '♡','♥','❤','❣','❥','❦','❧','ღ',
+    '♠','♤','♣','♧',
+    '○','●','◌','◎','◉',
+    '☾','☽',
+    '❀','✿','❁'
+  ];
   function readCustomSparkles(){
     try{const parsed=JSON.parse(localStorage.getItem(CUSTOM_SPARKLE_KEY)||'[]');return Array.isArray(parsed)?parsed:[];}catch{return [];}
   }
@@ -35,6 +44,8 @@
     if(String(icon).startsWith('custom:')){
       const custom=customSparkleById(icon);
       if(!custom)return '✦';
+      if(custom.type==='emoji')return `<span class="px-custom-emoji">${esc(custom.value||'✦')}</span>`;
+      if(custom.type==='png'&&custom.data)return `<img class="px-custom-image" src="${esc(custom.data)}" alt="">`;
       const lines=(custom.strokes||[]).map(stroke=>{
         const pts=(stroke||[]).map(p=>Array.isArray(p)?`${Number(p[0]).toFixed(1)},${Number(p[1]).toFixed(1)}`:'').filter(Boolean).join(' ');
         return pts?`<polyline points="${pts}"></polyline>`:'';
@@ -44,11 +55,12 @@
     return esc(icon);
   }
   function sparkleIcons(friend){
-    return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,100):['✦','✧','⋆','✶','☾','⟡'];
+    const chosen=Array.isArray(friend?.profileSparkleIcons)?friend.profileSparkleIcons.filter(icon=>String(icon).startsWith('custom:')||BUILTIN_SPARKLE_OPTIONS.includes(icon)).slice(0,100):[];
+    return chosen.length?chosen:['✦','✧','⋆','✶','☾','⟡'];
   }
   function sparkleCount(friend,area='profile'){
     const density=friend?.profileSparkleDensity||'constellation';
-    const counts={profile:{whisper:7,constellation:18,starfall:44},dossier:{whisper:5,constellation:11,starfall:20}};
+    const counts={profile:{whisper:7,constellation:44,starfall:72},dossier:{whisper:5,constellation:20,starfall:30}};
     return counts[area]?.[density]||counts[area].constellation;
   }
   function sparkleHash(seed=''){
@@ -68,13 +80,20 @@
         [7,67,15],[22,65,18],[40,68,13],[60,66,17],[81,69,15],[94,72,19],
         [4,80,20],[18,78,14],[33,82,18],[51,79,15],[69,83,19],[87,81,16],
         [9,91,17],[29,90,15],[48,91,18],[68,92,14],[92,90,20],
-        [50,23,11],[12,48,12],[88,33,13],[30,59,12]
+        [50,23,11],[12,48,12],[88,33,13],[30,59,12],
+        [2,4,15],[11,5,20],[25,4,13],[36,6,18],[52,4,16],[63,7,21],[77,5,14],[89,6,19],[98,8,16],
+        [5,14,12],[15,13,18],[33,12,15],[47,14,20],[60,12,13],[72,14,18],[86,13,16],
+        [2,22,14],[14,24,20],[39,21,13],[66,23,17],[91,22,15],
+        [10,35,16],[50,34,12],[82,37,18],
+        [24,73,13],[58,75,16],[91,76,14],[47,88,12]
       ],
       dossier:[
         [10,12,10],[86,11,15],[23,25,9],[72,24,13],[7,39,14],[91,38,9],
         [31,48,11],[66,46,8],[15,60,13],[84,61,10],[43,69,9],[71,73,14],
         [9,82,10],[92,85,8],[27,89,12],[57,86,9],[49,31,10],[37,76,8],
-        [78,52,11],[18,44,9]
+        [78,52,11],[18,44,9],
+        [5,8,13],[34,9,10],[58,7,14],[95,18,11],[48,43,12],
+        [6,56,10],[93,73,13],[34,84,9],[63,92,12],[80,31,10]
       ]
     };
     const slots=layouts[area]||layouts.profile;
@@ -338,7 +357,7 @@
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
+        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-custom-emoji{display:block;width:1em;height:1em;line-height:1em;text-align:center}.px-custom-image{display:block;width:1em;height:1em;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.14))}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
     .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxSparkFloat{0%,100%{transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg))}50%{transform:translate3d(var(--spark-float-x,4px),var(--spark-float-y,-9px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-float-rotate,5deg)))}}@keyframes pxSparkFade{0%,100%{opacity:var(--spark-opacity-low,.22)}42%{opacity:var(--spark-opacity-high,.78)}72%{opacity:calc((var(--spark-opacity-low,.22) + var(--spark-opacity-high,.78))/2)}}
