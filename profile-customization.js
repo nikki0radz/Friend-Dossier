@@ -38,6 +38,7 @@
   let sparkleLayoutDrafts={};
   let activeSparkleLayoutDensity='constellation';
   let sparkleLayoutWorking=null;
+  let liveSparkleEdit=null;
 
   function readCustomSparkles(){
     try{
@@ -162,7 +163,7 @@
     $('colourHex')?.addEventListener('change',()=>{const hex=normalHex($('colourHex').value,$(activeColourTarget)?.value||'#ffffff');setTargetColour(activeColourTarget,hex,true);addRecentColour(hex);});
     box.querySelectorAll('.font-option').forEach(btn=>btn.onclick=()=>selectFont(btn.dataset.font));
     $('friendProfileTextScale')?.addEventListener('input',syncTextScaleSlider);
-    box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density,true));
+    box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>beginProfileSparkleEdit(btn.dataset.density));
     bindSparklePicker(box);
     renderRecentColours();
   }
@@ -410,19 +411,20 @@
     for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);}
     return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
   }
-  function defaultSparkleAmount(density){
+  function defaultSparkleAmount(density,area='profile'){
+    if(area==='archive')return density==='whisper'?5:(density==='starfall'?30:20);
     return density==='whisper'?7:(density==='starfall'?80:44);
   }
-  function makeDefaultSparklePoints(seed,density,amount=defaultSparkleAmount(density)){
+  function makeDefaultSparklePoints(seed,density,amount=defaultSparkleAmount(density),area='profile'){
     const rand=layoutHash(String(seed||'friend')+'|sparkle-layout|'+density+'|'+amount);
     const points=[];
     for(let i=0;i<amount;i++){
       const y=Math.max(1,Math.min(99,1+((i+.18+rand()*.64)/amount)*98));
       let x;
-      if(y>9&&y<43){
-        x=rand()<.5 ? 1+rand()*15 : 84+rand()*15;
+      if(area==='profile'&&y>9&&y<43){
+        x=rand()<.5 ? .5+rand()*17 : 82.5+rand()*17;
       }else{
-        x=1+rand()*98;
+        x=.5+rand()*99;
       }
       points.push([Math.round(x*10)/10,Math.round(y*10)/10]);
     }
@@ -433,10 +435,10 @@
     }
     return points;
   }
-  function normalizeSparkleLayout(layout,density,seed){
-    const fallbackAmount=defaultSparkleAmount(density);
+  function normalizeSparkleLayout(layout,density,seed,area='profile'){
+    const fallbackAmount=defaultSparkleAmount(density,area);
     const amount=Math.max(1,Math.min(100,Number(layout?.amount)||fallbackAmount));
-    const size=Math.max(60,Math.min(200,Number(layout?.size)||100));
+    const size=Math.max(50,Math.min(220,Number(layout?.size)||100));
     let points=Array.isArray(layout?.points)
       ? layout.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
           Math.max(1,Math.min(99,Number(p[0]))),
@@ -444,16 +446,18 @@
         ]).slice(0,100)
       : [];
     if(points.length<amount){
-      const generated=makeDefaultSparklePoints(seed,density,amount);
+      const generated=makeDefaultSparklePoints(seed,density,amount,area);
       points=points.concat(generated.slice(points.length,amount));
     }
-    return{amount,size,points};
+    let sizes=Array.isArray(layout?.sizes)?layout.sizes.slice(0,100).map(v=>Math.max(40,Math.min(300,Number(v)||100))):[];
+    while(sizes.length<points.length)sizes.push(100);
+    return{amount,size,points,sizes};
   }
-  function normalizeSparkleLayouts(layouts,seed){
+  function normalizeSparkleLayouts(layouts,seed,area='profile'){
     return{
-      whisper:normalizeSparkleLayout(layouts?.whisper,'whisper',seed),
-      constellation:normalizeSparkleLayout(layouts?.constellation,'constellation',seed),
-      starfall:normalizeSparkleLayout(layouts?.starfall,'starfall',seed)
+      whisper:normalizeSparkleLayout(layouts?.whisper,'whisper',seed,area),
+      constellation:normalizeSparkleLayout(layouts?.constellation,'constellation',seed,area),
+      starfall:normalizeSparkleLayout(layouts?.starfall,'starfall',seed,area)
     };
   }
   function layoutSeed(){
@@ -565,12 +569,173 @@
     sparkleLayoutWorking=null;
   }
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
-  function selectSparkleDensity(value,openEditor=false){
+  function selectSparkleDensity(value){
     const density=['whisper','constellation','starfall'].includes(value)?value:'constellation';
     if($('friendProfileSparkleDensity')) $('friendProfileSparkleDensity').value=density;
     document.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.classList.toggle('active',btn.dataset.density===density));
-    if(openEditor)openSparkleLayoutEditor(density);
   }
+  function ensureLiveSparkleEditor(){
+    let bar=$('sparkleLiveEditor');
+    if(bar)return bar;
+    bar=document.createElement('aside');
+    bar.id='sparkleLiveEditor';
+    bar.className='sparkle-live-editor';
+    bar.innerHTML=`
+      <div class="sparkle-live-head"><strong id="sparkleLiveTitle">Arrange sparkles</strong><small>Drag the frozen sparkles on the real page</small></div>
+      <div class="sparkle-live-ranges">
+        <label><span>Amount <b id="sparkleLiveAmountValue"></b></span><input id="sparkleLiveAmount" type="range" min="1" max="100" step="1"></label>
+        <label><span>Overall size <b id="sparkleLiveOverallValue"></b></span><input id="sparkleLiveOverall" type="range" min="50" max="220" step="5"></label>
+        <label class="sparkle-individual-size"><span>Selected sparkle <b id="sparkleLiveIndividualValue">tap one</b></span><input id="sparkleLiveIndividual" type="range" min="40" max="300" step="5" value="100" disabled></label>
+      </div>
+      <div class="sparkle-live-actions"><button type="button" id="sparkleLiveReset">Reset scatter</button><button type="button" id="sparkleLiveCancel">Cancel</button><button type="button" id="sparkleLiveSave">Save layout ✦</button></div>`;
+    document.body.appendChild(bar);
+    $('sparkleLiveCancel').onclick=()=>finishLiveSparkleEdit(false);
+    $('sparkleLiveSave').onclick=()=>finishLiveSparkleEdit(true);
+    $('sparkleLiveReset').onclick=()=>{
+      if(!liveSparkleEdit)return;
+      const seed=liveSparkleEdit.friend?.id||liveSparkleEdit.friend?.name||'friend';
+      liveSparkleEdit.layout=normalizeSparkleLayout(null,liveSparkleEdit.density,seed,liveSparkleEdit.area);
+      liveSparkleEdit.selected=-1;
+      syncLiveSparkleControls();
+      renderLiveSparkles();
+    };
+    $('sparkleLiveAmount').addEventListener('input',()=>{
+      if(!liveSparkleEdit)return;
+      const layout=liveSparkleEdit.layout;
+      const amount=Math.max(1,Math.min(100,Number($('sparkleLiveAmount').value)||1));
+      if(layout.points.length<amount){
+        const extra=makeDefaultSparklePoints((liveSparkleEdit.friend?.id||'friend')+'|extra|'+layout.points.length,liveSparkleEdit.density,amount,liveSparkleEdit.area);
+        while(layout.points.length<amount){
+          const i=layout.points.length;
+          layout.points.push(extra[i]||[50,50]);
+          layout.sizes.push(100);
+        }
+      }
+      layout.amount=amount;
+      if(liveSparkleEdit.selected>=amount)liveSparkleEdit.selected=-1;
+      syncLiveSparkleControls();renderLiveSparkles();
+    });
+    $('sparkleLiveOverall').addEventListener('input',()=>{
+      if(!liveSparkleEdit)return;
+      liveSparkleEdit.layout.size=Math.max(50,Math.min(220,Number($('sparkleLiveOverall').value)||100));
+      syncLiveSparkleControls();renderLiveSparkles();
+    });
+    $('sparkleLiveIndividual').addEventListener('input',()=>{
+      if(!liveSparkleEdit||liveSparkleEdit.selected<0)return;
+      const v=Math.max(40,Math.min(300,Number($('sparkleLiveIndividual').value)||100));
+      liveSparkleEdit.layout.sizes[liveSparkleEdit.selected]=v;
+      syncLiveSparkleControls();renderLiveSparkles();
+    });
+    return bar;
+  }
+  function liveSparkleLayer(){
+    return liveSparkleEdit?.area==='archive'
+      ? document.querySelector('.px-dossier-sparks')
+      : document.querySelector('#personView>.px-ambient');
+  }
+  function syncLiveSparkleControls(){
+    if(!liveSparkleEdit)return;
+    const l=liveSparkleEdit.layout;
+    $('sparkleLiveAmount').value=l.amount;
+    $('sparkleLiveOverall').value=l.size;
+    $('sparkleLiveAmountValue').textContent=l.amount;
+    $('sparkleLiveOverallValue').textContent=l.size+'%';
+    const individual=$('sparkleLiveIndividual');
+    const has=liveSparkleEdit.selected>=0&&liveSparkleEdit.selected<l.amount;
+    individual.disabled=!has;
+    individual.value=has?(l.sizes[liveSparkleEdit.selected]||100):100;
+    $('sparkleLiveIndividualValue').textContent=has?(individual.value+'%'):'tap one';
+  }
+  function renderLiveSparkles(){
+    if(!liveSparkleEdit)return;
+    const layer=liveSparkleLayer();if(!layer)return;
+    const clone={...liveSparkleEdit.friend,profileSparkleDensity:liveSparkleEdit.density};
+    if(typeof window.friendDossierSparkleMarkup==='function'){
+      layer.innerHTML=window.friendDossierSparkleMarkup(clone,liveSparkleEdit.area,liveSparkleEdit.layout);
+    }
+    layer.querySelectorAll('i[data-sparkle-index]').forEach(el=>{
+      const index=Number(el.dataset.sparkleIndex);
+      el.classList.toggle('sparkle-edit-selected',index===liveSparkleEdit.selected);
+    });
+  }
+  function bindLiveSparkleDrag(){
+    const layer=liveSparkleLayer();if(!layer||layer.dataset.sparkleEditBound==='1')return;
+    layer.dataset.sparkleEditBound='1';
+    let dragging=-1;
+    const select=(index)=>{
+      if(!liveSparkleEdit)return;
+      liveSparkleEdit.selected=index;
+      syncLiveSparkleControls();
+      layer.querySelectorAll('i[data-sparkle-index]').forEach(el=>el.classList.toggle('sparkle-edit-selected',Number(el.dataset.sparkleIndex)===index));
+    };
+    const move=e=>{
+      if(dragging<0||!liveSparkleEdit)return;
+      const rect=layer.getBoundingClientRect();
+      const x=Math.max(.5,Math.min(99.5,((e.clientX-rect.left)/rect.width)*100));
+      const y=Math.max(.5,Math.min(99.5,((e.clientY-rect.top)/rect.height)*100));
+      liveSparkleEdit.layout.points[dragging]=[Math.round(x*10)/10,Math.round(y*10)/10];
+      const el=layer.querySelector(`i[data-sparkle-index="${dragging}"]`);
+      if(el){el.style.left=x+'%';el.style.top=y+'%';}
+    };
+    layer.addEventListener('pointerdown',e=>{
+      const el=e.target.closest?.('i[data-sparkle-index]');if(!el||!liveSparkleEdit)return;
+      e.preventDefault();dragging=Number(el.dataset.sparkleIndex);select(dragging);
+      el.setPointerCapture?.(e.pointerId);move(e);
+    });
+    layer.addEventListener('pointermove',e=>{if(dragging>=0){e.preventDefault();move(e);}});
+    const stop=()=>{dragging=-1;};
+    layer.addEventListener('pointerup',stop);layer.addEventListener('pointercancel',stop);
+  }
+  function startLiveSparkleEdit(area,density,layout,returnDialog=false){
+    const friend=selected();if(!friend)return;
+    liveSparkleEdit={area,density,layout:JSON.parse(JSON.stringify(layout)),friend,returnDialog,selected:-1};
+    ensureLiveSparkleEditor().classList.add('open');
+    document.body.classList.add('sparkle-live-editing');
+    $('sparkleLiveTitle').textContent=(area==='archive'?'Archive · ':'')+density.charAt(0).toUpperCase()+density.slice(1);
+    syncLiveSparkleControls();
+    renderLiveSparkles();
+    bindLiveSparkleDrag();
+  }
+  function beginProfileSparkleEdit(density){
+    density=['whisper','constellation','starfall'].includes(density)?density:'constellation';
+    selectSparkleDensity(density);
+    activeSparkleLayoutDensity=density;
+    const current=sparkleLayoutDrafts[density]||normalizeSparkleLayout(null,density,layoutSeed(),'profile');
+    const dialog=$('friendDialog');
+    if(dialog?.open)dialog.close();
+    renderPersonHero();showChoice();
+    requestAnimationFrame(()=>startLiveSparkleEdit('profile',density,current,true));
+  }
+  function beginArchiveSparkleEdit(){
+    const friend=selected();if(!friend)return;
+    const density=friend.profileSparkleDensity||'constellation';
+    const layouts=normalizeSparkleLayouts(friend.archiveSparkleLayouts,friend.id||friend.name||'friend','archive');
+    startLiveSparkleEdit('archive',density,layouts[density],false);
+  }
+  function finishLiveSparkleEdit(save){
+    if(!liveSparkleEdit)return;
+    const edit=liveSparkleEdit;
+    document.body.classList.remove('sparkle-live-editing');
+    $('sparkleLiveEditor')?.classList.remove('open');
+    const layer=liveSparkleLayer();if(layer)delete layer.dataset.sparkleEditBound;
+    if(save){
+      if(edit.area==='profile'){
+        sparkleLayoutDrafts[edit.density]=JSON.parse(JSON.stringify(edit.layout));
+      }else{
+        edit.friend.archiveSparkleLayouts=edit.friend.archiveSparkleLayouts&&typeof edit.friend.archiveSparkleLayouts==='object'?edit.friend.archiveSparkleLayouts:{};
+        edit.friend.archiveSparkleLayouts[edit.density]=JSON.parse(JSON.stringify(edit.layout));
+        persistFriends();
+      }
+    }
+    liveSparkleEdit=null;
+    if(edit.area==='archive'){
+      renderRead();
+    }else{
+      renderPersonHero();showChoice();
+      if(edit.returnDialog)requestAnimationFrame(()=>safeOpen($('friendDialog')));
+    }
+  }
+  window.openArchiveSparkleEditor=beginArchiveSparkleEdit;
   function selectedSparkleIcons(){
     return [...document.querySelectorAll('#profileSparkleIcons input:checked')].map(input=>input.value).slice(0,100);
   }
@@ -668,6 +833,11 @@
     .sparkle-density-options button small{display:block!important;margin-top:5px!important;font-size:8px!important;line-height:1.25!important;color:var(--muted)!important;font-weight:500!important}
     .sparkle-density-options button.active{border-color:color-mix(in srgb,var(--accent) 78%,white 8%)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),rgba(255,255,255,.025))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 16px color-mix(in srgb,var(--accent) 13%,transparent)!important}
     .sparkle-density-options button.active b{color:color-mix(in srgb,var(--accent) 72%,white 28%)!important}
+    .sparkle-live-editor{position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:120500;display:none;width:min(calc(100vw - 20px),540px);margin:0 auto;padding:12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.15));background:color-mix(in srgb,#171124 92%,transparent);color:#f7f2fb;box-shadow:0 18px 55px rgba(0,0,0,.48);backdrop-filter:blur(16px)}.sparkle-live-editor.open{display:block}
+    .sparkle-live-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}.sparkle-live-head strong{font:800 14px Georgia,serif}.sparkle-live-head small{font:9px system-ui;color:rgba(247,242,251,.52)}
+    .sparkle-live-ranges{display:grid;grid-template-columns:1fr 1fr;gap:7px}.sparkle-live-ranges label{display:grid;gap:4px;font:9px system-ui;color:rgba(247,242,251,.65)}.sparkle-live-ranges label span{display:flex;justify-content:space-between}.sparkle-live-ranges .sparkle-individual-size{grid-column:1/-1}.sparkle-live-ranges input{width:100%;accent-color:var(--accent)}
+    .sparkle-live-actions{display:grid;grid-template-columns:.9fr .7fr 1.2fr;gap:6px;margin-top:8px}.sparkle-live-actions button{min-height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:#f7f2fb;font-size:10px;font-weight:800}.sparkle-live-actions #sparkleLiveSave{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+    body.sparkle-live-editing{overflow:hidden!important;overscroll-behavior:none!important}.sparkle-live-editing #personView>.px-ambient,.sparkle-live-editing .px-dossier-sparks{pointer-events:auto!important;z-index:120000!important}.sparkle-live-editing #personView>.px-ambient i,.sparkle-live-editing .px-dossier-sparks i{animation:none!important;transform:none!important;opacity:.76!important;pointer-events:auto!important;cursor:grab!important;touch-action:none!important;text-shadow:0 0 9px currentColor!important}.sparkle-live-editing #personView>.px-ambient i.sparkle-edit-selected,.sparkle-live-editing .px-dossier-sparks i.sparkle-edit-selected{outline:2px solid color-mix(in srgb,var(--accent) 72%,white 18%);outline-offset:5px;border-radius:50%;opacity:1!important}.sparkle-live-editing #personView>*:not(.px-ambient),.sparkle-live-editing .px-dossier>*:not(.px-dossier-sparks){pointer-events:none!important}
     .sparkle-density-options button:after{content:'tap to arrange';display:block;margin-top:5px;font-size:7px;letter-spacing:.05em;text-transform:uppercase;color:color-mix(in srgb,var(--muted) 72%,transparent)}
     .sparkle-layout-modal{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;background:rgba(10,7,14,.96);color:#f7f2fb;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));box-sizing:border-box}
     .sparkle-layout-modal::backdrop{background:rgba(4,3,8,.68);backdrop-filter:blur(4px)}
