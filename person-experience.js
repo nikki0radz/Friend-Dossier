@@ -58,31 +58,25 @@
     const chosen=Array.isArray(friend?.profileSparkleIcons)?friend.profileSparkleIcons.filter(icon=>String(icon).startsWith('custom:')||BUILTIN_SPARKLE_OPTIONS.includes(icon)).slice(0,100):[];
     return chosen.length?chosen:['✦','✧','⋆','✶','☾','⟡'];
   }
-  function sparkleCount(friend,area='profile'){
-    const density=friend?.profileSparkleDensity||'constellation';
-    if(area==='profile'){
-      const saved=friend?.profileSparkleLayouts?.[density];
-      const fallback=density==='whisper'?7:(density==='starfall'?80:44);
-      return Math.max(1,Math.min(100,Number(saved?.amount)||fallback));
-    }
-    const counts={dossier:{whisper:5,constellation:20,starfall:30}};
-    return counts.dossier[density]||counts.dossier.constellation;
+  function defaultSparkleAmount(density,area='profile'){
+    if(area==='archive')return density==='whisper'?5:(density==='starfall'?30:20);
+    return density==='whisper'?7:(density==='starfall'?80:44);
   }
   function sparkleHash(seed=''){
     let h=2166136261;
     for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);}
     return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
   }
-  function makeDefaultProfilePoints(friend,density,amount){
-    const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|sparkle-layout|'+density+'|'+amount);
+  function makeDefaultSparklePoints(friend,density,amount,area='profile'){
+    const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|'+area+'-sparkle-layout|'+density+'|'+amount);
     const points=[];
     for(let i=0;i<amount;i++){
-      const y=Math.max(1,Math.min(99,1+((i+.18+rand()*.64)/amount)*98));
+      const y=Math.max(.5,Math.min(99.5,.5+((i+.12+rand()*.76)/amount)*99));
       let x;
-      if(y>9&&y<43){
-        x=rand()<.5 ? 1+rand()*15 : 84+rand()*15;
+      if(area==='profile'&&y>9&&y<43){
+        x=rand()<.5 ? .5+rand()*17 : 82.5+rand()*17;
       }else{
-        x=1+rand()*98;
+        x=.5+rand()*99;
       }
       points.push([x,y]);
     }
@@ -92,38 +86,37 @@
     }
     return points;
   }
-  function profileSparkleLayout(friend){
+  function sparkleAreaLayout(friend,area='profile',overrideLayout=null){
     const density=friend?.profileSparkleDensity||'constellation';
-    const fallbackAmount=density==='whisper'?7:(density==='starfall'?80:44);
-    const saved=friend?.profileSparkleLayouts?.[density];
+    const source=area==='archive'?friend?.archiveSparkleLayouts:friend?.profileSparkleLayouts;
+    const saved=overrideLayout||source?.[density];
+    const fallbackAmount=defaultSparkleAmount(density,area);
     const amount=Math.max(1,Math.min(100,Number(saved?.amount)||fallbackAmount));
-    const size=Math.max(60,Math.min(200,Number(saved?.size)||100));
+    const size=Math.max(50,Math.min(220,Number(saved?.size)||100));
     let points=Array.isArray(saved?.points)
       ? saved.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
-          Math.max(1,Math.min(99,Number(p[0]))),
-          Math.max(1,Math.min(99,Number(p[1])))
+          Math.max(.5,Math.min(99.5,Number(p[0]))),
+          Math.max(.5,Math.min(99.5,Number(p[1])))
         ]).slice(0,100)
       : [];
     if(points.length<amount){
-      const generated=makeDefaultProfilePoints(friend,density,amount);
+      const generated=makeDefaultSparklePoints(friend,density,amount,area);
       points=points.concat(generated.slice(points.length,amount));
     }
-    return{amount,size,points};
+    let sizes=Array.isArray(saved?.sizes)?saved.sizes.slice(0,100).map(v=>Math.max(40,Math.min(300,Number(v)||100))):[];
+    while(sizes.length<points.length)sizes.push(100);
+    return{amount,size,points,sizes};
   }
-  function profileSparkleSlots(friend,count){
-    return profileSparkleLayout(friend).points.slice(0,count);
+  function sparkleCount(friend,area='profile',overrideLayout=null){
+    return sparkleAreaLayout(friend,area,overrideLayout).amount;
   }
-  function sparkleMarkup(friend,area='profile'){
-    const icons=sparkleIcons(friend),count=sparkleCount(friend,area);
+  function sparkleMarkup(friend,area='profile',overrideLayout=null){
+    const icons=sparkleIcons(friend);
+    const layout=sparkleAreaLayout(friend,area,overrideLayout);
+    const count=layout.amount;
     const rand=sparkleHash(String(friend?.id||friend?.name||'friend')+'|'+area+'|'+icons.join('|')+'|'+(friend?.profileSparkleDensity||'constellation'));
-    const dossierSlots=[
-      [10,12],[86,11],[23,25],[72,24],[7,39],[91,38],[31,48],[66,46],[15,60],[84,61],
-      [43,69],[71,73],[9,82],[92,85],[27,89],[57,86],[49,31],[37,76],[78,52],[18,44],
-      [5,8],[34,9],[58,7],[95,18],[48,43],[6,56],[93,73],[34,84],[63,92],[80,31]
-    ];
-    const profileLayout=area==='profile'?profileSparkleLayout(friend):null;
-    const slots=area==='profile'?profileLayout.points.slice(0,count):dossierSlots.slice(0,count);
-    const sizeScale=profileLayout?profileLayout.size/100:1;
+    const slots=layout.points.slice(0,count);
+    const sizeScale=layout.size/100;
 
     let pool=[];
     function nextIcon(){
@@ -137,11 +130,12 @@
       return pool.pop()||icons[0];
     }
 
-    return slots.map(pos=>{
+    return slots.map((pos,index)=>{
       const icon=nextIcon();
       let size=Math.round(8+Math.pow(rand(),.62)*27);
       if(rand()<.20)size+=Math.round(8+rand()*11);
-      size=Math.max(7,Math.min(72,Math.round(size*sizeScale)));
+      const individual=(layout.sizes[index]||100)/100;
+      size=Math.max(6,Math.min(110,Math.round(size*sizeScale*individual)));
 
       const delay=-(rand()*11).toFixed(2);
       const opacityLow=(.08+rand()*.40).toFixed(2);
@@ -153,9 +147,10 @@
       const floatDur=(5.6+rand()*8.8).toFixed(2);
       const fadeDur=(4.0+rand()*7.2).toFixed(2);
 
-      return '<i style="left:'+pos[0].toFixed(2)+'%;top:'+pos[1].toFixed(2)+'%;font-size:'+size+'px;--spark-delay:'+delay+'s;--spark-opacity-low:'+opacityLow+';--spark-opacity-high:'+opacityHigh+';--spark-x1:'+x1+'px;--spark-y1:'+y1+'px;--spark-x2:'+x2+'px;--spark-y2:'+y2+'px;--spark-rotate:'+rotate+'deg;--spark-r1:'+rot1+'deg;--spark-r2:'+rot2+'deg;--spark-float-dur:'+floatDur+'s;--spark-fade-dur:'+fadeDur+'s">'+sparkleSymbolMarkup(icon)+'</i>';
+      return '<i data-sparkle-index="'+index+'" style="left:'+pos[0].toFixed(2)+'%;top:'+pos[1].toFixed(2)+'%;font-size:'+size+'px;--spark-delay:'+delay+'s;--spark-opacity-low:'+opacityLow+';--spark-opacity-high:'+opacityHigh+';--spark-x1:'+x1+'px;--spark-y1:'+y1+'px;--spark-x2:'+x2+'px;--spark-y2:'+y2+'px;--spark-rotate:'+rotate+'deg;--spark-r1:'+rot1+'deg;--spark-r2:'+rot2+'deg;--spark-float-dur:'+floatDur+'s;--spark-fade-dur:'+fadeDur+'s">'+sparkleSymbolMarkup(icon)+'</i>';
     }).join('');
   }
+  window.friendDossierSparkleMarkup=sparkleMarkup;
   function frameEmojis(friend){
     if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length) return friend.frameEmojis.filter(Boolean).slice(0,3);
     if(friend?.frameStyle==='flowers') return ['🌸'];
@@ -333,7 +328,7 @@
     const bd=formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear);
     p.innerHTML=`<section class="character-sheet px-dossier" style="--profile-frame:${esc(frame)};--profile-bg:${esc(bg)};--profile-text:${esc(text)};--profile-heading:${esc(head)};--profile-sparkle:${esc(spark)};--px-font:${font}">
       <div class="character-card-actions"><button class="character-back" id="backToChoices">‹ Profile</button><span>FRIEND DOSSIER</span><button class="character-edit" id="editEntriesBtn">Edit entries</button></div>
-      <div class="px-dossier-sparks" aria-hidden="true">${sparkleMarkup(f,'dossier')}</div>
+      <div class="px-dossier-sparks" aria-hidden="true">${sparkleMarkup(f,'archive')}</div><button type="button" id="editArchiveSparkles" class="archive-sparkle-edit-fab">✦ Arrange sparkles</button>
       <div class="px-dossier-head">${portraitMarkup(f,'px-dossier-portrait')}<div class="character-name">${esc(f.name)}</div>${f.relationship?`<div class="character-role">${esc(f.relationship)}</div>`:''}${bd?`<div class="character-birthday">🎂 ${esc(bd)}</div>`:''}</div>
       <div class="character-divider"><span></span><b>◆</b><span></span></div>
       <div class="px-dossier-tools"><button id="dossierAddInfo">＋ Add info</button><button id="dossierEditPerson">✎ Edit person</button></div>
@@ -344,6 +339,7 @@
     $('editEntriesBtn').onclick=renderReadEdit;
     $('dossierAddInfo').onclick=showAddInfo;
     $('dossierEditPerson').onclick=()=>openFriendDialog(f);
+    $('editArchiveSparkles').onclick=()=>window.openArchiveSparkleEditor?.();
     const story=$('readStory');
     if(!f.entries.length){story.innerHTML='<div class="read-empty">No lore recorded yet ✦</div>';return;}
     const groups=new Map();f.entries.forEach(e=>{if(!groups.has(e.type))groups.set(e.type,[]);groups.get(e.type).push(e);});
@@ -390,11 +386,12 @@
     .px-rule{width:min(70vw,330px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;color:var(--person-accent,var(--accent));margin-top:24px}.px-rule span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent))}.px-rule span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent),transparent)}
     .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:var(--person-font,Georgia,serif);font-size:var(--person-archive-title-size,21px);color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:var(--person-archive-sub-size,11px);margin-top:2px}
     #personChoice{margin-top:auto!important;padding-bottom:max(8px,env(safe-area-inset-bottom))}
-    #personView:not(.read-mode){color:var(--person-text);overflow-x:clip!important}
+    #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:paint}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-custom-emoji{display:block;width:1em;height:1em;line-height:1em;text-align:center}.px-custom-image{display:block;width:1em;height:1em;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.14))}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
-    .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
+        .px-ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:paint}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-custom-emoji{display:block;width:1em;height:1em;line-height:1em;text-align:center}.px-custom-image{display:block;width:1em;height:1em;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,255,255,.14))}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
+    .px-dossier{font-family:var(--px-font);position:relative;isolation:isolate;overflow:clip}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:paint}.px-dossier>*:not(.px-dossier-sparks){position:relative;z-index:1}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
+    .archive-sparkle-edit-fab{position:fixed;right:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:25;border:1px solid color-mix(in srgb,var(--profile-sparkle) 46%,rgba(255,255,255,.14));border-radius:999px;background:color-mix(in srgb,var(--profile-bg) 88%,transparent);color:var(--profile-heading);padding:9px 13px;font-size:10px;font-weight:850;box-shadow:0 8px 26px rgba(0,0,0,.28);backdrop-filter:blur(12px)}body.sparkle-live-editing .archive-sparkle-edit-fab{display:none!important}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxSparkFloat{0%,100%{transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg))}32%{transform:translate3d(var(--spark-x1,7px),var(--spark-y1,-10px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-r1,7deg)))}68%{transform:translate3d(var(--spark-x2,-8px),var(--spark-y2,9px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-r2,-6deg)))}}@keyframes pxSparkFade{0%,100%{opacity:var(--spark-opacity-low,.22)}42%{opacity:var(--spark-opacity-high,.78)}72%{opacity:calc((var(--spark-opacity-low,.22) + var(--spark-opacity-high,.78))/2)}}
     .category-gallery{display:flex;gap:7px;overflow-x:auto;padding:10px 1px 2px;margin-top:7px;scroll-snap-type:x proximity;scrollbar-width:none}.category-gallery::-webkit-scrollbar{display:none}
