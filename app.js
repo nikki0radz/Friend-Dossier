@@ -173,6 +173,7 @@ function normalizeFriend(f={}){
       profileSparkle:f.profileSparkle||f.frameColor||settings.accent,
       profileSparkleIcons:Array.isArray(f.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,100):['✦','✧','⋆','✶','☾','⟡'],
       profileSparkleDensity:['whisper','constellation','starfall'].includes(f.profileSparkleDensity)?f.profileSparkleDensity:'constellation',
+      profileSparkleLayouts:(f.profileSparkleLayouts&&typeof f.profileSparkleLayouts==='object')?f.profileSparkleLayouts:{},
       profileFont:f.profileFont||'default',
       profileTextScale:Number.isFinite(Number(f.profileTextScale))?Number(f.profileTextScale):100,
       photoSourceData:f.photoSourceData||f.imageData||'',
@@ -191,7 +192,7 @@ function normalizeFriend(f={}){
   if(f.otherDate)entries.push({id:uid(),type:'date',emoji:'📅',title:f.otherDateLabel||'Important date',value:'',day:Number(f.otherDate.slice(8,10)),month:Number(f.otherDate.slice(5,7)),year:Number(f.otherDate.slice(0,4)),recurring:true});
   let birthdayDay='',birthdayMonth='',birthdayYear='';
   if(f.birthday){birthdayYear=Number(f.birthday.slice(0,4));birthdayMonth=Number(f.birthday.slice(5,7));birthdayDay=Number(f.birthday.slice(8,10));}
-  return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay,birthdayMonth,birthdayYear,entries,bubbleColor:'',frameStyle:'none',frameColor:'',frameEmojis:[],profileBg:'#1b1326',profileText:'#f4edf7',profileHeading:'#f6d5ff',profileSparkle:settings.accent,profileSparkleIcons:['✦','✧','⋆','✶','☾','⟡'],profileSparkleDensity:'constellation',profileFont:'default',profileTextScale:100,photoSourceData:f.imageData||'',photoX:50,photoY:50,photoZoom:100};
+  return{id:f.id||uid(),name:f.name||'Unnamed',relationship:f.relationship||'',imageData:f.imageData||'',birthdayDay,birthdayMonth,birthdayYear,entries,bubbleColor:'',frameStyle:'none',frameColor:'',frameEmojis:[],profileBg:'#1b1326',profileText:'#f4edf7',profileHeading:'#f6d5ff',profileSparkle:settings.accent,profileSparkleIcons:['✦','✧','⋆','✶','☾','⟡'],profileSparkleDensity:'constellation',profileSparkleLayouts:{},profileFont:'default',profileTextScale:100,photoSourceData:f.imageData||'',photoX:50,photoY:50,photoZoom:100};
 }
 function persistFriends(){ try{localStorage.setItem(DATA_KEY,JSON.stringify(state.friends));return true;}catch(err){console.error('Friend Dossier save failed',err);return false;} }
 function loadData(){ let migrated=false;try{let raw=localStorage.getItem(DATA_KEY);if(!raw){for(const key of LEGACY_KEYS){const candidate=localStorage.getItem(key);if(candidate){raw=candidate;migrated=true;break;}}}if(raw){const parsed=JSON.parse(raw);const arr=Array.isArray(parsed)?parsed:(Array.isArray(parsed?.friends)?parsed.friends:[]);state.friends=arr.map(normalizeFriend);if(migrated)persistFriends();}}catch(err){console.error('Friend Dossier load failed',err);state.friends=[];}try{const rawSettings=localStorage.getItem(SETTINGS_KEY);if(rawSettings){const parsed=JSON.parse(rawSettings);{
