@@ -182,7 +182,7 @@
   function ensureSparkleDrawer(){
     let modal=$('sparkleDrawModal');
     if(modal)return modal;
-    modal=document.createElement('div');
+    modal=document.createElement('dialog');
     modal.id='sparkleDrawModal';
     modal.className='sparkle-draw-modal';
     modal.innerHTML=`
@@ -228,6 +228,7 @@
         </div>
       </section>`;
     document.body.appendChild(modal);
+    modal.addEventListener('cancel',e=>{e.preventDefault();closeSparkleDrawer();});
 
     $('sparkleDrawCancel').onclick=()=>{
       if(!$('sparkleCreateHome')?.classList.contains('hidden'))closeSparkleDrawer();
@@ -305,11 +306,17 @@
   }
   function openSparkleDrawer(){
     const modal=ensureSparkleDrawer();
-    modal.classList.add('open');document.body.classList.add('sparkle-drawing-open');
+    if(!modal.open) modal.showModal();
+    modal.classList.add('open');
+    document.body.classList.add('sparkle-drawing-open');
     showSparkleMaker('home');
   }
   function closeSparkleDrawer(){
-    $('sparkleDrawModal')?.classList.remove('open');document.body.classList.remove('sparkle-drawing-open');activeSparkleStroke=null;
+    const modal=$('sparkleDrawModal');
+    modal?.classList.remove('open');
+    if(modal?.open) modal.close();
+    document.body.classList.remove('sparkle-drawing-open');
+    activeSparkleStroke=null;
   }
   function addCustomSparkle(item){
     const items=readCustomSparkles();
@@ -468,7 +475,8 @@
     .profile-sparkle-icon .custom-sparkle-svg polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
     .profile-sparkle-add{aspect-ratio:1!important;border:1px dashed color-mix(in srgb,var(--accent) 48%,rgba(255,255,255,.12))!important;border-radius:13px!important;background:color-mix(in srgb,var(--accent) 6%,transparent)!important;color:var(--text)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;padding:4px!important}
     .profile-sparkle-add span{font-size:22px!important;line-height:1!important;color:var(--accent)!important}.profile-sparkle-add small{font:700 8px/1.05 system-ui,sans-serif!important;color:var(--muted)!important}
-    .sparkle-draw-modal{position:fixed;inset:0;z-index:120000;display:none;align-items:stretch;justify-content:center;background:rgba(9,6,14,.82);backdrop-filter:blur(18px);padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom))}
+    .sparkle-draw-modal{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;display:none;align-items:stretch;justify-content:center;background:rgba(9,6,14,.94);color:#f7f2fb;backdrop-filter:blur(18px);padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));box-sizing:border-box}
+    .sparkle-draw-modal::backdrop{background:rgba(5,3,9,.58);backdrop-filter:blur(4px)}
     .sparkle-draw-modal.open{display:flex}.sparkle-draw-sheet{width:min(100%,520px);min-height:100%;display:flex;flex-direction:column;justify-content:center;color:#f7f2fb}
     .sparkle-draw-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:8px}.sparkle-draw-head button{justify-self:start;border:0;background:transparent;color:#f7f2fb;font:700 14px system-ui;padding:8px 0}.sparkle-draw-head strong{font:700 22px Georgia,serif}.sparkle-draw-sheet>p{text-align:center;margin:4px auto 18px;max-width:330px;color:rgba(247,242,251,.62);font:12px/1.45 system-ui}
     .sparkle-canvas-wrap{width:min(82vw,360px);aspect-ratio:1;margin:0 auto;border-radius:24px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 65%),rgba(255,255,255,.025);box-shadow:inset 0 0 40px rgba(255,255,255,.025),0 18px 50px rgba(0,0,0,.28);overflow:hidden}
