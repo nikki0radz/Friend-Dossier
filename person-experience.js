@@ -119,7 +119,21 @@
     const fontKey=(f.profileFont in FONT_MAP)?f.profileFont:'default';
     const personRoot=$('personView');
     const textScale=Math.max(80,Math.min(140,Number(f.profileTextScale)||100));
-    personRoot?.style.setProperty('--person-text-scale',String(textScale/100));
+    const scale=textScale/100;
+    const bodyScale=1+(scale-1)*.65;
+    const vw=window.innerWidth||390;
+    personRoot?.style.setProperty('--person-text-scale',String(scale));
+    personRoot?.style.setProperty('--person-name-size',`${Math.min(56,Math.max(38,vw*.11))*scale}px`);
+    personRoot?.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
+    personRoot?.style.setProperty('--person-archive-title-size',`${24*scale}px`);
+    personRoot?.style.setProperty('--person-archive-sub-size',`${10*bodyScale}px`);
+    personRoot?.style.setProperty('--person-action-size',`${12*bodyScale}px`);
+    personRoot?.style.setProperty('--person-dossier-name-size',`${Math.min(48,Math.max(34,vw*.10))*scale}px`);
+    personRoot?.style.setProperty('--person-dossier-role-size',`${12*bodyScale}px`);
+    personRoot?.style.setProperty('--person-dossier-birthday-size',`${11*bodyScale}px`);
+    personRoot?.style.setProperty('--person-section-title-size',`${17*bodyScale}px`);
+    personRoot?.style.setProperty('--person-entry-size',`${13*bodyScale}px`);
+    personRoot?.style.setProperty('--person-entry-detail-size',`${11*bodyScale}px`);
     personRoot?.classList.toggle('custom-text-size',textScale!==100);
     syncProfileAura(f);
     if(fontKey==='default'){
@@ -282,19 +296,6 @@
     #app{position:relative;z-index:1}
 
     #personView.custom-person-font,#personView.custom-person-font *{font-family:var(--person-font)!important}
-    #personView.custom-text-size .px-name,
-    #personView.custom-text-size .px-role,
-    #personView.custom-text-size .px-birthday,
-    #personView.custom-text-size .px-open-dossier strong,
-    #personView.custom-text-size .px-open-dossier small,
-    #personView.custom-text-size .px-secondary-actions strong,
-    #personView.custom-text-size .px-dossier .character-name,
-    #personView.custom-text-size .px-dossier .character-role,
-    #personView.custom-text-size .px-dossier .character-birthday,
-    #personView.custom-text-size .px-dossier .character-section-title strong,
-    #personView.custom-text-size .px-dossier .entry-main,
-    #personView.custom-text-size .px-dossier .entry-detail,
-    #personView.custom-text-size .px-dossier li{zoom:var(--person-text-scale)}
     #personView:not(.read-mode){min-height:calc(100dvh - 18px);display:flex;flex-direction:column;position:relative;overflow:visible;padding-bottom:28px}
     #personView:not(.read-mode) #personBackBtn{position:relative;z-index:5;align-self:flex-start}
     #personView:not(.read-mode) #personHero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:18px 12px 12px;position:relative}
@@ -309,16 +310,16 @@
     .px-hero-portrait.has-bubble>img,.px-hero-portrait.has-bubble>.px-initials,.px-dossier-portrait.has-bubble>img,.px-dossier-portrait.has-bubble>.px-initials{width:82%;height:82%}
     .px-initials{display:grid!important;place-items:center;background:linear-gradient(145deg,var(--px-frame),color-mix(in srgb,var(--px-frame) 28%,#fff));font-size:42px;font-weight:900;color:#2a1833}
     .px-wreath{position:absolute;inset:0;z-index:4;pointer-events:none}.px-wreath-piece{position:absolute;font-size:calc(clamp(25px,7.3vw,40px) * var(--s));line-height:1;filter:drop-shadow(0 3px 3px rgba(0,0,0,.3));white-space:nowrap}.px-dossier-portrait .px-wreath-piece{font-size:calc(clamp(20px,5.7vw,31px) * var(--s))}
-    .px-name{font-family:var(--person-font,Georgia,serif);font-size:clamp(38px,11vw,56px);line-height:.95;margin-top:23px;text-align:center;color:var(--person-heading,var(--person-text));text-shadow:0 4px 24px rgba(0,0,0,.42)}
-    .px-role{margin-top:10px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:color-mix(in srgb,var(--person-text) 78%,transparent)}.px-birthday{margin-top:10px;font-size:12px;color:var(--person-text)}
+    .px-name{font-family:var(--person-font,Georgia,serif);font-size:var(--person-name-size,clamp(38px,11vw,56px));line-height:.95;margin-top:23px;text-align:center;color:var(--person-heading,var(--person-text));text-shadow:0 4px 24px rgba(0,0,0,.42)}
+    .px-role{margin-top:10px;font-size:var(--person-meta-size,12px);text-transform:uppercase;letter-spacing:.18em;color:color-mix(in srgb,var(--person-text) 78%,transparent)}.px-birthday{margin-top:10px;font-size:var(--person-meta-size,12px);color:var(--person-text)}
     .px-rule{width:min(70vw,330px);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;color:var(--person-accent,var(--accent));margin-top:24px}.px-rule span{height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent))}.px-rule span:last-child{background:linear-gradient(90deg,color-mix(in srgb,var(--person-accent,var(--accent)) 70%,transparent),transparent)}
-    .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:var(--person-font,Georgia,serif);font-size:21px;color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:11px;margin-top:2px}
+    .px-open-dossier{width:min(88vw,520px);margin:4px auto 0;padding:19px 20px;border-radius:22px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 42%,transparent);background:linear-gradient(145deg,color-mix(in srgb,var(--person-accent,var(--accent)) 10%,transparent),rgba(255,255,255,.025));color:var(--person-text);display:grid;grid-template-columns:auto 1fr;grid-template-areas:'icon title' 'icon sub';column-gap:13px;text-align:left;box-shadow:0 16px 38px rgba(0,0,0,.2)}.px-open-dossier>span{grid-area:icon;align-self:center;font-size:27px;color:var(--person-accent,var(--accent));text-shadow:0 0 12px currentColor}.px-open-dossier strong{grid-area:title;font-family:var(--person-font,Georgia,serif);font-size:var(--person-archive-title-size,21px);color:var(--person-heading,var(--person-text))}.px-open-dossier small{grid-area:sub;color:color-mix(in srgb,var(--person-text) 62%,transparent);font-size:var(--person-archive-sub-size,11px);margin-top:2px}
     #personChoice{margin-top:auto!important;padding-bottom:max(8px,env(safe-area-inset-bottom))}
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
         .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
-    .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{color:var(--profile-heading)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
+    .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxSparkFloat{0%,100%{transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg))}50%{transform:translate3d(var(--spark-float-x,4px),var(--spark-float-y,-9px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-float-rotate,5deg)))}}@keyframes pxSparkFade{0%,100%{opacity:var(--spark-opacity-low,.22)}42%{opacity:var(--spark-opacity-high,.78)}72%{opacity:calc((var(--spark-opacity-low,.22) + var(--spark-opacity-high,.78))/2)}}
     .category-gallery{display:flex;gap:7px;overflow-x:auto;padding:10px 1px 2px;margin-top:7px;scroll-snap-type:x proximity;scrollbar-width:none}.category-gallery::-webkit-scrollbar{display:none}
