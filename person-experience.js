@@ -193,9 +193,11 @@
     const bodyScale=1+(scale-1)*.55;
     const vw=window.innerWidth||390;
     personRoot?.style.setProperty('--person-text-scale',String(scale));
-    personRoot?.style.setProperty('--person-name-size',`${Math.min(104,Math.min(56,Math.max(38,vw*.11))*headingScale)}px`);
+    const nameSize=Math.min(112,Math.min(56,Math.max(38,vw*.11))*headingScale);
+    const archiveTitleSize=Math.min(42,20*headingScale);
+    personRoot?.style.setProperty('--person-name-size',`${nameSize}px`);
     personRoot?.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
-    personRoot?.style.setProperty('--person-archive-title-size',`${Math.min(58,24*headingScale)}px`);
+    personRoot?.style.setProperty('--person-archive-title-size',`${archiveTitleSize}px`);
     personRoot?.style.setProperty('--person-archive-sub-size',`${10*bodyScale}px`);
     personRoot?.style.setProperty('--person-action-size',`${12*bodyScale}px`);
     personRoot?.style.setProperty('--person-dossier-name-size',`${Math.min(92,Math.min(48,Math.max(34,vw*.10))*headingScale)}px`);
