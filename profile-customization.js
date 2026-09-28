@@ -140,7 +140,7 @@
         <div class="recent-colours-wrap"><div class="recent-colours-title">Recently used colours</div><div id="recentColours" class="recent-colours"></div></div>
       </div>
       <div class="font-picker-wrap"><div class="font-picker-title">Font</div><div id="fontOptions" class="font-options">${Object.keys(FONT_MAP).map(key=>`<button type="button" class="font-option" data-font="${key}" style="font-family:${FONT_MAP[key]}"><span>Aa Mooncakes</span><small>${FONT_LABELS[key]}</small></button>`).join('')}</div><input id="friendProfileFont" type="hidden" value="default"></div>
-      <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="140" step="5" value="100"></div>
+      <div class="profile-text-size-wrap"><div class="font-picker-title">Text size <span id="friendProfileTextScaleValue">100%</span></div><input id="friendProfileTextScale" type="range" min="80" max="200" step="5" value="100"></div>
       <div class="profile-sparkle-picker">
         <div class="profile-theme-heading"><strong>Sparkle constellation</strong><small>Choose their symbols</small></div>
         <div id="profileSparkleIcons" class="profile-sparkle-icons">${sparkleOptionsMarkup()}</div>
@@ -158,9 +158,7 @@
     ['colourHue','colourSat','colourVal'].forEach(id=>$(id)?.addEventListener('change',()=>addRecentColour($(activeColourTarget)?.value)));
     $('colourHex')?.addEventListener('change',()=>{const hex=normalHex($('colourHex').value,$(activeColourTarget)?.value||'#ffffff');setTargetColour(activeColourTarget,hex,true);addRecentColour(hex);});
     box.querySelectorAll('.font-option').forEach(btn=>btn.onclick=()=>selectFont(btn.dataset.font));
-    $('friendProfileTextScale')?.addEventListener('input',()=>{
-      if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${$('friendProfileTextScale').value}%`;
-    });
+    $('friendProfileTextScale')?.addEventListener('input',syncTextScaleSlider);
     box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density));
     bindSparklePicker(box);
     renderRecentColours();
@@ -371,6 +369,13 @@
       addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'png',data});
     }catch{alert('I couldn’t read that PNG. Try another image.');}
   }
+  function syncTextScaleSlider(){
+    const range=$('friendProfileTextScale');if(!range)return;
+    const min=Number(range.min)||80,max=Number(range.max)||200,value=Number(range.value)||100;
+    const pct=Math.max(0,Math.min(100,((value-min)/(max-min))*100));
+    range.style.setProperty('--text-scale-fill',pct+'%');
+    if($('friendProfileTextScaleValue'))$('friendProfileTextScaleValue').textContent=value+'%';
+  }
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
   function selectSparkleDensity(value){
     const density=['whisper','constellation','starfall'].includes(value)?value:'constellation';
@@ -400,9 +405,9 @@
     const values={friendFrameColour:friend?.frameColor||settings.accent,friendProfileBg:friend?.profileBg||'#1b1326',friendProfileText:friend?.profileText||'#f4edf7',friendProfileHeading:friend?.profileHeading||friend?.frameColor||'#f6d5ff',friendProfileSparkle:friend?.profileSparkle||friend?.frameColor||settings.accent};
     Object.entries(values).forEach(([id,val])=>setTargetColour(id,val));
     selectFont(friend?.profileFont||'default');
-    const textScale=Math.max(80,Math.min(140,Number(friend?.profileTextScale)||100));
+    const textScale=Math.max(80,Math.min(200,Number(friend?.profileTextScale)||100));
     if($('friendProfileTextScale')) $('friendProfileTextScale').value=textScale;
-    if($('friendProfileTextScaleValue')) $('friendProfileTextScaleValue').textContent=`${textScale}%`;
+    syncTextScaleSlider();
     setSparkleIcons(friend?.profileSparkleIcons);
     selectSparkleDensity(friend?.profileSparkleDensity||'constellation');
     selectColourTarget('friendProfileBg');
@@ -413,7 +418,7 @@
   function ensureIdBeforeSave(){if($('friendId')&&!$('friendId').value)$('friendId').value=uid();}
   const saveBtn=$('friendForm')?.querySelector('.primary-button');
   saveBtn?.addEventListener('click',ensureIdBeforeSave,{capture:true});
-  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(140,Number($('friendProfileTextScale')?.value)||100));friend.profileSparkleIcons=selectedSparkleIcons().length?selectedSparkleIcons():DEFAULT_SPARKLES.slice();friend.profileSparkleDensity=$('friendProfileSparkleDensity')?.value||'constellation';COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
+  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(200,Number($('friendProfileTextScale')?.value)||100));friend.profileSparkleIcons=selectedSparkleIcons().length?selectedSparkleIcons():DEFAULT_SPARKLES.slice();friend.profileSparkleDensity=$('friendProfileSparkleDensity')?.value||'constellation';COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
 
   function fallbackEmojis(friend){if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length)return friend.frameEmojis.filter(Boolean).slice(0,3);if(friend?.frameStyle==='flowers')return['🌸'];if(friend?.frameStyle==='shards')return['💎'];return[];}
   function wreathMarkup(emojis,count=24){const list=(emojis||[]).filter(Boolean).slice(0,3);if(!list.length)return'';const sizes=[1,.78,1.13,.88,1.02,.72,1.18,.84],nudges=[0,-3,2,-1,3,-2,1,-3];let html='';for(let i=0;i<count;i++){const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=43+nudges[i%nudges.length],x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rotate=((i*37)%48)-24;html+=`<span class="emoji-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--emoji-size:${size};transform:translate(-50%,-50%) rotate(${rotate}deg)">${esc(list[i%list.length])}</span>`;}return html;}
@@ -453,7 +458,8 @@
     .colour-property-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.colour-property{border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.035);border-radius:14px;padding:9px 5px;color:var(--text);display:grid;place-items:center;gap:5px;font-size:10px}.colour-property.active{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}.colour-dot{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.55);box-shadow:0 3px 10px rgba(0,0,0,.3)}
     .colour-editor{margin-top:12px;padding:12px;border-radius:15px;background:rgba(0,0,0,.12);display:grid;gap:10px}.colour-editor-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.colour-editor-head input{width:92px;text-transform:uppercase;padding:7px 8px;border-radius:9px;font-family:monospace}.colour-editor label{display:grid;grid-template-columns:1fr auto;gap:5px 8px;font-size:11px;color:var(--muted)}.colour-editor label input[type=range]{grid-column:1/-1;width:100%;height:14px;border-radius:999px;appearance:none;border:0;padding:0}.colour-editor input[type=range]::-webkit-slider-thumb{appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid #4b3c55;box-shadow:0 2px 6px rgba(0,0,0,.35)}.reverse-range{direction:rtl}
     .recent-colours-wrap{margin-top:12px}.recent-colours-title,.font-picker-title{font-size:11px;color:var(--muted);margin-bottom:7px}.recent-colours{display:flex;gap:7px;flex-wrap:wrap;min-height:30px}.recent-colour{width:29px;height:29px;border-radius:50%;border:2px solid rgba(255,255,255,.48);box-shadow:0 2px 8px rgba(0,0,0,.28)}.recent-empty{font-size:10px;color:var(--muted)}
-    .font-picker-wrap{margin-top:15px}.font-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.font-option{min-height:68px;border-radius:13px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--text);padding:8px;display:grid;place-items:center;gap:3px}.font-option span{font-size:17px}.font-option small{font-family:system-ui,sans-serif!important;font-size:9px;color:var(--muted)}.font-option.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+    .profile-text-size-wrap{margin-top:15px}.profile-text-size-wrap input[type=range]{--text-scale-fill:16.667%;display:block!important;width:100%!important;height:8px!important;margin:8px 0 4px!important;padding:0!important;border:0!important;border-radius:999px!important;appearance:none!important;-webkit-appearance:none!important;background:linear-gradient(90deg,var(--accent) 0 var(--text-scale-fill),rgba(255,255,255,.13) var(--text-scale-fill) 100%)!important;box-sizing:border-box!important;overflow:visible!important;outline:none!important}.profile-text-size-wrap input[type=range]::-webkit-slider-runnable-track{height:8px!important;border:0!important;border-radius:999px!important;background:transparent!important}.profile-text-size-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none!important;appearance:none!important;width:22px!important;height:22px!important;margin-top:-7px!important;border-radius:50%!important;background:#fff!important;border:2px solid color-mix(in srgb,var(--accent) 60%,#4b3c55)!important;box-shadow:0 2px 8px rgba(0,0,0,.35)!important}.profile-text-size-wrap input[type=range]::-moz-range-track{height:8px!important;border:0!important;border-radius:999px!important;background:rgba(255,255,255,.13)!important}.profile-text-size-wrap input[type=range]::-moz-range-progress{height:8px!important;border-radius:999px!important;background:var(--accent)!important}.profile-text-size-wrap input[type=range]::-moz-range-thumb{width:22px!important;height:22px!important;border-radius:50%!important;background:#fff!important;border:2px solid var(--accent)!important}
+        .font-picker-wrap{margin-top:15px}.font-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.font-option{min-height:68px;border-radius:13px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);color:var(--text);padding:8px;display:grid;place-items:center;gap:3px}.font-option span{font-size:17px}.font-option small{font-family:system-ui,sans-serif!important;font-size:9px;color:var(--muted)}.font-option.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
     .profile-sparkle-picker{margin-top:16px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))}
     .profile-sparkle-picker .profile-theme-heading{margin-bottom:10px}
     .profile-sparkle-icons{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:8px 0 0!important}
