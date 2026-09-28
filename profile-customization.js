@@ -22,16 +22,13 @@
 ['friendFrameColour','Frame'],['friendProfileBg','Background'],['friendProfileText','Body text'],['friendProfileHeading','Headings'],['friendProfileSparkle','Sparkles']
   ];
   const SPARKLE_OPTIONS=[
-    '✦','✧','⋆','★','☆','✶','✷','✸','✹','✺',
-    '✵','✴','✳','✲','✱','❈','❉','❊','❋','※',
+    '✦','✧','⋆','★','☆','✶','✷','✸','✹','✺','✵','✴','✳','✲','✱','※',
     '⟡','◇','◆','◈','♢','♦','⬥','⬦','⬧','❖',
-    '♡','♥','❤','❣','❥','❦','❧','ღ','ෆ','🖤',
-    '♠','♤','♣','♧','♦️','🃏','⚄','⚅','🎲',
-    '○','●','◌','◍','◎','◉','◯','⊙','⦿','⚬',
-    '☾','☽','☼','☀','☉','☄','☁','☂','☃','⚡',
-    '❀','✿','❁','✾','✽','⚘','❃','☘','🍀',
-    '🐟','𓆟','𓆝','𓆞','🫧','🐚','🐶','🐠','❄️','🪼',
-    '🦋','🐱','♫','♪','☯','∞','☮','⚜','☠','🍁'
+    '♡','♥','❤','❣','❥','❦','❧','ღ',
+    '♠','♤','♣','♧',
+    '○','●','◌','◎','◉',
+    '☾','☽',
+    '❀','✿','❁'
   ];
   const DEFAULT_SPARKLES=['✦','✧','⋆','✶','☾','⟡'];
   const CUSTOM_SPARKLE_KEY='friendDossier.customSparkles.v1';
@@ -42,7 +39,15 @@
   function readCustomSparkles(){
     try{
       const parsed=JSON.parse(localStorage.getItem(CUSTOM_SPARKLE_KEY)||'[]');
-      return Array.isArray(parsed)?parsed.filter(x=>x&&typeof x.id==='string'&&Array.isArray(x.strokes)).slice(0,24):[];
+      if(!Array.isArray(parsed))return[];
+      return parsed.map(x=>{
+        if(!x||typeof x.id!=='string')return null;
+        if(!x.type&&Array.isArray(x.strokes))return{...x,type:'draw'};
+        if(x.type==='draw'&&Array.isArray(x.strokes))return x;
+        if(x.type==='emoji'&&typeof x.value==='string'&&x.value.trim())return x;
+        if(x.type==='png'&&typeof x.data==='string'&&x.data.startsWith('data:image/'))return x;
+        return null;
+      }).filter(Boolean).slice(0,24);
     }catch{return [];}
   }
   function writeCustomSparkles(items){
@@ -59,7 +64,10 @@
   function sparkleChoiceMarkup(icon){
     if(String(icon).startsWith('custom:')){
       const custom=customSparkleById(icon);
-      return custom?sparkleVectorSvg(custom.strokes):'✦';
+      if(!custom)return'✦';
+      if(custom.type==='emoji')return`<span class="custom-sparkle-emoji">${esc(custom.value)}</span>`;
+      if(custom.type==='png')return`<img class="custom-sparkle-image" src="${esc(custom.data)}" alt="">`;
+      return sparkleVectorSvg(custom.strokes);
     }
     return esc(icon);
   }
@@ -67,7 +75,7 @@
     return [...SPARKLE_OPTIONS,...readCustomSparkles().map(x=>x.id)];
   }
   function sparkleOptionsMarkup(){
-    const tiles=allSparkleChoices().map(icon=>`<label class="profile-sparkle-icon${String(icon).startsWith('custom:')?' custom-drawn-sparkle':''}"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>`).join('');
+    const tiles=allSparkleChoices().map(icon=>`<label class="profile-sparkle-icon${String(icon).startsWith('custom:')?' custom-sparkle-tile':''}"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>`).join('');
     return tiles+`<button type="button" class="profile-sparkle-add" id="addCustomSparkle"><span>＋</span><small>Add sparkle</small></button>`;
   }
   function readStoredFriends(){
@@ -178,21 +186,65 @@
     modal.id='sparkleDrawModal';
     modal.className='sparkle-draw-modal';
     modal.innerHTML=`
-      <section class="sparkle-draw-sheet" role="dialog" aria-modal="true" aria-label="Draw your own sparkle">
-        <div class="sparkle-draw-head"><button type="button" id="sparkleDrawCancel">‹ Back</button><strong>Draw a sparkle</strong><span></span></div>
-        <p>Draw one little symbol with your finger. It’ll inherit each person’s sparkle colour.</p>
-        <div class="sparkle-canvas-wrap"><canvas id="sparkleDrawCanvas"></canvas></div>
-        <div class="sparkle-draw-tools">
-          <button type="button" id="sparkleUndo">Undo</button>
-          <button type="button" id="sparkleClear">Clear</button>
-          <button type="button" id="sparkleSave" class="sparkle-save-drawing">Save sparkle ✦</button>
+      <section class="sparkle-draw-sheet" role="dialog" aria-modal="true" aria-label="Add your own sparkle">
+        <div class="sparkle-draw-head"><button type="button" id="sparkleDrawCancel">‹ Back</button><strong id="sparkleMakerTitle">Add a sparkle</strong><span></span></div>
+
+        <div id="sparkleCreateHome" class="sparkle-create-home">
+          <p>Make your own little floating symbol.</p>
+          <div class="sparkle-create-choices">
+            <button type="button" data-sparkle-maker="draw"><span>✎</span><b>Draw it</b><small>Sketch with your finger</small></button>
+            <button type="button" data-sparkle-maker="emoji"><span>☺</span><b>Emoji</b><small>Paste or type any emoji</small></button>
+            <button type="button" data-sparkle-maker="png"><span>▧</span><b>PNG image</b><small>Use a tiny transparent image</small></button>
+          </div>
+        </div>
+
+        <div id="sparkleDrawPanel" class="sparkle-maker-panel hidden">
+          <p>Draw one little symbol with your finger. It’ll inherit each person’s sparkle colour.</p>
+          <div class="sparkle-canvas-wrap"><canvas id="sparkleDrawCanvas"></canvas></div>
+          <div class="sparkle-draw-tools">
+            <button type="button" id="sparkleUndo">Undo</button>
+            <button type="button" id="sparkleClear">Clear</button>
+            <button type="button" id="sparkleSave" class="sparkle-save-drawing">Save sparkle ✦</button>
+          </div>
+        </div>
+
+        <div id="sparkleEmojiPanel" class="sparkle-maker-panel hidden">
+          <p>Paste an emoji below. Colour emoji keep their normal colours when they float.</p>
+          <div class="sparkle-emoji-entry">
+            <div id="sparkleEmojiPreview" class="sparkle-maker-preview">✨</div>
+            <input id="sparkleEmojiInput" type="text" maxlength="12" inputmode="text" autocomplete="off" placeholder="🐟">
+          </div>
+          <button type="button" id="sparkleEmojiSave" class="sparkle-maker-save">Save emoji</button>
+        </div>
+
+        <div id="sparklePngPanel" class="sparkle-maker-panel hidden">
+          <p>Choose a simple PNG. Transparent backgrounds work best.</p>
+          <label class="sparkle-png-picker">
+            <input id="sparklePngInput" type="file" accept="image/png">
+            <span>Choose PNG</span>
+          </label>
+          <div id="sparklePngPreview" class="sparkle-maker-preview sparkle-png-preview"><span>PNG</span></div>
+          <button type="button" id="sparklePngSave" class="sparkle-maker-save">Save PNG sparkle</button>
         </div>
       </section>`;
     document.body.appendChild(modal);
-    $('sparkleDrawCancel').onclick=closeSparkleDrawer;
+
+    $('sparkleDrawCancel').onclick=()=>{
+      if(!$('sparkleCreateHome')?.classList.contains('hidden'))closeSparkleDrawer();
+      else showSparkleMaker('home');
+    };
+    modal.querySelectorAll('[data-sparkle-maker]').forEach(btn=>btn.onclick=()=>showSparkleMaker(btn.dataset.sparkleMaker));
     $('sparkleUndo').onclick=()=>{sparkleDrawingStrokes.pop();redrawSparkleCanvas();};
     $('sparkleClear').onclick=()=>{sparkleDrawingStrokes=[];redrawSparkleCanvas();};
     $('sparkleSave').onclick=saveSparkleDrawing;
+    $('sparkleEmojiInput').addEventListener('input',()=>{
+      const value=$('sparkleEmojiInput').value.trim();
+      $('sparkleEmojiPreview').textContent=value||'✨';
+    });
+    $('sparkleEmojiSave').onclick=saveSparkleEmoji;
+    $('sparklePngInput').addEventListener('change',previewSparklePng);
+    $('sparklePngSave').onclick=saveSparklePng;
+
     const canvas=$('sparkleDrawCanvas');
     const pointFromEvent=e=>{
       const r=canvas.getBoundingClientRect();
@@ -209,8 +261,25 @@
     });
     const endStroke=()=>{activeSparkleStroke=null;};
     canvas.addEventListener('pointerup',endStroke);canvas.addEventListener('pointercancel',endStroke);canvas.addEventListener('pointerleave',e=>{if(e.buttons===0)endStroke();});
-    window.addEventListener('resize',()=>{if(modal.classList.contains('open'))sizeSparkleCanvas();});
+    window.addEventListener('resize',()=>{if(modal.classList.contains('open')&&!$('sparkleDrawPanel')?.classList.contains('hidden'))sizeSparkleCanvas();});
     return modal;
+  }
+  function showSparkleMaker(mode='home'){
+    const home=$('sparkleCreateHome'),draw=$('sparkleDrawPanel'),emoji=$('sparkleEmojiPanel'),png=$('sparklePngPanel');
+    [home,draw,emoji,png].forEach(el=>el?.classList.add('hidden'));
+    const titles={home:'Add a sparkle',draw:'Draw a sparkle',emoji:'Add an emoji',png:'Add a PNG'};
+    if($('sparkleMakerTitle'))$('sparkleMakerTitle').textContent=titles[mode]||titles.home;
+    if(mode==='draw'){
+      sparkleDrawingStrokes=[];activeSparkleStroke=null;draw?.classList.remove('hidden');requestAnimationFrame(sizeSparkleCanvas);
+    }else if(mode==='emoji'){
+      if($('sparkleEmojiInput'))$('sparkleEmojiInput').value='';
+      if($('sparkleEmojiPreview'))$('sparkleEmojiPreview').textContent='✨';
+      emoji?.classList.remove('hidden');
+    }else if(mode==='png'){
+      if($('sparklePngInput'))$('sparklePngInput').value='';
+      if($('sparklePngPreview'))$('sparklePngPreview').innerHTML='<span>PNG</span>';
+      png?.classList.remove('hidden');
+    }else home?.classList.remove('hidden');
   }
   function sizeSparkleCanvas(){
     const canvas=$('sparkleDrawCanvas'); if(!canvas)return;
@@ -229,28 +298,71 @@
       if(!stroke?.length)return;
       ctx.beginPath();ctx.moveTo(stroke[0][0],stroke[0][1]);
       for(let i=1;i<stroke.length;i++)ctx.lineTo(stroke[i][0],stroke[i][1]);
-      if(stroke.length===1){ctx.lineTo(stroke[0][0]+.01,stroke[0][1]+.01);}
+      if(stroke.length===1)ctx.lineTo(stroke[0][0]+.01,stroke[0][1]+.01);
       ctx.stroke();
     });
     ctx.restore();
   }
   function openSparkleDrawer(){
-    sparkleDrawingStrokes=[];activeSparkleStroke=null;
-    const modal=ensureSparkleDrawer();modal.classList.add('open');document.body.classList.add('sparkle-drawing-open');
-    requestAnimationFrame(sizeSparkleCanvas);
+    const modal=ensureSparkleDrawer();
+    modal.classList.add('open');document.body.classList.add('sparkle-drawing-open');
+    showSparkleMaker('home');
   }
   function closeSparkleDrawer(){
     $('sparkleDrawModal')?.classList.remove('open');document.body.classList.remove('sparkle-drawing-open');activeSparkleStroke=null;
+  }
+  function addCustomSparkle(item){
+    const items=readCustomSparkles();
+    items.push(item);
+    if(!writeCustomSparkles(items)){alert('Couldn’t save that sparkle. Your browser storage may be full.');return false;}
+    refreshSparklePicker([item.id]);closeSparkleDrawer();return true;
   }
   function saveSparkleDrawing(){
     const useful=sparkleDrawingStrokes.filter(s=>Array.isArray(s)&&s.length);
     if(!useful.length){alert('Draw something first ✦');return;}
     const cleaned=useful.map(stroke=>stroke.map(([x,y])=>[Math.round(x*10)/10,Math.round(y*10)/10]));
-    const item={id:'custom:'+Date.now().toString(36),strokes:cleaned};
-    const items=readCustomSparkles();
-    items.push(item);
-    if(!writeCustomSparkles(items)){alert('Couldn’t save that sparkle. Your browser storage may be full.');return;}
-    refreshSparklePicker([item.id]);closeSparkleDrawer();
+    addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'draw',strokes:cleaned});
+  }
+  function saveSparkleEmoji(){
+    const value=$('sparkleEmojiInput')?.value.trim()||'';
+    if(!value){alert('Add an emoji first ✦');return;}
+    addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'emoji',value:value.slice(0,12)});
+  }
+  function previewSparklePng(){
+    const file=$('sparklePngInput')?.files?.[0],preview=$('sparklePngPreview');
+    if(!file||!preview)return;
+    if(file.type!=='image/png'){alert('Please choose a PNG image.');$('sparklePngInput').value='';return;}
+    const reader=new FileReader();
+    reader.onload=()=>{preview.innerHTML=`<img src="${reader.result}" alt="PNG preview">`;};
+    reader.readAsDataURL(file);
+  }
+  function resizeSparklePng(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=reject;
+      reader.onload=()=>{
+        const img=new Image();
+        img.onerror=reject;
+        img.onload=()=>{
+          const size=160,canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+          const ctx=canvas.getContext('2d');ctx.clearRect(0,0,size,size);
+          const scale=Math.min(size/img.width,size/img.height),w=img.width*scale,h=img.height*scale;
+          ctx.drawImage(img,(size-w)/2,(size-h)/2,w,h);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.src=reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function saveSparklePng(){
+    const file=$('sparklePngInput')?.files?.[0];
+    if(!file){alert('Choose a PNG first ✦');return;}
+    if(file.type!=='image/png'){alert('Please choose a PNG image.');return;}
+    try{
+      const data=await resizeSparklePng(file);
+      addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'png',data});
+    }catch{alert('I couldn’t read that PNG. Try another image.');}
   }
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
   function selectSparkleDensity(value){
@@ -362,7 +474,13 @@
     .sparkle-canvas-wrap{width:min(82vw,360px);aspect-ratio:1;margin:0 auto;border-radius:24px;border:1px solid color-mix(in srgb,var(--accent) 42%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 65%),rgba(255,255,255,.025);box-shadow:inset 0 0 40px rgba(255,255,255,.025),0 18px 50px rgba(0,0,0,.28);overflow:hidden}
     #sparkleDrawCanvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
     .sparkle-draw-tools{width:min(82vw,360px);margin:14px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}.sparkle-draw-tools button{min-height:44px;border-radius:13px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);color:#f7f2fb;font-weight:800}.sparkle-draw-tools .sparkle-save-drawing{grid-column:1/-1;border-color:color-mix(in srgb,var(--accent) 58%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:color-mix(in srgb,var(--accent) 70%,white 30%)}
-    body.sparkle-drawing-open{overflow:hidden!important}
+    .profile-sparkle-icon .custom-sparkle-emoji{font-size:1em!important;line-height:1!important}.profile-sparkle-icon .custom-sparkle-image{display:block!important;width:78%!important;height:78%!important;object-fit:contain!important}
+    .sparkle-create-home,.sparkle-maker-panel{width:min(86vw,380px);margin:0 auto}.sparkle-create-home>p,.sparkle-maker-panel>p{text-align:center;margin:4px auto 18px;max-width:330px;color:rgba(247,242,251,.62);font:12px/1.45 system-ui}
+    .sparkle-create-choices{display:grid;grid-template-columns:1fr;gap:10px}.sparkle-create-choices button{min-height:84px;border-radius:18px;border:1px solid rgba(255,255,255,.10);background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 10%,transparent),rgba(255,255,255,.025));color:#f7f2fb;display:grid;grid-template-columns:46px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;padding:12px 15px}.sparkle-create-choices button>span{grid-row:1/3;display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--accent) 13%,transparent);font-size:24px;color:var(--accent)}.sparkle-create-choices button b{font-size:14px}.sparkle-create-choices button small{font-size:10px;color:rgba(247,242,251,.55)}
+    .sparkle-emoji-entry{display:grid;place-items:center;gap:14px}.sparkle-emoji-entry input{width:min(220px,70vw);height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;text-align:center;font-size:24px;outline:none}.sparkle-maker-preview{width:112px;height:112px;border-radius:24px;border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);background:rgba(255,255,255,.025);display:grid;place-items:center;font-size:50px;margin:4px auto 16px;overflow:hidden}.sparkle-png-preview img{max-width:82%;max-height:82%;object-fit:contain}.sparkle-png-preview span{font:800 12px system-ui;color:rgba(247,242,251,.42)}
+    .sparkle-png-picker{display:flex!important;justify-content:center!important;margin:4px auto 14px!important}.sparkle-png-picker input{position:absolute!important;opacity:0!important;pointer-events:none!important}.sparkle-png-picker span{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:13px;border:1px dashed color-mix(in srgb,var(--accent) 52%,transparent);background:color-mix(in srgb,var(--accent) 7%,transparent);color:#f7f2fb;font-weight:800}
+    .sparkle-maker-save{display:block;width:min(82vw,360px);min-height:48px;margin:14px auto 0;border-radius:14px;border:1px solid color-mix(in srgb,var(--accent) 58%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:color-mix(in srgb,var(--accent) 70%,white 30%);font-weight:850}.sparkle-maker-panel.hidden,.sparkle-create-home.hidden{display:none!important}
+        body.sparkle-drawing-open{overflow:hidden!important}
     .character-choice-panel{grid-template-columns:1fr 1fr!important;gap:10px!important}.read-primary-choice{grid-column:1/-1!important;min-height:150px!important;position:relative!important;overflow:hidden!important;border:1px solid color-mix(in srgb,var(--accent) 48%,transparent)!important;background:radial-gradient(circle at 80% 20%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 35%),linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025))!important}.read-primary-choice .choice-book{font-size:38px!important}.read-primary-choice strong{font-size:22px!important;font-family:Georgia,serif}.read-primary-choice small{font-size:11px!important;letter-spacing:.04em}.read-primary-choice i{position:absolute;right:18px;top:14px;color:var(--accent);font-style:normal;opacity:.75}.secondary-person-choice{grid-column:auto!important;min-height:64px!important;padding:10px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important}.secondary-person-choice span{font-size:16px!important}.secondary-person-choice strong{font-size:12px!important}.secondary-person-choice small{display:none!important}.edit-person-choice{margin-top:0!important}.swipe-pop{animation:swipePop .22s ease}@keyframes swipePop{from{opacity:.65;transform:translateX(8px)}to{opacity:1;transform:none}}
   `;document.head.appendChild(css);
 
