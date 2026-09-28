@@ -471,7 +471,7 @@
     const size=Math.max(50,Math.min(220,Number(layout?.size)||100));
     let points=Array.isArray(layout?.points)
       ? layout.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
-          Math.max(1,Math.min(99,Number(p[0]))),
+          Math.max(-8,Math.min(108,Number(p[0]))),
           Math.max(1,Math.min(99,Number(p[1])))
         ]).slice(0,100)
       : [];
@@ -506,7 +506,7 @@
           <strong id="sparkleLayoutTitle">Sparkle layout</strong>
           <span></span>
         </div>
-        <p class="sparkle-layout-help">Drag the × markers wherever you want them. The real sparkles will still randomise their symbol, transparency and floating movement.</p>
+        <p class="sparkle-layout-help">Drag the × markers wherever you want them, including slightly past the side edges so sparkles can float naturally offscreen.</p>
         <div id="sparkleLayoutStage" class="sparkle-layout-stage"></div>
         <div class="sparkle-layout-controls">
           <label><span>Amount <b id="sparkleLayoutAmountValue">7</b></span><input id="sparkleLayoutAmount" type="range" min="1" max="100" step="1" value="7"></label>
@@ -552,7 +552,7 @@
     const movePoint=e=>{
       if(dragIndex<0||!sparkleLayoutWorking)return;
       const rect=stage.getBoundingClientRect();
-      const x=Math.max(1,Math.min(99,((e.clientX-rect.left)/rect.width)*100));
+      const x=Math.max(-8,Math.min(108,((e.clientX-rect.left)/rect.width)*100));
       const y=Math.max(1,Math.min(99,((e.clientY-rect.top)/rect.height)*100));
       sparkleLayoutWorking.points[dragIndex]=[Math.round(x*10)/10,Math.round(y*10)/10];
       const dot=stage.querySelector(`[data-layout-index="${dragIndex}"]`);
@@ -701,7 +701,7 @@
     const move=e=>{
       if(dragging<0||!liveSparkleEdit)return;
       const rect=layer.getBoundingClientRect();
-      const x=Math.max(.5,Math.min(99.5,((e.clientX-rect.left)/rect.width)*100));
+      const x=Math.max(-8,Math.min(108,((e.clientX-rect.left)/rect.width)*100));
       const y=Math.max(.5,Math.min(99.5,((e.clientY-rect.top)/rect.height)*100));
       liveSparkleEdit.layout.points[dragging]=[Math.round(x*10)/10,Math.round(y*10)/10];
       const el=layer.querySelector(`i[data-sparkle-index="${dragging}"]`);
