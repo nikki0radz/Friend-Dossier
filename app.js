@@ -171,7 +171,7 @@ function normalizeFriend(f={}){
       profileText:f.profileText||'#f4edf7',
       profileHeading:f.profileHeading||f.frameColor||'#f6d5ff',
       profileSparkle:f.profileSparkle||f.frameColor||settings.accent,
-      profileSparkleIcons:Array.isArray(f.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,30):['✦','✧','⋆','✶','☾','⟡'],
+      profileSparkleIcons:Array.isArray(f.profileSparkleIcons)&&f.profileSparkleIcons.length?f.profileSparkleIcons.slice(0,100):['✦','✧','⋆','✶','☾','⟡'],
       profileSparkleDensity:['whisper','constellation','starfall'].includes(f.profileSparkleDensity)?f.profileSparkleDensity:'constellation',
       profileFont:f.profileFont||'default',
       profileTextScale:Number.isFinite(Number(f.profileTextScale))?Number(f.profileTextScale):100,
