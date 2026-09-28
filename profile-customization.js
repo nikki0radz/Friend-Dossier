@@ -79,7 +79,15 @@
     return [...SPARKLE_OPTIONS,...readCustomSparkles().map(x=>x.id)];
   }
   function sparkleOptionsMarkup(){
-    const tiles=allSparkleChoices().map(icon=>`<label class="profile-sparkle-icon${String(icon).startsWith('custom:')?' custom-sparkle-tile':''}"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>`).join('');
+    const tiles=allSparkleChoices().map(icon=>{
+      if(String(icon).startsWith('custom:')){
+        return `<div class="profile-sparkle-custom-wrap">
+          <label class="profile-sparkle-icon custom-sparkle-tile"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>
+          <button type="button" class="custom-sparkle-delete" data-custom-sparkle="${esc(icon)}" aria-label="Delete custom sparkle">×</button>
+        </div>`;
+      }
+      return `<label class="profile-sparkle-icon"><input type="checkbox" value="${esc(icon)}"><span>${sparkleChoiceMarkup(icon)}</span></label>`;
+    }).join('');
     return tiles+`<button type="button" class="profile-sparkle-add" id="addCustomSparkle"><span>＋</span><small>Add sparkle</small></button>`;
   }
   function readStoredFriends(){
@@ -172,7 +180,26 @@
     root.querySelectorAll('#profileSparkleIcons input').forEach(input=>input.addEventListener('change',()=>{
       input.closest('.profile-sparkle-icon')?.classList.toggle('selected',input.checked);
     }));
+    root.querySelectorAll('.custom-sparkle-delete').forEach(btn=>btn.addEventListener('click',e=>{
+      e.preventDefault();e.stopPropagation();
+      deleteCustomSparkle(btn.dataset.customSparkle);
+    }));
     root.querySelector('#addCustomSparkle')?.addEventListener('click',openSparkleDrawer);
+  }
+  function deleteCustomSparkle(id){
+    if(!id||!String(id).startsWith('custom:'))return;
+    if(!confirm('Delete this custom sparkle from your bank?'))return;
+    const next=readCustomSparkles().filter(item=>item.id!==id);
+    writeCustomSparkles(next);
+    state.friends.forEach(friend=>{
+      if(Array.isArray(friend.profileSparkleIcons)){
+        friend.profileSparkleIcons=friend.profileSparkleIcons.filter(icon=>icon!==id);
+        if(!friend.profileSparkleIcons.length)friend.profileSparkleIcons=DEFAULT_SPARKLES.slice();
+      }
+    });
+    persistFriends();
+    refreshSparklePicker();
+    if(state.selectedId){renderPersonHero();showChoice();}
   }
   function refreshSparklePicker(extraSelected=[]){
     const grid=$('profileSparkleIcons'); if(!grid)return;
@@ -296,7 +323,7 @@
     const ctx=canvas.getContext('2d');if(!ctx)return;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.save();ctx.scale(canvas.width/100,canvas.height/100);
-    ctx.strokeStyle='#ffffff';ctx.lineWidth=2.3;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=1.25;ctx.lineCap='round';ctx.lineJoin='round';
     sparkleDrawingStrokes.forEach(stroke=>{
       if(!stroke?.length)return;
       ctx.beginPath();ctx.moveTo(stroke[0][0],stroke[0][1]);
@@ -852,8 +879,11 @@
     .sparkle-layout-controls{width:min(92vw,420px);margin:13px auto 0;display:grid;gap:10px}.sparkle-layout-controls label{display:grid;grid-template-columns:1fr;gap:6px;color:rgba(247,242,251,.68);font:11px system-ui}.sparkle-layout-controls label span{display:flex;justify-content:space-between}.sparkle-layout-controls input[type=range]{width:100%;accent-color:var(--accent)}
     .sparkle-layout-actions{width:min(92vw,420px);display:grid;grid-template-columns:1fr 1.35fr;gap:8px;margin:12px auto 0}.sparkle-layout-actions button{min-height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#f7f2fb;font-weight:800}.sparkle-layout-actions #sparkleLayoutSave{border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:color-mix(in srgb,var(--accent) 72%,white 28%)}
 
+    .profile-sparkle-custom-wrap{position:relative!important;aspect-ratio:1!important;min-width:0!important;width:100%!important}
+    .profile-sparkle-custom-wrap .profile-sparkle-icon{position:absolute!important;inset:0!important}
+    .custom-sparkle-delete{position:absolute!important;right:-4px!important;top:-4px!important;z-index:4!important;width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;padding:0!important;border-radius:50%!important;border:1px solid rgba(255,255,255,.24)!important;background:#2a1833!important;color:#fff!important;display:grid!important;place-items:center!important;font:800 13px/1 system-ui!important;box-shadow:0 3px 10px rgba(0,0,0,.35)!important}
     .profile-sparkle-icon .custom-sparkle-svg{width:72%!important;height:72%!important;overflow:visible!important}
-    .profile-sparkle-icon .custom-sparkle-svg polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+    .profile-sparkle-icon .custom-sparkle-svg polyline{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
     .profile-sparkle-add{aspect-ratio:1!important;border:1px dashed color-mix(in srgb,var(--accent) 48%,rgba(255,255,255,.12))!important;border-radius:13px!important;background:color-mix(in srgb,var(--accent) 6%,transparent)!important;color:var(--text)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;padding:4px!important}
     .profile-sparkle-add span{font-size:22px!important;line-height:1!important;color:var(--accent)!important}.profile-sparkle-add small{font:700 8px/1.05 system-ui,sans-serif!important;color:var(--muted)!important}
     .sparkle-draw-modal{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;display:none;align-items:stretch;justify-content:center;background:rgba(9,6,14,.94);color:#f7f2fb;backdrop-filter:blur(18px);padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));box-sizing:border-box}
