@@ -467,7 +467,8 @@
   }
   function normalizeSparkleLayout(layout,density,seed,area='profile'){
     const fallbackAmount=defaultSparkleAmount(density,area);
-    const amount=Math.max(1,Math.min(100,Number(layout?.amount)||fallbackAmount));
+    const rawAmount=Number(layout?.amount);
+    const amount=Math.max(0,Math.min(100,Number.isFinite(rawAmount)?rawAmount:fallbackAmount));
     const size=Math.max(50,Math.min(220,Number(layout?.size)||100));
     let points=Array.isArray(layout?.points)
       ? layout.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
@@ -509,7 +510,7 @@
         <p class="sparkle-layout-help">Drag the × markers wherever you want them, including slightly past the side edges so sparkles can float naturally offscreen.</p>
         <div id="sparkleLayoutStage" class="sparkle-layout-stage"></div>
         <div class="sparkle-layout-controls">
-          <label><span>Amount <b id="sparkleLayoutAmountValue">7</b></span><input id="sparkleLayoutAmount" type="range" min="1" max="100" step="1" value="7"></label>
+          <label><span>Amount <b id="sparkleLayoutAmountValue">7</b></span><input id="sparkleLayoutAmount" type="range" min="0" max="100" step="1" value="7"></label>
           <label><span>Overall size <b id="sparkleLayoutSizeValue">100%</b></span><input id="sparkleLayoutSize" type="range" min="60" max="200" step="5" value="100"></label>
         </div>
         <div class="sparkle-layout-actions">
@@ -532,7 +533,7 @@
     };
     $('sparkleLayoutAmount').addEventListener('input',()=>{
       if(!sparkleLayoutWorking)return;
-      const amount=Math.max(1,Math.min(100,Number($('sparkleLayoutAmount').value)||1));
+      const amount=Math.max(0,Math.min(100,Number($('sparkleLayoutAmount').value)||0));
       if(sparkleLayoutWorking.points.length<amount){
         const generated=makeDefaultSparklePoints(layoutSeed()+'|extra|'+Date.now(),activeSparkleLayoutDensity,amount);
         sparkleLayoutWorking.points=sparkleLayoutWorking.points.concat(generated.slice(sparkleLayoutWorking.points.length,amount));
@@ -613,7 +614,7 @@
     bar.innerHTML=`
       <div class="sparkle-live-head"><strong id="sparkleLiveTitle">Arrange sparkles</strong><small>Drag the frozen sparkles on the real page</small></div>
       <div class="sparkle-live-ranges">
-        <label><span>Amount <b id="sparkleLiveAmountValue"></b></span><input id="sparkleLiveAmount" type="range" min="1" max="100" step="1"></label>
+        <label><span>Amount <b id="sparkleLiveAmountValue"></b></span><input id="sparkleLiveAmount" type="range" min="0" max="100" step="1"></label>
         <label><span>Overall size <b id="sparkleLiveOverallValue"></b></span><input id="sparkleLiveOverall" type="range" min="50" max="220" step="5"></label>
         <label class="sparkle-individual-size"><span>Selected sparkle <b id="sparkleLiveIndividualValue">tap one</b></span><input id="sparkleLiveIndividual" type="range" min="40" max="300" step="5" value="100" disabled></label>
       </div>
@@ -632,7 +633,7 @@
     $('sparkleLiveAmount').addEventListener('input',()=>{
       if(!liveSparkleEdit)return;
       const layout=liveSparkleEdit.layout;
-      const amount=Math.max(1,Math.min(100,Number($('sparkleLiveAmount').value)||1));
+      const amount=Math.max(0,Math.min(100,Number($('sparkleLiveAmount').value)||0));
       if(layout.points.length<amount){
         const extra=makeDefaultSparklePoints((liveSparkleEdit.friend?.id||'friend')+'|extra|'+layout.points.length,liveSparkleEdit.density,amount,liveSparkleEdit.area);
         while(layout.points.length<amount){
