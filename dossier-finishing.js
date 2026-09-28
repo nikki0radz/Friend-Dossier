@@ -55,7 +55,8 @@
       align-items:center!important;
       opacity:.82;
     }
-    .px-dossier .character-card-actions > span{
+    .px-dossier .character-card-actions > span,
+    .px-dossier .dossier-title-stack > span{
       font-family:Georgia,'Times New Roman',serif!important;
       font-size:9px!important;
       font-weight:500!important;
