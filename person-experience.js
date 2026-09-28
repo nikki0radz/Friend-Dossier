@@ -195,7 +195,7 @@
     const vw=window.innerWidth||390;
     personRoot?.style.setProperty('--person-text-scale',String(scale));
     const nameSize=Math.min(120,Math.min(58,Math.max(40,vw*.115))*headingScale);
-    const archiveTitleSize=Math.min(32,20*archiveScale);
+    const archiveTitleSize=Math.min(30,Math.max(14,nameSize*.42));
     personRoot?.style.setProperty('--person-name-size',`${nameSize}px`);
     personRoot?.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
     personRoot?.style.setProperty('--person-archive-title-size',`${archiveTitleSize}px`);
