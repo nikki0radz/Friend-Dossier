@@ -26,6 +26,23 @@
     document.body.classList.toggle('person-profile-active',Boolean(active));
     if(active) aura.style.setProperty('--profile-aura',friend.profileSparkle||friend.profileHeading||friend.frameColor||settings.accent);
   }
+  const CUSTOM_SPARKLE_KEY='friendDossier.customSparkles.v1';
+  function readCustomSparkles(){
+    try{const parsed=JSON.parse(localStorage.getItem(CUSTOM_SPARKLE_KEY)||'[]');return Array.isArray(parsed)?parsed:[];}catch{return [];}
+  }
+  function customSparkleById(id){return readCustomSparkles().find(x=>x?.id===id)||null;}
+  function sparkleSymbolMarkup(icon){
+    if(String(icon).startsWith('custom:')){
+      const custom=customSparkleById(icon);
+      if(!custom)return '✦';
+      const lines=(custom.strokes||[]).map(stroke=>{
+        const pts=(stroke||[]).map(p=>Array.isArray(p)?`${Number(p[0]).toFixed(1)},${Number(p[1]).toFixed(1)}`:'').filter(Boolean).join(' ');
+        return pts?`<polyline points="${pts}"></polyline>`:'';
+      }).join('');
+      return `<svg class="px-custom-sparkle" viewBox="0 0 100 100" aria-hidden="true">${lines}</svg>`;
+    }
+    return esc(icon);
+  }
   function sparkleIcons(friend){
     return Array.isArray(friend?.profileSparkleIcons)&&friend.profileSparkleIcons.length?friend.profileSparkleIcons.slice(0,100):['✦','✧','⋆','✶','☾','⟡'];
   }
@@ -82,7 +99,7 @@
       const floatRot=Math.round(rand()*18-9);
       const floatDur=(5.2+rand()*6.2).toFixed(2);
       const fadeDur=(4.1+rand()*5.7).toFixed(2);
-      return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;--spark-delay:'+delay+'s;--spark-opacity-low:'+opacityLow+';--spark-opacity-high:'+opacityHigh+';--spark-float-x:'+floatX+'px;--spark-float-y:'+floatY+'px;--spark-rotate:'+rotate+'deg;--spark-float-rotate:'+floatRot+'deg;--spark-float-dur:'+floatDur+'s;--spark-fade-dur:'+fadeDur+'s">'+esc(icon)+'</i>';
+      return '<i style="left:'+pos[0]+'%;top:'+pos[1]+'%;font-size:'+size+'px;--spark-delay:'+delay+'s;--spark-opacity-low:'+opacityLow+';--spark-opacity-high:'+opacityHigh+';--spark-float-x:'+floatX+'px;--spark-float-y:'+floatY+'px;--spark-rotate:'+rotate+'deg;--spark-float-rotate:'+floatRot+'deg;--spark-float-dur:'+floatDur+'s;--spark-fade-dur:'+fadeDur+'s">'+sparkleSymbolMarkup(icon)+'</i>';
     }).join('');
   }
   function frameEmojis(friend){
@@ -321,7 +338,7 @@
     #personView:not(.read-mode){color:var(--person-text)}
     #personView:not(.read-mode) .back-link{color:color-mix(in srgb,var(--person-text) 70%,transparent)}
     #personView:not(.read-mode) .px-secondary-actions strong{color:var(--person-text)}
-        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
+        .px-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}.px-ambient i{position:absolute;color:color-mix(in srgb,var(--person-accent,var(--accent)) 70%,white);font-style:normal;text-shadow:0 0 12px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}.px-ambient .px-custom-sparkle,.px-dossier-sparks .px-custom-sparkle{display:block;width:1em;height:1em;overflow:visible}.px-ambient .px-custom-sparkle polyline,.px-dossier-sparks .px-custom-sparkle polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}.px-ambient~*{position:relative;z-index:1}#personView.read-mode>.px-ambient{display:none!important}
     .px-dossier{font-family:var(--px-font);position:relative}.px-dossier-head{text-align:center}.px-dossier .character-name{font-size:var(--person-dossier-name-size,clamp(34px,10vw,48px))!important;color:var(--profile-heading)!important}.px-dossier .character-role{font-size:var(--person-dossier-role-size,12px)!important}.px-dossier .character-birthday{font-size:var(--person-dossier-birthday-size,11px)!important}.px-dossier .character-section-title strong{color:var(--profile-heading)!important}.px-dossier-sparks{position:absolute;inset:48px 12px auto;height:230px;pointer-events:none}.px-dossier-sparks i{position:absolute;color:var(--profile-sparkle);font-style:normal;text-shadow:0 0 11px currentColor;opacity:var(--spark-opacity-low,.28);transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg));animation:pxSparkFloat var(--spark-float-dur,8s) ease-in-out infinite,pxSparkFade var(--spark-fade-dur,6s) ease-in-out infinite;animation-delay:var(--spark-delay,0s),var(--spark-delay,0s);will-change:transform,opacity}
     .px-dossier-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:7px 2px 16px}.px-dossier-tools button{border:1px solid color-mix(in srgb,var(--profile-frame) 28%,transparent);background:color-mix(in srgb,var(--profile-frame) 9%,transparent);color:var(--profile-heading);border-radius:13px;padding:10px 9px;font-size:11px;font-weight:800}
     @keyframes pxSparkFloat{0%,100%{transform:translate3d(0,0,0) rotate(var(--spark-rotate,0deg))}50%{transform:translate3d(var(--spark-float-x,4px),var(--spark-float-y,-9px),0) rotate(calc(var(--spark-rotate,0deg) + var(--spark-float-rotate,5deg)))}}@keyframes pxSparkFade{0%,100%{opacity:var(--spark-opacity-low,.22)}42%{opacity:var(--spark-opacity-high,.78)}72%{opacity:calc((var(--spark-opacity-low,.22) + var(--spark-opacity-high,.78))/2)}}
