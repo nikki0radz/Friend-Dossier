@@ -78,11 +78,13 @@
 
   let sx=0, sy=0, st=0;
   personView.addEventListener('touchstart',e=>{
+    if(document.body.classList.contains('sparkle-live-editing')){sx=sy=st=0;return;}
     if(e.touches.length!==1) return;
     sx=e.touches[0].clientX; sy=e.touches[0].clientY; st=Date.now();
   },{passive:true,capture:true});
 
   personView.addEventListener('touchend',e=>{
+    if(document.body.classList.contains('sparkle-live-editing')){sx=sy=st=0;return;}
     if(!sx || !e.changedTouches?.length) return;
     if(e.target.closest('button,input,textarea,select,label,dialog')){sx=sy=0;return;}
     const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy, dt=Date.now()-st;
