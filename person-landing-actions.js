@@ -10,9 +10,12 @@
     if(panel){
       const f=selected();
       const textScale=Math.max(80,Math.min(200,Number(f?.profileTextScale)||100));
-      const archiveScale=1+(textScale/100-1)*.45;
-      const archiveTitleSize=Math.min(32,20*archiveScale);
-      const archiveSubSize=10*(1+(textScale/100-1)*.55);
+      const scale=textScale/100;
+      const headingScale=1+(scale-1)*1.16;
+      const vw=window.innerWidth||390;
+      const nameSize=Math.min(120,Math.min(58,Math.max(40,vw*.115))*headingScale);
+      const archiveTitleSize=Math.min(30,Math.max(14,nameSize*.42));
+      const archiveSubSize=10*(1+(scale-1)*.55);
       panel.innerHTML=`
         <button id="readBtn" class="px-open-dossier" aria-label="Enter Archives">
           <span class="archive-sigil">✦</span>
