@@ -607,12 +607,16 @@
   }
   function ensureLiveSparkleEditor(){
     let bar=$('sparkleLiveEditor');
-    if(bar)return bar;
+    if(bar){
+      const amount=bar.querySelector('#sparkleLiveAmount');
+      if(amount)amount.min='0';
+      return bar;
+    }
     bar=document.createElement('aside');
     bar.id='sparkleLiveEditor';
     bar.className='sparkle-live-editor';
     bar.innerHTML=`
-      <div class="sparkle-live-head"><strong id="sparkleLiveTitle">Arrange sparkles</strong><small>Drag the frozen sparkles on the real page</small></div>
+      <div class="sparkle-live-head" id="sparkleLiveDragHandle"><strong id="sparkleLiveTitle">Arrange sparkles</strong><small>↕ Drag this box · drag sparkles on the page</small></div>
       <div class="sparkle-live-ranges">
         <label><span>Amount <b id="sparkleLiveAmountValue"></b></span><input id="sparkleLiveAmount" type="range" min="0" max="100" step="1"></label>
         <label><span>Overall size <b id="sparkleLiveOverallValue"></b></span><input id="sparkleLiveOverall" type="range" min="50" max="220" step="5"></label>
@@ -657,6 +661,36 @@
       liveSparkleEdit.layout.sizes[liveSparkleEdit.selected]=v;
       syncLiveSparkleControls();renderLiveSparkles();
     });
+
+    const dragHandle=$('sparkleLiveDragHandle');
+    let panelDrag=null;
+    const movePanel=e=>{
+      if(!panelDrag)return;
+      e.preventDefault();
+      const height=bar.offsetHeight||0;
+      const maxTop=Math.max(8,window.innerHeight-height-8);
+      const nextTop=Math.max(8,Math.min(maxTop,panelDrag.startTop+(e.clientY-panelDrag.startY)));
+      bar.style.top=nextTop+'px';
+      bar.style.bottom='auto';
+    };
+    dragHandle?.addEventListener('pointerdown',e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      e.preventDefault();
+      const rect=bar.getBoundingClientRect();
+      panelDrag={startY:e.clientY,startTop:rect.top};
+      dragHandle.setPointerCapture?.(e.pointerId);
+      bar.classList.add('dragging');
+    });
+    dragHandle?.addEventListener('pointermove',movePanel);
+    const stopPanelDrag=e=>{
+      if(!panelDrag)return;
+      panelDrag=null;
+      bar.classList.remove('dragging');
+      try{dragHandle?.releasePointerCapture?.(e.pointerId);}catch{}
+    };
+    dragHandle?.addEventListener('pointerup',stopPanelDrag);
+    dragHandle?.addEventListener('pointercancel',stopPanelDrag);
+
     return bar;
   }
   function liveSparkleLayer(){
@@ -864,8 +898,8 @@
     .sparkle-density-options button small{display:block!important;margin-top:5px!important;font-size:8px!important;line-height:1.25!important;color:var(--muted)!important;font-weight:500!important}
     .sparkle-density-options button.active{border-color:color-mix(in srgb,var(--accent) 78%,white 8%)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),rgba(255,255,255,.025))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 16px color-mix(in srgb,var(--accent) 13%,transparent)!important}
     .sparkle-density-options button.active b{color:color-mix(in srgb,var(--accent) 72%,white 28%)!important}
-    .sparkle-live-editor{position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:120500;display:none;width:min(calc(100vw - 20px),540px);margin:0 auto;padding:12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.15));background:color-mix(in srgb,#171124 92%,transparent);color:#f7f2fb;box-shadow:0 18px 55px rgba(0,0,0,.48);backdrop-filter:blur(16px)}.sparkle-live-editor.open{display:block}
-    .sparkle-live-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}.sparkle-live-head strong{font:800 14px Georgia,serif}.sparkle-live-head small{font:9px system-ui;color:rgba(247,242,251,.52)}
+    .sparkle-live-editor{position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));top:auto;z-index:120500;display:none;width:min(calc(100vw - 20px),540px);margin:0 auto;padding:12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.15));background:color-mix(in srgb,#171124 92%,transparent);color:#f7f2fb;box-shadow:0 18px 55px rgba(0,0,0,.48);backdrop-filter:blur(16px)}.sparkle-live-editor.open{display:block}.sparkle-live-editor.dragging{box-shadow:0 22px 65px rgba(0,0,0,.6),0 0 0 1px color-mix(in srgb,var(--accent) 35%,transparent)}
+    .sparkle-live-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-5px -5px 8px;padding:7px 7px 6px;border-radius:13px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}.sparkle-live-editor.dragging .sparkle-live-head{cursor:grabbing;background:rgba(255,255,255,.035)}.sparkle-live-head strong{font:800 14px Georgia,serif}.sparkle-live-head small{font:9px system-ui;color:rgba(247,242,251,.52);text-align:right}
     .sparkle-live-ranges{display:grid;grid-template-columns:1fr 1fr;gap:7px}.sparkle-live-ranges label{display:grid;gap:4px;font:9px system-ui;color:rgba(247,242,251,.65)}.sparkle-live-ranges label span{display:flex;justify-content:space-between}.sparkle-live-ranges .sparkle-individual-size{grid-column:1/-1}.sparkle-live-ranges input{width:100%;accent-color:var(--accent)}
     .sparkle-live-actions{display:grid;grid-template-columns:.9fr .7fr 1.2fr;gap:6px;margin-top:8px}.sparkle-live-actions button{min-height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:#f7f2fb;font-size:10px;font-weight:800}.sparkle-live-actions #sparkleLiveSave{border-color:color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
     body.sparkle-live-editing{overflow:hidden!important;overscroll-behavior:none!important}body.sparkle-live-editing #personView{touch-action:none!important;overscroll-behavior:none!important}.sparkle-live-editing #personView>.px-ambient,.sparkle-live-editing .px-dossier-sparks{pointer-events:auto!important;z-index:120000!important}.sparkle-live-editing #personView>.px-ambient i,.sparkle-live-editing .px-dossier-sparks i{animation:none!important;transform:none!important;opacity:.76!important;pointer-events:auto!important;cursor:grab!important;touch-action:none!important;text-shadow:0 0 9px currentColor!important}.sparkle-live-editing #personView>.px-ambient i.sparkle-edit-selected,.sparkle-live-editing .px-dossier-sparks i.sparkle-edit-selected{outline:2px solid color-mix(in srgb,var(--accent) 72%,white 18%);outline-offset:5px;border-radius:50%;opacity:1!important}.sparkle-live-editing #personView>*:not(.px-ambient),.sparkle-live-editing .px-dossier>*:not(.px-dossier-sparks){pointer-events:none!important}
