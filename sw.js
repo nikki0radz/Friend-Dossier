@@ -1,4 +1,4 @@
-const CACHE='friend-dossier-v22';
+const CACHE='friend-dossier-v23';
 const ASSETS=[
   './',
   './index.html',
