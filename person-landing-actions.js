@@ -38,9 +38,14 @@
     .px-secondary-actions{width:min(88vw,520px);margin:10px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .px-secondary-actions button{height:48px;min-height:48px;border-radius:15px;border:1px solid color-mix(in srgb,var(--person-accent,var(--accent)) 24%,transparent);background:rgba(255,255,255,.035);color:var(--person-text);display:flex;align-items:center;justify-content:center;gap:7px;font-size:var(--person-action-size,12px);font-weight:800;box-shadow:0 8px 20px rgba(0,0,0,.12)}
     .px-secondary-actions button span{font-size:16px;color:var(--person-accent,var(--accent));text-shadow:0 0 9px color-mix(in srgb,var(--person-accent,var(--accent)) 55%,transparent)}
-    #personChoice{display:flex;flex-direction:column;align-items:center;width:100%;position:relative;isolation:isolate;overflow:visible}
+    #personChoice{display:flex;flex-direction:column;align-items:center;width:100%;position:relative;isolation:isolate;overflow:visible;margin-top:8px!important;padding-bottom:max(8px,env(safe-area-inset-bottom))!important}
+    #personView:not(.read-mode) #personHero{flex:0 0 auto!important;padding-bottom:4px!important}
     #personChoice:before{content:none!important}
     @media(max-width:420px){.px-secondary-actions{gap:8px}.px-secondary-actions button{height:46px;min-height:46px;font-size:var(--person-action-size,11px)}}
+    .px-open-dossier{height:80px!important;min-height:80px!important;padding:6px 24px 7px!important;gap:2px!important}
+    .px-open-dossier .archive-sigil{margin:0!important;font-size:15px!important}
+    .px-open-dossier strong{margin:0!important;line-height:1!important}
+    .px-open-dossier small{margin:1px 0 0!important;line-height:1.1!important}
 
     .px-dossier .character-sections{gap:16px!important;padding-top:14px!important}
     .px-dossier .character-section{position:relative;overflow:hidden;border:1px solid color-mix(in srgb,var(--profile-frame) 24%,transparent)!important;border-radius:20px!important;padding:16px 16px 15px!important;background:radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--profile-sparkle) 10%,transparent),transparent 34%),linear-gradient(145deg,color-mix(in srgb,var(--profile-frame) 7%,transparent),rgba(255,255,255,.018))!important;box-shadow:inset 0 1px rgba(255,255,255,.035),0 8px 26px rgba(0,0,0,.12)!important}
