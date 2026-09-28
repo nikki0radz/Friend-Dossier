@@ -35,6 +35,9 @@
   let sparkleDrawingStrokes=[];
   let activeSparkleStroke=null;
   let activeColourTarget='friendProfileBg';
+  let sparkleLayoutDrafts={};
+  let activeSparkleLayoutDensity='constellation';
+  let sparkleLayoutWorking=null;
 
   function readCustomSparkles(){
     try{
@@ -159,7 +162,7 @@
     $('colourHex')?.addEventListener('change',()=>{const hex=normalHex($('colourHex').value,$(activeColourTarget)?.value||'#ffffff');setTargetColour(activeColourTarget,hex,true);addRecentColour(hex);});
     box.querySelectorAll('.font-option').forEach(btn=>btn.onclick=()=>selectFont(btn.dataset.font));
     $('friendProfileTextScale')?.addEventListener('input',syncTextScaleSlider);
-    box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density));
+    box.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.onclick=()=>selectSparkleDensity(btn.dataset.density,true));
     bindSparklePicker(box);
     renderRecentColours();
   }
@@ -369,18 +372,204 @@
       addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'png',data});
     }catch{alert('I couldn’t read that PNG. Try another image.');}
   }
+  function applyTextScalePreview(value){
+    const root=$('personView');if(!root)return;
+    const textScale=Math.max(80,Math.min(200,Number(value)||100));
+    const scale=textScale/100;
+    const headingScale=1+(scale-1)*1.08;
+    const bodyScale=1+(scale-1)*.55;
+    const vw=window.innerWidth||390;
+    root.style.setProperty('--person-text-scale',String(scale));
+    root.style.setProperty('--person-name-size',`${Math.min(104,Math.min(56,Math.max(38,vw*.11))*headingScale)}px`);
+    root.style.setProperty('--person-meta-size',`${12*bodyScale}px`);
+    root.style.setProperty('--person-archive-title-size',`${Math.min(58,24*headingScale)}px`);
+    root.style.setProperty('--person-archive-sub-size',`${10*bodyScale}px`);
+    root.style.setProperty('--person-action-size',`${12*bodyScale}px`);
+    root.style.setProperty('--person-dossier-name-size',`${Math.min(92,Math.min(48,Math.max(34,vw*.10))*headingScale)}px`);
+    root.style.setProperty('--person-dossier-role-size',`${12*bodyScale}px`);
+    root.style.setProperty('--person-dossier-birthday-size',`${11*bodyScale}px`);
+    root.style.setProperty('--person-section-title-size',`${17*bodyScale}px`);
+    root.style.setProperty('--person-entry-size',`${13*bodyScale}px`);
+    root.style.setProperty('--person-entry-detail-size',`${11*bodyScale}px`);
+  }
   function syncTextScaleSlider(){
     const range=$('friendProfileTextScale');if(!range)return;
     const min=Number(range.min)||80,max=Number(range.max)||200,value=Number(range.value)||100;
     const pct=Math.max(0,Math.min(100,((value-min)/(max-min))*100));
-    range.style.setProperty('--text-scale-fill',pct+'%');
+    const fill=pct>=99.5?'100%':pct+'%';
+    range.style.setProperty('--text-scale-fill',fill);
+    const bg=pct>=99.5
+      ? 'var(--accent)'
+      : `linear-gradient(90deg,var(--accent) 0 ${fill},rgba(255,255,255,.13) ${fill} 100%)`;
+    range.style.setProperty('background',bg,'important');
     if($('friendProfileTextScaleValue'))$('friendProfileTextScaleValue').textContent=value+'%';
+    applyTextScalePreview(value);
+  }
+  function layoutHash(seed=''){
+    let h=2166136261;
+    for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619);}
+    return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+  }
+  function defaultSparkleAmount(density){
+    return density==='whisper'?7:(density==='starfall'?80:44);
+  }
+  function makeDefaultSparklePoints(seed,density,amount=defaultSparkleAmount(density)){
+    const rand=layoutHash(String(seed||'friend')+'|sparkle-layout|'+density+'|'+amount);
+    const points=[];
+    for(let i=0;i<amount;i++){
+      const y=Math.max(1,Math.min(99,1+((i+.18+rand()*.64)/amount)*98));
+      let x;
+      if(y>9&&y<43){
+        x=rand()<.5 ? 1+rand()*15 : 84+rand()*15;
+      }else{
+        x=1+rand()*98;
+      }
+      points.push([Math.round(x*10)/10,Math.round(y*10)/10]);
+    }
+    // Shuffle storage order so adding/removing amount never looks like a top-to-bottom fill.
+    for(let i=points.length-1;i>0;i--){
+      const j=Math.floor(rand()*(i+1));
+      [points[i],points[j]]=[points[j],points[i]];
+    }
+    return points;
+  }
+  function normalizeSparkleLayout(layout,density,seed){
+    const fallbackAmount=defaultSparkleAmount(density);
+    const amount=Math.max(1,Math.min(100,Number(layout?.amount)||fallbackAmount));
+    const size=Math.max(60,Math.min(200,Number(layout?.size)||100));
+    let points=Array.isArray(layout?.points)
+      ? layout.points.filter(p=>Array.isArray(p)&&Number.isFinite(Number(p[0]))&&Number.isFinite(Number(p[1]))).map(p=>[
+          Math.max(1,Math.min(99,Number(p[0]))),
+          Math.max(1,Math.min(99,Number(p[1])))
+        ]).slice(0,100)
+      : [];
+    if(points.length<amount){
+      const generated=makeDefaultSparklePoints(seed,density,amount);
+      points=points.concat(generated.slice(points.length,amount));
+    }
+    return{amount,size,points};
+  }
+  function normalizeSparkleLayouts(layouts,seed){
+    return{
+      whisper:normalizeSparkleLayout(layouts?.whisper,'whisper',seed),
+      constellation:normalizeSparkleLayout(layouts?.constellation,'constellation',seed),
+      starfall:normalizeSparkleLayout(layouts?.starfall,'starfall',seed)
+    };
+  }
+  function layoutSeed(){
+    return $('friendId')?.value||$('friendName')?.value||'draft';
+  }
+  function ensureSparkleLayoutEditor(){
+    let modal=$('sparkleLayoutModal');
+    if(modal)return modal;
+    modal=document.createElement('dialog');
+    modal.id='sparkleLayoutModal';
+    modal.className='sparkle-layout-modal';
+    modal.innerHTML=`
+      <section class="sparkle-layout-sheet" role="dialog" aria-modal="true">
+        <div class="sparkle-layout-head">
+          <button type="button" id="sparkleLayoutCancel">‹ Back</button>
+          <strong id="sparkleLayoutTitle">Sparkle layout</strong>
+          <span></span>
+        </div>
+        <p class="sparkle-layout-help">Drag the × markers wherever you want them. The real sparkles will still randomise their symbol, transparency and floating movement.</p>
+        <div id="sparkleLayoutStage" class="sparkle-layout-stage"></div>
+        <div class="sparkle-layout-controls">
+          <label><span>Amount <b id="sparkleLayoutAmountValue">7</b></span><input id="sparkleLayoutAmount" type="range" min="1" max="100" step="1" value="7"></label>
+          <label><span>Overall size <b id="sparkleLayoutSizeValue">100%</b></span><input id="sparkleLayoutSize" type="range" min="60" max="200" step="5" value="100"></label>
+        </div>
+        <div class="sparkle-layout-actions">
+          <button type="button" id="sparkleLayoutReset">Reset scatter</button>
+          <button type="button" id="sparkleLayoutSave">Use this layout ✦</button>
+        </div>
+      </section>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('cancel',e=>{e.preventDefault();closeSparkleLayoutEditor();});
+    $('sparkleLayoutCancel').onclick=closeSparkleLayoutEditor;
+    $('sparkleLayoutReset').onclick=()=>{
+      sparkleLayoutWorking=normalizeSparkleLayout(null,activeSparkleLayoutDensity,layoutSeed());
+      syncSparkleLayoutControls();
+      renderSparkleLayoutStage();
+    };
+    $('sparkleLayoutSave').onclick=()=>{
+      if(!sparkleLayoutWorking)return;
+      sparkleLayoutDrafts[activeSparkleLayoutDensity]=JSON.parse(JSON.stringify(sparkleLayoutWorking));
+      closeSparkleLayoutEditor();
+    };
+    $('sparkleLayoutAmount').addEventListener('input',()=>{
+      if(!sparkleLayoutWorking)return;
+      const amount=Math.max(1,Math.min(100,Number($('sparkleLayoutAmount').value)||1));
+      if(sparkleLayoutWorking.points.length<amount){
+        const generated=makeDefaultSparklePoints(layoutSeed()+'|extra|'+Date.now(),activeSparkleLayoutDensity,amount);
+        sparkleLayoutWorking.points=sparkleLayoutWorking.points.concat(generated.slice(sparkleLayoutWorking.points.length,amount));
+      }
+      sparkleLayoutWorking.amount=amount;
+      syncSparkleLayoutControls();
+      renderSparkleLayoutStage();
+    });
+    $('sparkleLayoutSize').addEventListener('input',()=>{
+      if(!sparkleLayoutWorking)return;
+      sparkleLayoutWorking.size=Math.max(60,Math.min(200,Number($('sparkleLayoutSize').value)||100));
+      syncSparkleLayoutControls();
+      renderSparkleLayoutStage();
+    });
+    const stage=$('sparkleLayoutStage');
+    let dragIndex=-1;
+    const movePoint=e=>{
+      if(dragIndex<0||!sparkleLayoutWorking)return;
+      const rect=stage.getBoundingClientRect();
+      const x=Math.max(1,Math.min(99,((e.clientX-rect.left)/rect.width)*100));
+      const y=Math.max(1,Math.min(99,((e.clientY-rect.top)/rect.height)*100));
+      sparkleLayoutWorking.points[dragIndex]=[Math.round(x*10)/10,Math.round(y*10)/10];
+      const dot=stage.querySelector(`[data-layout-index="${dragIndex}"]`);
+      if(dot){dot.style.left=x+'%';dot.style.top=y+'%';}
+    };
+    stage.addEventListener('pointerdown',e=>{
+      const dot=e.target.closest?.('.sparkle-layout-dot');if(!dot)return;
+      e.preventDefault();dragIndex=Number(dot.dataset.layoutIndex);
+      stage.setPointerCapture?.(e.pointerId);movePoint(e);
+    });
+    stage.addEventListener('pointermove',e=>{if(dragIndex>=0){e.preventDefault();movePoint(e);}});
+    const stop=()=>{dragIndex=-1;};
+    stage.addEventListener('pointerup',stop);stage.addEventListener('pointercancel',stop);
+    return modal;
+  }
+  function syncSparkleLayoutControls(){
+    if(!sparkleLayoutWorking)return;
+    if($('sparkleLayoutAmount'))$('sparkleLayoutAmount').value=sparkleLayoutWorking.amount;
+    if($('sparkleLayoutSize'))$('sparkleLayoutSize').value=sparkleLayoutWorking.size;
+    if($('sparkleLayoutAmountValue'))$('sparkleLayoutAmountValue').textContent=sparkleLayoutWorking.amount;
+    if($('sparkleLayoutSizeValue'))$('sparkleLayoutSizeValue').textContent=sparkleLayoutWorking.size+'%';
+  }
+  function renderSparkleLayoutStage(){
+    const stage=$('sparkleLayoutStage');if(!stage||!sparkleLayoutWorking)return;
+    const amount=Math.min(sparkleLayoutWorking.amount,sparkleLayoutWorking.points.length);
+    const sizeScale=sparkleLayoutWorking.size/100;
+    stage.innerHTML=sparkleLayoutWorking.points.slice(0,amount).map((p,i)=>{
+      const s=Math.max(14,Math.min(34,18*sizeScale));
+      return `<button type="button" class="sparkle-layout-dot" data-layout-index="${i}" style="left:${p[0]}%;top:${p[1]}%;font-size:${s}px">×</button>`;
+    }).join('');
+  }
+  function openSparkleLayoutEditor(density){
+    activeSparkleLayoutDensity=['whisper','constellation','starfall'].includes(density)?density:'constellation';
+    const current=sparkleLayoutDrafts[activeSparkleLayoutDensity]||normalizeSparkleLayout(null,activeSparkleLayoutDensity,layoutSeed());
+    sparkleLayoutWorking=JSON.parse(JSON.stringify(current));
+    const modal=ensureSparkleLayoutEditor();
+    if($('sparkleLayoutTitle'))$('sparkleLayoutTitle').textContent=activeSparkleLayoutDensity.charAt(0).toUpperCase()+activeSparkleLayoutDensity.slice(1)+' layout';
+    syncSparkleLayoutControls();
+    renderSparkleLayoutStage();
+    if(!modal.open)modal.showModal();
+  }
+  function closeSparkleLayoutEditor(){
+    const modal=$('sparkleLayoutModal');if(modal?.open)modal.close();
+    sparkleLayoutWorking=null;
   }
   function selectFont(key){if(!(key in FONT_MAP))key='default';if($('friendProfileFont'))$('friendProfileFont').value=key;document.querySelectorAll('.font-option').forEach(b=>b.classList.toggle('active',b.dataset.font===key));}
-  function selectSparkleDensity(value){
+  function selectSparkleDensity(value,openEditor=false){
     const density=['whisper','constellation','starfall'].includes(value)?value:'constellation';
     if($('friendProfileSparkleDensity')) $('friendProfileSparkleDensity').value=density;
     document.querySelectorAll('#profileSparkleDensity [data-density]').forEach(btn=>btn.classList.toggle('active',btn.dataset.density===density));
+    if(openEditor)openSparkleLayoutEditor(density);
   }
   function selectedSparkleIcons(){
     return [...document.querySelectorAll('#profileSparkleIcons input:checked')].map(input=>input.value).slice(0,100);
@@ -409,16 +598,18 @@
     if($('friendProfileTextScale')) $('friendProfileTextScale').value=textScale;
     syncTextScaleSlider();
     setSparkleIcons(friend?.profileSparkleIcons);
+    sparkleLayoutDrafts=normalizeSparkleLayouts(friend?.profileSparkleLayouts,friend?.id||friend?.name||'draft');
     selectSparkleDensity(friend?.profileSparkleDensity||'constellation');
     selectColourTarget('friendProfileBg');
   }
 
   const previousOpenFriendDialog=openFriendDialog;
   openFriendDialog=function(friend=null){previousOpenFriendDialog(friend);setThemeFields(friend);};
+  $('friendDialog')?.addEventListener('close',()=>{if(state.selectedId){renderPersonHero();showChoice();}});
   function ensureIdBeforeSave(){if($('friendId')&&!$('friendId').value)$('friendId').value=uid();}
   const saveBtn=$('friendForm')?.querySelector('.primary-button');
   saveBtn?.addEventListener('click',ensureIdBeforeSave,{capture:true});
-  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(200,Number($('friendProfileTextScale')?.value)||100));friend.profileSparkleIcons=selectedSparkleIcons().length?selectedSparkleIcons():DEFAULT_SPARKLES.slice();friend.profileSparkleDensity=$('friendProfileSparkleDensity')?.value||'constellation';COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();});});
+  saveBtn?.addEventListener('click',()=>{queueMicrotask(()=>{const id=$('friendId')?.value,friend=state.friends.find(f=>f.id===id);if(!friend)return;friend.profileBg=$('friendProfileBg')?.value||'#1b1326';friend.profileText=$('friendProfileText')?.value||'#f4edf7';friend.profileHeading=$('friendProfileHeading')?.value||friend.frameColor||'#f6d5ff';friend.profileSparkle=$('friendProfileSparkle')?.value||friend.frameColor||settings.accent;friend.profileFont=$('friendProfileFont')?.value||'default';friend.profileTextScale=Math.max(80,Math.min(200,Number($('friendProfileTextScale')?.value)||100));friend.profileSparkleIcons=selectedSparkleIcons().length?selectedSparkleIcons():DEFAULT_SPARKLES.slice();friend.profileSparkleDensity=$('friendProfileSparkleDensity')?.value||'constellation';friend.profileSparkleLayouts=JSON.parse(JSON.stringify(sparkleLayoutDrafts));COLOUR_TARGETS.forEach(([target])=>{const v=$(target)?.value;if(v)addRecentColour(v)});persistFriends();if(state.selectedId===friend.id){renderPersonHero();showChoice();}});});
 
   function fallbackEmojis(friend){if(Array.isArray(friend?.frameEmojis)&&friend.frameEmojis.filter(Boolean).length)return friend.frameEmojis.filter(Boolean).slice(0,3);if(friend?.frameStyle==='flowers')return['🌸'];if(friend?.frameStyle==='shards')return['💎'];return[];}
   function wreathMarkup(emojis,count=24){const list=(emojis||[]).filter(Boolean).slice(0,3);if(!list.length)return'';const sizes=[1,.78,1.13,.88,1.02,.72,1.18,.84],nudges=[0,-3,2,-1,3,-2,1,-3];let html='';for(let i=0;i<count;i++){const angle=(360/count)*i-90,rad=angle*Math.PI/180,radius=43+nudges[i%nudges.length],x=50+Math.cos(rad)*radius,y=50+Math.sin(rad)*radius,size=sizes[i%sizes.length],rotate=((i*37)%48)-24;html+=`<span class="emoji-wreath-piece" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;--emoji-size:${size};transform:translate(-50%,-50%) rotate(${rotate}deg)">${esc(list[i%list.length])}</span>`;}return html;}
@@ -477,6 +668,18 @@
     .sparkle-density-options button small{display:block!important;margin-top:5px!important;font-size:8px!important;line-height:1.25!important;color:var(--muted)!important;font-weight:500!important}
     .sparkle-density-options button.active{border-color:color-mix(in srgb,var(--accent) 78%,white 8%)!important;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 16%,transparent),rgba(255,255,255,.025))!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent),0 0 16px color-mix(in srgb,var(--accent) 13%,transparent)!important}
     .sparkle-density-options button.active b{color:color-mix(in srgb,var(--accent) 72%,white 28%)!important}
+    .sparkle-density-options button:after{content:'tap to arrange';display:block;margin-top:5px;font-size:7px;letter-spacing:.05em;text-transform:uppercase;color:color-mix(in srgb,var(--muted) 72%,transparent)}
+    .sparkle-layout-modal{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;background:rgba(10,7,14,.96);color:#f7f2fb;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom));box-sizing:border-box}
+    .sparkle-layout-modal::backdrop{background:rgba(4,3,8,.68);backdrop-filter:blur(4px)}
+    .sparkle-layout-sheet{width:min(100%,520px);height:100%;margin:auto;display:flex;flex-direction:column;align-items:center;overflow:auto}
+    .sparkle-layout-head{width:100%;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:4px}.sparkle-layout-head button{justify-self:start;border:0;background:transparent;color:#f7f2fb;padding:8px 0;font-weight:800}.sparkle-layout-head strong{font:700 20px Georgia,serif}
+    .sparkle-layout-help{max-width:360px;margin:2px auto 10px;text-align:center;color:rgba(247,242,251,.58);font:11px/1.4 system-ui}
+    .sparkle-layout-stage{position:relative;flex:0 0 auto;width:min(62vw,280px);aspect-ratio:9/16;border-radius:25px;border:1px solid color-mix(in srgb,var(--accent) 38%,rgba(255,255,255,.12));background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012));box-shadow:inset 0 0 38px rgba(255,255,255,.018);overflow:hidden;touch-action:none}
+    .sparkle-layout-stage:before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 24.8%,rgba(255,255,255,.045) 25%,transparent 25.2%,transparent 49.8%,rgba(255,255,255,.035) 50%,transparent 50.2%,transparent 74.8%,rgba(255,255,255,.045) 75%,transparent 75.2%);pointer-events:none}
+    .sparkle-layout-dot{position:absolute;transform:translate(-50%,-50%);width:1.35em;height:1.35em;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 55%,white 8%);border-radius:50%;background:color-mix(in srgb,var(--accent) 13%,#120d19);color:color-mix(in srgb,var(--accent) 65%,white 35%);font-family:system-ui,sans-serif;line-height:1;box-shadow:0 0 9px color-mix(in srgb,var(--accent) 20%,transparent);padding:0;touch-action:none}
+    .sparkle-layout-controls{width:min(92vw,420px);margin:13px auto 0;display:grid;gap:10px}.sparkle-layout-controls label{display:grid;grid-template-columns:1fr;gap:6px;color:rgba(247,242,251,.68);font:11px system-ui}.sparkle-layout-controls label span{display:flex;justify-content:space-between}.sparkle-layout-controls input[type=range]{width:100%;accent-color:var(--accent)}
+    .sparkle-layout-actions{width:min(92vw,420px);display:grid;grid-template-columns:1fr 1.35fr;gap:8px;margin:12px auto 0}.sparkle-layout-actions button{min-height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#f7f2fb;font-weight:800}.sparkle-layout-actions #sparkleLayoutSave{border-color:color-mix(in srgb,var(--accent) 60%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:color-mix(in srgb,var(--accent) 72%,white 28%)}
+
     .profile-sparkle-icon .custom-sparkle-svg{width:72%!important;height:72%!important;overflow:visible!important}
     .profile-sparkle-icon .custom-sparkle-svg polyline{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
     .profile-sparkle-add{aspect-ratio:1!important;border:1px dashed color-mix(in srgb,var(--accent) 48%,rgba(255,255,255,.12))!important;border-radius:13px!important;background:color-mix(in srgb,var(--accent) 6%,transparent)!important;color:var(--text)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;padding:4px!important}
