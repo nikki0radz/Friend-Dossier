@@ -43,7 +43,8 @@
           kind:'date',friend,entry,
           emoji:(entry.emoji||'📅').trim()||'📅',
           title:(entry.title||'Important date').trim()||'Important date',
-          subtitle:friend.name
+          subtitle:friend.name,
+          note:(entry.value||'').trim()
         });
       });
     });
@@ -212,7 +213,7 @@
       button.className='calendar-event-card';
       button.innerHTML=`
         <span class="calendar-event-emoji">${esc(event.emoji)}</span>
-        <span class="calendar-event-copy"><strong>${esc(event.title)}</strong><small>${esc(event.subtitle||event.friend.name)}</small></span>
+        <span class="calendar-event-copy"><strong>${esc(event.title)}</strong><small>${esc(event.subtitle||event.friend.name)}</small>${event.note?`<em>${esc(event.note)}</em>`:''}</span>
         <span class="calendar-event-arrow">›</span>`;
       button.onclick=()=>{
         closeDateCalendar(true);
@@ -320,11 +321,11 @@
     .important-date-calendar.hidden{display:none!important}
     .calendar-shell{width:min(100%,680px);min-height:100dvh;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px max(22px,env(safe-area-inset-bottom));box-sizing:border-box}
     .calendar-topbar{display:grid;grid-template-columns:70px 1fr 70px;align-items:center;gap:8px;padding:3px 0 16px}
-    .calendar-topbar>div{text-align:center;display:grid;gap:2px}.calendar-topbar>div strong{font-family:Georgia,'Times New Roman',serif;font-size:17px;color:color-mix(in srgb,var(--accent) 66%,white 34%)}.calendar-topbar>div small{font-size:8px;letter-spacing:.04em;color:var(--muted)}
+    .calendar-topbar>div{text-align:center;display:grid;gap:2px}.calendar-topbar>div strong{font-family:Georgia,'Times New Roman',serif;font-size:15px;color:color-mix(in srgb,var(--accent) 66%,white 34%)}.calendar-topbar>div small{font-size:8px;letter-spacing:.04em;color:var(--muted)}
     .calendar-back,.calendar-today{border:0;background:transparent;color:color-mix(in srgb,var(--text) 68%,transparent);font-weight:700;padding:8px 4px}.calendar-back{text-align:left}.calendar-today{text-align:right;font-size:10px}
     .calendar-month-nav{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin:2px 0 11px}
     .calendar-month-nav button{width:38px;height:38px;border-radius:50%;border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);background:rgba(255,255,255,.025);color:var(--accent);font-size:24px}
-    .calendar-month-nav button:last-child{justify-self:end}.calendar-month-nav h2{margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:27px;font-weight:600;letter-spacing:-.02em}
+    .calendar-month-nav button:last-child{justify-self:end}.calendar-month-nav h2{margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:600;letter-spacing:-.02em}
     .calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 0 5px}.calendar-weekdays span{text-align:center;font-size:8px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
     .calendar-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
     .calendar-day{position:relative;min-width:0;aspect-ratio:.86;padding:7px 2px 4px;border:1px solid rgba(255,255,255,.045);border-radius:15px;background:rgba(255,255,255,.018);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
@@ -336,7 +337,7 @@
     .calendar-day-details{margin-top:16px;padding:14px;border:1px solid color-mix(in srgb,var(--accent) 18%,transparent);border-radius:20px;background:rgba(255,255,255,.022)}
     .calendar-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.calendar-detail-head>div{display:grid;gap:3px}.calendar-detail-head small{font-size:8px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}.calendar-detail-head strong{font-family:Georgia,'Times New Roman',serif;font-size:16px}.calendar-detail-head>span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-size:11px}
     .calendar-no-events{text-align:center;padding:17px 6px;color:var(--muted);font-size:11px}.calendar-no-events span{color:var(--accent)}
-    .calendar-event-list{display:grid;gap:7px}.calendar-event-card{display:grid;grid-template-columns:38px 1fr 18px;align-items:center;gap:9px;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.025);color:var(--text);text-align:left}.calendar-event-emoji{font-size:21px;text-align:center}.calendar-event-copy{display:grid;gap:2px}.calendar-event-copy strong{font-size:12px}.calendar-event-copy small{font-size:9px;color:var(--muted)}.calendar-event-arrow{font-size:20px;color:var(--accent);opacity:.65}
+    .calendar-event-list{display:grid;gap:7px}.calendar-event-card{display:grid;grid-template-columns:38px 1fr 18px;align-items:center;gap:9px;width:100%;padding:9px 10px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.025);color:var(--text);text-align:left}.calendar-event-emoji{font-size:21px;text-align:center}.calendar-event-copy{display:grid;gap:2px}.calendar-event-copy strong{font-size:12px}.calendar-event-copy small{font-size:9px;color:var(--muted)}.calendar-event-copy em{margin-top:3px;font-size:10px;line-height:1.35;font-style:normal;color:color-mix(in srgb,var(--text) 64%,transparent);white-space:pre-wrap}.calendar-event-arrow{font-size:20px;color:var(--accent);opacity:.65}
     .date-emoji-picker{margin:4px 0 12px;padding:10px;border:1px solid color-mix(in srgb,var(--accent) 17%,var(--border));border-radius:14px;background:rgba(255,255,255,.025)}
     .date-emoji-picker.hidden{display:none!important}.date-emoji-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.date-emoji-picker-head span{font-size:10px;color:#d7cbdc}.date-emoji-picker-head input{width:58px!important;height:38px!important;padding:5px!important;text-align:center;font-size:21px!important;margin:0!important}
     .date-emoji-quick{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}.date-emoji-quick button{aspect-ratio:1;border:1px solid transparent;border-radius:9px;background:transparent;font-size:16px;padding:0}.date-emoji-quick button.active{border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
