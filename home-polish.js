@@ -9,12 +9,12 @@
     btn.type='button';
     btn.className='delete-friend-button';
     btn.textContent='Delete person';
-    btn.addEventListener('click',()=>{
+    btn.addEventListener('click',async()=>{
       const id=$('friendId')?.value;
       if(!id) return;
       const friend=state.friends.find(f=>f.id===id);
       if(!friend) return;
-      if(!confirm(`Delete ${friend.name}? This cannot be undone.`)) return;
+      if(!await fdConfirm(`This will permanently remove ${friend.name} and everything in their dossier.`,{title:`Delete ${friend.name}?`,confirmLabel:'Delete person',danger:true,icon:'✕'})) return;
       state.friends=state.friends.filter(f=>f.id!==id);
       persistFriends();
       safeClose($('friendDialog'));
