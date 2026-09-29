@@ -496,7 +496,10 @@ function openEntryDialog(type,entry=null){
   renderEntryImagePreview();
   const isDate=type==='date';
   $('entryDateFields').classList.toggle('hidden',!isDate);
-  $('entryValueLabel').classList.toggle('hidden',isDate);
+  const valueLabel=$('entryValueLabel');
+  const valueLabelText=$('entryValueLabelText');
+  valueLabel?.classList.remove('hidden');
+  if(valueLabelText)valueLabelText.innerHTML=isDate?'Note <small class="entry-note-optional">(optional)</small>':'Info';
   safeOpen($('entryDialog'));
 }
 function saveEntry(event){
