@@ -32,7 +32,7 @@
         const entryYear=Number(entry.year)||0;
         if(recurring){
           if(entryYear&&y<entryYear)return;
-        }else if(!entryYear||entryYear!==y)return;
+        }else if((entryYear||new Date().getFullYear())!==y)return;
         events.push({
           kind:'date',friend,entry,
           emoji:(entry.emoji||'📅').trim()||'📅',
