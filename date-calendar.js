@@ -145,7 +145,7 @@
     return overlay;
   }
 
-  function openDateCalendar(date=new Date()){
+  function openDateCalendar(date=new Date(),skipHistory=false){
     const overlay=ensureCalendar();
     calendarSelected=startOfDay(date);
     calendarCursor=new Date(calendarSelected.getFullYear(),calendarSelected.getMonth(),1);
@@ -153,9 +153,11 @@
     overlay.setAttribute('aria-hidden','false');
     document.body.classList.add('important-calendar-open');
     renderCalendarMonth();
+    if(!skipHistory)window.friendDossierHistoryPush?.('calendar',{date:keyFor(calendarSelected)});
   }
 
-  function closeDateCalendar(){
+  function closeDateCalendar(skipHistory=false){
+    if(!skipHistory&&window.friendDossierHistoryBack?.('calendar'))return;
     const overlay=$('importantDateCalendar');if(!overlay)return;
     overlay.classList.add('hidden');
     overlay.setAttribute('aria-hidden','true');
@@ -207,7 +209,7 @@
         <span class="calendar-event-copy"><strong>${esc(event.title)}</strong><small>${esc(event.subtitle||event.friend.name)}</small></span>
         <span class="calendar-event-arrow">›</span>`;
       button.onclick=()=>{
-        closeDateCalendar();
+        closeDateCalendar(true);
         openPerson(event.friend.id);
       };
       list.appendChild(button);
@@ -335,6 +337,9 @@
     @media(max-width:390px){.calendar-shell{padding-left:10px;padding-right:10px}.calendar-month-grid{gap:3px}.calendar-day{border-radius:12px;padding-top:5px}.calendar-day-emojis i{font-size:10px}.date-emoji-quick{grid-template-columns:repeat(5,1fr)}}
   `;
   document.head.appendChild(style);
+
+  window.openImportantDateCalendar=(date,skipHistory=false)=>openDateCalendar(date,skipHistory);
+  window.closeImportantDateCalendar=(skipHistory=false)=>closeDateCalendar(skipHistory);
 
   renderWeekStrip();
   softenNextDateCard();
