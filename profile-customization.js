@@ -186,9 +186,9 @@
     }));
     root.querySelector('#addCustomSparkle')?.addEventListener('click',openSparkleDrawer);
   }
-  function deleteCustomSparkle(id){
+  async function deleteCustomSparkle(id){
     if(!id||!String(id).startsWith('custom:'))return;
-    if(!confirm('Delete this custom sparkle from your bank?'))return;
+    if(!await fdConfirm('This will remove the sparkle from your custom sparkle bank.',{title:'Delete this sparkle?',confirmLabel:'Delete',danger:true,icon:'✕'}))return;
     const next=readCustomSparkles().filter(item=>item.id!==id);
     writeCustomSparkles(next);
     state.friends.forEach(friend=>{
@@ -350,24 +350,24 @@
   function addCustomSparkle(item){
     const items=readCustomSparkles();
     items.push(item);
-    if(!writeCustomSparkles(items)){alert('Couldn’t save that sparkle. Your browser storage may be full.');return false;}
+    if(!writeCustomSparkles(items)){fdAlert('Couldn’t save that sparkle. Your browser storage may be full.',{title:'Couldn’t save',danger:true,icon:'!'});return false;}
     refreshSparklePicker([item.id]);closeSparkleDrawer();return true;
   }
   function saveSparkleDrawing(){
     const useful=sparkleDrawingStrokes.filter(s=>Array.isArray(s)&&s.length);
-    if(!useful.length){alert('Draw something first ✦');return;}
+    if(!useful.length){fdAlert('Draw something first ✦',{title:'Nothing to save',icon:'✎'});return;}
     const cleaned=useful.map(stroke=>stroke.map(([x,y])=>[Math.round(x*10)/10,Math.round(y*10)/10]));
     addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'draw',strokes:cleaned});
   }
   function saveSparkleEmoji(){
     const value=$('sparkleEmojiInput')?.value.trim()||'';
-    if(!value){alert('Add an emoji first ✦');return;}
+    if(!value){fdAlert('Add an emoji first ✦',{title:'Pick an emoji',icon:'☺'});return;}
     addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'emoji',value:value.slice(0,12)});
   }
   function previewSparklePng(){
     const file=$('sparklePngInput')?.files?.[0],preview=$('sparklePngPreview');
     if(!file||!preview)return;
-    if(file.type!=='image/png'){alert('Please choose a PNG image.');$('sparklePngInput').value='';return;}
+    if(file.type!=='image/png'){fdAlert('Please choose a PNG image.',{title:'PNG only',icon:'▧'});$('sparklePngInput').value='';return;}
     const reader=new FileReader();
     reader.onload=()=>{preview.innerHTML=`<img src="${reader.result}" alt="PNG preview">`;};
     reader.readAsDataURL(file);
@@ -393,12 +393,12 @@
   }
   async function saveSparklePng(){
     const file=$('sparklePngInput')?.files?.[0];
-    if(!file){alert('Choose a PNG first ✦');return;}
-    if(file.type!=='image/png'){alert('Please choose a PNG image.');return;}
+    if(!file){fdAlert('Choose a PNG first ✦',{title:'Choose an image',icon:'▧'});return;}
+    if(file.type!=='image/png'){fdAlert('Please choose a PNG image.',{title:'PNG only',icon:'▧'});return;}
     try{
       const data=await resizeSparklePng(file);
       addCustomSparkle({id:'custom:'+Date.now().toString(36),type:'png',data});
-    }catch{alert('I couldn’t read that PNG. Try another image.');}
+    }catch{fdAlert('I couldn’t read that PNG. Try another image.',{title:'PNG problem',danger:true,icon:'!'});}
   }
   function applyTextScalePreview(value){
     const root=$('personView');if(!root)return;
