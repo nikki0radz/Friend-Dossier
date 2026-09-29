@@ -1,4 +1,4 @@
-const CACHE='friend-dossier-v32';
+const CACHE='friend-dossier-v33';
 const ASSETS=[
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS=[
   './splash.css',
   './editor-polish.css',
   './app.js',
+  './ui-prompts.js',
   './emoji-frames.js',
   './profile-customization.js',
   './home-polish.js',
@@ -19,7 +20,8 @@ const ASSETS=[
   './dossier-finishing.js',
   './magic-intensify.js',
   './colour-studio-v2.js',
-  './date-calendar.js'
+  './date-calendar.js',
+  './navigation-history.js'
 ];
 
 self.addEventListener('install',event=>{
