@@ -9,6 +9,12 @@
 
   const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
   const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return startOfDay(x);};
+  const startOfMondayWeek=d=>{
+    const x=startOfDay(d);
+    const offset=(x.getDay()+6)%7;
+    x.setDate(x.getDate()-offset);
+    return x;
+  };
   const keyFor=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const sameDay=(a,b)=>keyFor(a)===keyFor(b);
   const prettyDate=d=>d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -62,7 +68,7 @@
     next.insertAdjacentElement('afterend',wrap);
     wrap.querySelector('.week-prev').onclick=()=>{weekOffset-=7;renderWeekStrip();};
     wrap.querySelector('.week-next').onclick=()=>{weekOffset+=7;renderWeekStrip();};
-    wrap.querySelector('.week-open-calendar').onclick=()=>openDateCalendar(addDays(new Date(),weekOffset));
+    wrap.querySelector('.week-open-calendar').onclick=()=>openDateCalendar(addDays(startOfMondayWeek(new Date()),weekOffset));
 
     const strip=wrap.querySelector('#dateWeekStrip');
     let startX=0,startY=0,pointerId=null;
@@ -88,7 +94,7 @@
   function renderWeekStrip(){
     const wrap=ensureWeekStrip();if(!wrap)return;
     const strip=wrap.querySelector('#dateWeekStrip');
-    const start=addDays(new Date(),weekOffset),end=addDays(start,6);
+    const start=addDays(startOfMondayWeek(new Date()),weekOffset),end=addDays(start,6);
     wrap.querySelector('#weekRangeLabel').textContent=weekOffset===0?'Next 7 days':shortRange(start,end);
     strip.innerHTML='';
     for(let i=0;i<7;i++){
