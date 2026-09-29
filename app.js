@@ -279,8 +279,8 @@ function nextOccurrence(day,month,year,recurring=true){
     candidate=new Date(today.getFullYear(),month-1,day);
     if(candidate<today)candidate=new Date(today.getFullYear()+1,month-1,day);
   }else{
-    if(!year)return null;
-    candidate=new Date(year,month-1,day);
+    const oneOffYear=year||today.getFullYear();
+    candidate=new Date(oneOffYear,month-1,day);
     if(candidate<today)return null;
   }
   const days=Math.round((candidate-today)/86400000);
