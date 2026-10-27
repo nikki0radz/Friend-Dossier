@@ -201,7 +201,8 @@
   function renderCalendarDayDetails(){
     const box=$('calendarDayDetails');if(!box)return;
     const events=dateEvents(calendarSelected);
-    box.innerHTML=`<div class="calendar-detail-head"><div><small>Selected day</small><strong>${esc(prettyDate(calendarSelected))}</strong></div><span>${events.length?events.length:''}</span></div>`;
+    box.innerHTML=`<div class="calendar-detail-head"><div><small>Selected day</small><strong>${esc(prettyDate(calendarSelected))}</strong></div><button type="button" id="calendarAddEvent" class="text-button calendar-add-event">＋ Add event</button></div>`;
+    $('calendarAddEvent').onclick=()=>window.openCalendarEventEditor?.(new Date(calendarSelected));
     if(!events.length){
       box.insertAdjacentHTML('beforeend','<div class="calendar-no-events">Nothing written here yet <span>✦</span></div>');
       return;
@@ -346,6 +347,7 @@
   `;
   document.head.appendChild(style);
 
+  window.refreshImportantDateCalendar=()=>{renderCalendarMonth();renderWeekStrip();};
   window.renderImportantDateWeek=renderWeekStrip;
   window.openImportantDateCalendar=(date,skipHistory=false)=>openDateCalendar(date,skipHistory);
   window.closeImportantDateCalendar=(skipHistory=false)=>closeDateCalendar(skipHistory);

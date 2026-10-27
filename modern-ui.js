@@ -4,6 +4,18 @@ function validDossierDate(day, month, year) {
   const date=new Date(y,m-1,d);
   return d>0 && m>0 && m<=12 && date.getDate()===d && date.getMonth()===m-1;
 }
+function dossierCountdown(days) {
+  return days===0?'Today':days===1?'Tomorrow':`in ${days} days`;
+}
+function nextFriendDate(friend) {
+  const dates=(friend.entries||[]).filter(entry=>entry.type==='date').map(entry=>{
+    const next=nextOccurrence(entry.day,entry.month,entry.year,entry.recurring!==false);
+    return next?{...next,label:entry.title||'Important date'}:null;
+  }).filter(Boolean).sort((a,b)=>a.date-b.date);
+  if(dates.length)return dates[0];
+  const birthday=nextOccurrence(friend.birthdayDay,friend.birthdayMonth,friend.birthdayYear,true);
+  return birthday?{...birthday,label:'Birthday'}:null;
+}
 (() => {
   const icons={
     people:'<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v2"/>',
@@ -29,6 +41,7 @@ function validDossierDate(day, month, year) {
   let allCategories=false;
   let expanded=new Set();
   let settingsDraft=null;
+  let calendarEntryContext=null;
   const views=[['people','People list','A searchable list with useful details.'],['cards','Profile cards','A compact, visual grid of your people.'],['upcoming','Upcoming dates','Birthdays and plans at the top.']];
   const theme=()=>settings.cleanTheme==='dark'?'dark':'light';
   const layout=()=>views.some(v=>v[0]===settings.startScreen)?settings.startScreen:'people';
@@ -59,8 +72,8 @@ function validDossierDate(day, month, year) {
     });
   }
   function preview(f){
-    const entry=f.entries.find(e=>e.pinned)||f.entries.find(e=>e.type==='like')||f.entries.find(e=>e.type!=='allergy');
-    return entry?displayEntry(entry):(f.birthdayDay&&f.birthdayMonth?`Birthday ${formatPartialDate(f.birthdayDay,f.birthdayMonth,'')}`:'Open dossier');
+    const next=nextFriendDate(f);
+    return next?`${next.label} · ${next.date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} · ${dossierCountdown(next.days)}`:'';
   }
   function events(){
     const result=[];
@@ -74,7 +87,7 @@ function validDossierDate(day, month, year) {
     }
     return result.sort((a,b)=>a.date-b.date||a.friend.name.localeCompare(b.friend.name));
   }
-  function peopleRow(f){return `<button class="fd-person" data-person="${esc(f.id)}">${avatar(f)}<span class="fd-person-copy"><strong>${esc(f.name)}</strong><small>${esc(preview(f))}</small></span><span class="fd-chevron">${icon('arrow')}</span></button>`;}
+  function peopleRow(f){return `<button class="fd-person" data-person="${esc(f.id)}">${avatar(f)}<span class="fd-person-copy"><strong>${esc(f.name)}</strong>${preview(f)?`<small>${esc(preview(f))}</small>`:''}</span><span class="fd-chevron">${icon('arrow')}</span></button>`;}
   function bindPeople(root){bindPhotos(root);root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>openPerson(b.dataset.person));}
   function updateNav(){
     const profile=!$('personView').classList.contains('hidden');
@@ -117,7 +130,8 @@ function validDossierDate(day, month, year) {
     nextBox.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nextBox.click();}};
     const agenda=$('fdAgenda');agenda.innerHTML='';
     if(mode==='upcoming'){
-      agenda.innerHTML=`<div class="fd-section-heading"><h2>Coming up</h2><button class="text-button" id="fdViewMonth">View month ${icon('arrow')}</button></div><div class="fd-agenda-list">${upcoming.length?upcoming.slice(0,5).map(e=>`<button class="fd-event" data-person="${esc(e.friend.id)}"><span class="fd-date-block"><strong>${e.date.getDate()}</strong><small>${esc(e.date.toLocaleDateString('en-GB',{month:'short'}))}</small></span><span><strong>${esc(e.title)}</strong><small>${esc(countdownWords(e.days))}</small><small>${e.recurring?'Repeats yearly':'One-off'}</small></span>${icon('arrow')}</button>`).join(''):'<p class="fd-empty">Add a birthday or an important date to a profile and it will appear here.</p>'}</div>`;
+      agenda.innerHTML=`<div class="fd-section-heading"><h2>Coming up</h2><div class="fd-agenda-actions"><button class="text-button" id="fdAgendaAdd">${icon('plus')} Add event</button><button class="text-button" id="fdViewMonth">Month ${icon('arrow')}</button></div></div><div class="fd-agenda-list">${upcoming.length?upcoming.slice(0,3).map(e=>`<button class="fd-event" data-person="${esc(e.friend.id)}"><span class="fd-date-block"><strong>${e.date.getDate()}</strong><small>${esc(e.date.toLocaleDateString('en-GB',{month:'short'}))}</small></span><span><strong>${esc(e.title)}</strong><small>${esc(dossierCountdown(e.days))}</small></span>${icon('arrow')}</button>`).join(''):'<p class="fd-empty">No upcoming events yet.</p>'}</div>`;
+      $('fdAgendaAdd').onclick=()=>window.openCalendarEventEditor(new Date());
       $('fdViewMonth').onclick=()=>window.openImportantDateCalendar(new Date());bindPeople(agenda);
     }
     const people=state.friends.filter(f=>`${f.name} ${f.entries.map(displayEntry).join(' ')}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
@@ -143,6 +157,12 @@ function validDossierDate(day, month, year) {
     const text=entry.type==='date'?formatPartialDate(entry.day,entry.month,entry.year):'';
     return `<article class="fd-entry" data-entry="${esc(entry.id)}"><div class="fd-entry-copy">${pinnedArea?`<small class="fd-category-label">${esc(catName(entry.type))}</small>`:''}${entry.title?`<strong>${esc(entry.title)}</strong>`:''}${text?`<p>${esc(text)} <small>· ${entry.recurring!==false?'Yearly':'One-off'}</small></p>`:''}${entry.value?`<p>${esc(entry.value)}</p>`:''}${entry.images?.length?`<div class="fd-entry-images">${entry.images.map((src,i)=>`<button type="button" data-photo="${i}" aria-label="Open picture ${i+1}"><img src="${esc(src)}" alt="Attached picture ${i+1}" loading="lazy"></button>`).join('')}</div>`:''}</div><div class="fd-entry-actions"><button class="fd-pin ${entry.pinned?'is-pinned':''}" aria-label="${entry.pinned?'Unpin':'Pin'} item" aria-pressed="${!!entry.pinned}" data-pin="${esc(entry.id)}">${icon('pin')}</button><button aria-label="Edit item" data-edit="${esc(entry.id)}">${icon('edit')}</button></div></article>`;
   }
+  function openFullPhoto(source,alt,fallback=''){
+    const image=$('fdFullPhoto');
+    image.alt=alt;
+    image.onerror=()=>{if(fallback && image.getAttribute('src')!==fallback){image.src=fallback;fallback='';}};
+    image.src=source;safeOpen($('fdPhotoDialog'));
+  }
   function bindEntries(root){
     const f=selected();
     root.querySelectorAll('[data-pin]').forEach(b=>b.onclick=()=>{
@@ -152,8 +172,8 @@ function validDossierDate(day, month, year) {
     });
     root.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const entry=f.entries.find(e=>e.id===b.dataset.edit);window.__returnToDossierAfterEntry=true;openEntryDialog(entry.type,entry);});
     root.querySelectorAll('[data-photo]').forEach(b=>b.onclick=()=>{
-      const entry=f.entries.find(e=>e.id===b.closest('[data-entry]').dataset.entry);const modal=$('fdPhotoDialog');
-      $('fdFullPhoto').src=entry.images[Number(b.dataset.photo)];safeOpen(modal);
+      const entry=f.entries.find(e=>e.id===b.closest('[data-entry]').dataset.entry);
+      openFullPhoto(entry.images[Number(b.dataset.photo)],'Attached picture');
     });
   }
   renderRead=function(){
@@ -161,14 +181,15 @@ function validDossierDate(day, month, year) {
     const pinned=f.entries.filter(e=>e.pinned), allergies=f.entries.filter(e=>e.type==='allergy');
     const types=[...new Set([...settings.categories.map(c=>c.id),...f.entries.map(e=>e.type)])];
     const visible=allCategories?types:types.filter(type=>f.entries.some(e=>e.type===type));
-    $('readPanel').innerHTML=`<div class="fd-profile-top"><button id="fdBackPeople" class="text-button">${icon('back')} People</button><button id="fdEditPerson" class="text-button">Edit profile</button></div><header class="fd-profile-head">${avatar(f)}<div><h1>${esc(f.name)}</h1>${f.birthdayDay&&f.birthdayMonth?`<span>${icon('calendar')} ${esc(formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear))}</span>`:''}<button class="text-button fd-change-photo" id="fdChangePhoto">${f.imageData||f.photoSourceData?'Change photo':'Add photo'}</button></div></header><button class="primary-button fd-add-info" id="fdAddInfo">${icon('plus')} Add info</button>${allergies.length?`<div class="fd-allergy">${icon('warning')}<div><strong>Allergy / avoid</strong>${allergies.map(e=>`<p>${esc(displayEntry(e))}</p>`).join('')}</div></div>`:''}<section class="fd-pinned"><div class="fd-section-heading"><h2>${icon('pin')} Pinned details</h2></div>${pinned.length?pinned.map(e=>entryCard(e,true)).join(''):'<p class="fd-pin-hint">Tap the pin beside any item to keep it here.</p>'}</section><div class="fd-section-heading"><h2>Browse dossier</h2><button class="text-button" id="fdManageItems">Manage</button></div><div class="fd-categories">${visible.map(type=>{
+    $('readPanel').innerHTML=`<div class="fd-profile-top"><button id="fdBackPeople" class="text-button">${icon('back')} People</button><button id="fdEditPerson" class="text-button">Edit profile</button></div><header class="fd-profile-head">${f.imageData||f.photoSourceData?`<button type="button" class="fd-profile-photo" id="fdExpandPhoto" aria-label="Expand ${esc(f.name)}’s photo">${avatar(f)}</button>`:avatar(f)}<div><h1>${esc(f.name)}</h1>${f.birthdayDay&&f.birthdayMonth?`<span>${icon('calendar')} ${esc(formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear))}</span>`:''}<button class="text-button fd-change-photo" id="fdChangePhoto">${f.imageData||f.photoSourceData?'Change photo':'Add photo'}</button></div></header><button class="primary-button fd-add-info" id="fdAddInfo">${icon('plus')} Add info</button>${allergies.length?`<div class="fd-allergy">${icon('warning')}<div><strong>Allergy / avoid</strong>${allergies.map(e=>`<p>${esc(displayEntry(e))}</p>`).join('')}</div></div>`:''}<section class="fd-pinned"><div class="fd-section-heading"><h2>${icon('pin')} Pinned details</h2></div>${pinned.length?pinned.map(e=>entryCard(e,true)).join(''):'<p class="fd-pin-hint">Tap the pin beside any item to keep it here.</p>'}</section><div class="fd-categories">${visible.map(type=>{
       const entries=f.entries.filter(e=>e.type===type);
       const photos=entries.flatMap(entry=>(entry.images||[]).map((src,index)=>({src,index,id:entry.id})));
       return `<div class="fd-category-block"><details data-type="${esc(type)}" ${expanded.has(type)?'open':''}><summary>${catIcon(type)}<strong>${esc(catName(type))}</strong><span class="fd-count">${entries.length}</span>${icon('arrow')}</summary><div class="fd-category-items">${entries.map(e=>entryCard(e)).join('')}<button class="text-button fd-category-add" data-add-type="${esc(type)}">${icon('plus')} Add ${esc(catName(type).toLowerCase())}</button></div></details>${photos.length?`<div class="fd-category-preview">${photos.slice(0,3).map(photo=>`<button type="button" data-entry="${esc(photo.id)}" data-photo="${photo.index}" aria-label="Open ${esc(catName(type).toLowerCase())} picture ${photo.index+1}"><img src="${esc(photo.src)}" alt="${esc(catName(type))} picture" loading="lazy"></button>`).join('')}${photos.length>3?`<span>+${photos.length-3} more</span>`:''}</div>`:''}</div>`;
     }).join('')}</div><button class="fd-all-categories" id="fdAllCategories">${icon('grid')}${allCategories?'Show saved categories':'All categories'}${icon('arrow')}</button><p class="fd-profile-foot">${f.entries.length} saved ${f.entries.length===1?'item':'items'}</p>`;
     bindPhotos($('readPanel'));
+    if($('fdExpandPhoto'))$('fdExpandPhoto').onclick=()=>openFullPhoto(f.photoSourceData||f.imageData,`${f.name}’s photo`,f.imageData);
     $('fdChangePhoto').onclick=()=>{openFriendDialog(f);$('photoInput').click();};
-    $('fdBackPeople').onclick=()=>goHome();$('fdEditPerson').onclick=()=>openFriendDialog(f);$('fdAddInfo').onclick=showAddInfo;$('fdManageItems').onclick=renderReadEdit;
+    $('fdBackPeople').onclick=()=>goHome();$('fdEditPerson').onclick=()=>openFriendDialog(f);$('fdAddInfo').onclick=showAddInfo;
     $('fdAllCategories').onclick=()=>{allCategories=!allCategories;renderRead();};
     $('readPanel').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)expanded.add(d.dataset.type);else expanded.delete(d.dataset.type);}));
     $('readPanel').querySelectorAll('[data-add-type]').forEach(b=>b.onclick=()=>{expanded.add(b.dataset.addType);window.__returnToDossierAfterEntry=true;openEntryDialog(b.dataset.addType);});
@@ -183,10 +204,27 @@ function validDossierDate(day, month, year) {
     $('fdNewCategory').onclick=()=>openCategoryDialog();
   };
   const coreSaveEntry=saveEntry;
-  saveEntry=function(event){coreSaveEntry(event);if(!$('entryDialog').open&&selected()){showRead();renderHome();}};
+  saveEntry=function(event){
+    if(calendarEntryContext){
+      event.preventDefault();
+      const friend=state.friends.find(f=>f.id===$('fdEventFriend').value);
+      if(!friend){$('fdEventFriend').reportValidity();return;}
+      const context=calendarEntryContext;
+      state.selectedId=friend.id;window.__returnToDossierAfterEntry=true;
+      try{coreSaveEntry(event);}finally{state.selectedId=context.previousId;window.__returnToDossierAfterEntry=false;}
+      if(!$('entryDialog').open){
+        calendarEntryContext=null;$('fdEventFriendPicker').classList.add('hidden');$('fdEventFriend').required=false;
+        if(selected())showRead();renderHome();window.refreshImportantDateCalendar?.();
+      }
+      return;
+    }
+    coreSaveEntry(event);if(!$('entryDialog').open&&selected()){showRead();renderHome();}
+  };
   $('entryForm').removeEventListener('submit',coreSaveEntry);$('entryForm').addEventListener('submit',saveEntry);
   const coreOpenEntry=openEntryDialog;
   openEntryDialog=function(type,entry=null){
+    calendarEntryContext=null;
+    $('fdEventFriendPicker')?.classList.add('hidden');if($('fdEventFriend'))$('fdEventFriend').required=false;
     coreOpenEntry(type,entry);
     $('entryDialogTitle').textContent=(entry?'Edit ':'Add ')+catName(type).toLowerCase();
     $('entryDelete').classList.toggle('hidden',!entry);
@@ -197,6 +235,17 @@ function validDossierDate(day, month, year) {
       if(!persistFriends()){f.entries=old;fdAlert('This change could not be saved.',{title:'Couldn’t save'});return;}
       safeClose($('entryDialog'));showRead();renderHome();showToast('Item deleted');
     };
+  };
+  window.openCalendarEventEditor=function(date=new Date()){
+    if(!state.friends.length){fdAlert('Add a friend first, then you can choose whose event this is.',{title:'Add a friend first'});return;}
+    const previousId=state.selectedId;
+    openEntryDialog('date');calendarEntryContext={previousId};
+    $('entryDialogTitle').textContent='Add event';
+    const picker=$('fdEventFriend');
+    picker.innerHTML='<option value="">Choose a friend</option>'+[...state.friends].sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${esc(f.id)}">${esc(f.name)}</option>`).join('');
+    picker.value=previousId||'';picker.required=true;$('fdEventFriendPicker').classList.remove('hidden');
+    $('entryDay').value=date.getDate();$('entryMonth').value=date.getMonth()+1;$('entryYear').value=date.getFullYear();
+    $('entryRecurring').checked=false;picker.focus();
   };
   renderReadEdit=function(){
     showRead();allCategories=true;expanded=new Set(selected().entries.map(e=>e.type));renderRead();
@@ -242,9 +291,10 @@ function validDossierDate(day, month, year) {
     try{persistSettings();}catch{settings.categories=old;fdAlert('The category could not be saved.',{title:'Couldn’t save'});return;}
     safeClose($('fdCategoryDialog'));$('fdCategoryForm').reset();if(selected())showAddInfo();showToast('Category created');
   };
+  $('entryDialog').querySelector('.emoji-value-row').insertAdjacentHTML('beforebegin','<label id="fdEventFriendPicker" class="hidden">Whose event?<select id="fdEventFriend"><option value="">Choose a friend</option></select></label>');
   $('entryForm').insertAdjacentHTML('beforeend','<button type="button" id="entryDelete" class="fd-danger hidden">Delete item</button>');
   $('choosePhotoBtn').onclick=()=>$('photoInput').click();
   $('friendForm').insertAdjacentHTML('beforeend','<button type="button" id="friendDelete" class="fd-danger hidden">Delete friend</button>');
-  $('entryDialog').addEventListener('close',()=>{window.__returnToDossierAfterEntry=false;});
+  $('entryDialog').addEventListener('close',()=>{window.__returnToDossierAfterEntry=false;calendarEntryContext=null;$('fdEventFriendPicker').classList.add('hidden');$('fdEventFriend').required=false;});
   renderHome();
 })();
