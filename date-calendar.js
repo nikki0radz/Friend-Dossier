@@ -189,6 +189,7 @@
       button.setAttribute('aria-label',`${prettyDate(date)}${events.length?`, ${events.length} important date${events.length>1?'s':''}`:''}`);
       button.onclick=()=>{
         calendarSelected=date;
+        if(history.state?.view==='calendar')history.replaceState({...history.state,date:keyFor(date)},'',location.href);
         if(date.getMonth()!==m)calendarCursor=new Date(date.getFullYear(),date.getMonth(),1);
         renderCalendarMonth();
       };
@@ -345,6 +346,7 @@
   `;
   document.head.appendChild(style);
 
+  window.renderImportantDateWeek=renderWeekStrip;
   window.openImportantDateCalendar=(date,skipHistory=false)=>openDateCalendar(date,skipHistory);
   window.closeImportantDateCalendar=(skipHistory=false)=>closeDateCalendar(skipHistory);
 

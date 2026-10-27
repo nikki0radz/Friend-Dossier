@@ -180,6 +180,7 @@ function toArray(v){ if(Array.isArray(v))return v;if(typeof v==='string')return 
 function normalizeFriend(f={}){
   if(Array.isArray(f.entries)){
     return{
+      ...f,
       id:f.id||uid(),
       name:f.name||'Unnamed',
       relationship:f.relationship||'',
@@ -425,6 +426,7 @@ function openFriendDialog(friend=null){
 async function resizePhoto(file,max=1100,quality=.76){return new Promise((resolve,reject)=>{const r=new FileReader();r.onerror=reject;r.onload=()=>{const img=new Image();img.onerror=reject;img.onload=()=>{const scale=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',quality));};img.src=r.result;};r.readAsDataURL(file);});}
 async function saveFriend(){
   const form=$('friendForm');if(!form?.reportValidity())return;
+  if(($('birthdayDay').value||$('birthdayMonth').value||$('birthdayYear').value)&&!validDossierDate($('birthdayDay').value,$('birthdayMonth').value,$('birthdayYear').value)){fdAlert('Enter a valid day and month for the birthday.',{title:'Check the birthday'});return;}
   const id=$('friendId').value||uid(),old=state.friends.find(f=>f.id===id);
   const source=$('photoSourceData')?.value||'';
   let imageData='';
@@ -506,11 +508,14 @@ function saveEntry(event){
   event.preventDefault();
   const f=selected();if(!f)return;
   const id=$('entryId').value||uid(),type=$('entryType').value;
+  if(type==='date'&&!validDossierDate($('entryDay').value,$('entryMonth').value,$('entryYear').value)){fdAlert('Enter a valid day and month for this date.',{title:'Check the date'});return;}
+  if(type!=='date'&&!$('entryTitle').value.trim()&&!$('entryValue').value.trim()&&!entryImageDraft.length){fdAlert('Add a title, a detail or a picture first.',{title:'Nothing to save yet'});return;}
   const recurring=type==='date'?($('entryRecurring')?.checked!==false):false;
   const day=Number($('entryDay').value)||'',month=Number($('entryMonth').value)||'';
   const typedYear=Number($('entryYear').value)||0;
   const year=type==='date'?(typedYear||new Date().getFullYear()):'';
   const entry={
+    ...(f.entries.find(item=>item.id===id)||{}),
     id,type,
     emoji:$('entryEmoji').value.trim()||categoryFor(type).emoji,
     title:$('entryTitle').value.trim(),
@@ -520,8 +525,9 @@ function saveEntry(event){
     images:[...entryImageDraft]
   };
   const ix=f.entries.findIndex(x=>x.id===id);
+  const previousEntry=ix>=0?f.entries[ix]:null;
   if(ix>=0)f.entries[ix]=entry;else f.entries.push(entry);
-  if(!persistFriends()){fdAlert('Could not save this info. Browser storage may be full. Try removing one or more pictures.',{title:'Couldn’t save',danger:true,icon:'!'});return;}
+  if(!persistFriends()){if(ix>=0)f.entries[ix]=previousEntry;else f.entries.pop();fdAlert('Could not save this info. Browser storage may be full. Try removing one or more pictures.',{title:'Couldn’t save',danger:true,icon:'!'});return;}
   safeClose($('entryDialog'));showToast(ix>=0?'Updated':'Added');
   if(window.__returnToDossierAfterEntry){
     window.__returnToDossierAfterEntry=false;
