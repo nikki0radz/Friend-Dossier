@@ -88,7 +88,16 @@ function nextFriendDate(friend) {
     return result.sort((a,b)=>a.date-b.date||a.friend.name.localeCompare(b.friend.name));
   }
   function peopleRow(f){return `<button class="fd-person" data-person="${esc(f.id)}">${avatar(f)}<span class="fd-person-copy"><strong>${esc(f.name)}</strong>${preview(f)?`<small>${esc(preview(f))}</small>`:''}</span><span class="fd-chevron">${icon('arrow')}</span></button>`;}
-  function bindPeople(root){bindPhotos(root);root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>openPerson(b.dataset.person));}
+  function bindPeople(root){
+    bindPhotos(root);
+    root.querySelectorAll('[data-person]').forEach(button=>button.onclick=event=>{
+      const friend=state.friends.find(f=>f.id===button.dataset.person);
+      if(event.target.closest('[data-friend-photo]') && friend){
+        openFullPhoto(friend.photoSourceData||friend.imageData,`${friend.name}’s photo`,friend.imageData);return;
+      }
+      openPerson(button.dataset.person);
+    });
+  }
   function updateNav(){
     const profile=!$('personView').classList.contains('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>b.setAttribute('aria-current',b.dataset.nav===((profile||peopleOnly)?'people':'home')?'page':'false'));

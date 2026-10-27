@@ -68,3 +68,5 @@ html[data-start-screen=upcoming] .modern #dateWeekDashboard{display:block!import
 .fd-pinned+.fd-categories{margin-top:18px}
 .modern #fdPhotoDialog{width:min(94vw,920px);max-width:920px}
 .modern #fdPhotoDialog>img{height:auto;max-height:80dvh;object-fit:contain}
+
+.fd-person img.fd-avatar{cursor:zoom-in}
