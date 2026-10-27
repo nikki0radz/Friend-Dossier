@@ -428,7 +428,7 @@ async function saveFriend(){
   const form=$('friendForm');if(!form?.reportValidity())return;
   if(($('birthdayDay').value||$('birthdayMonth').value||$('birthdayYear').value)&&!validDossierDate($('birthdayDay').value,$('birthdayMonth').value,$('birthdayYear').value)){fdAlert('Enter a valid day and month for the birthday.',{title:'Check the birthday'});return;}
   const id=$('friendId').value||uid(),old=state.friends.find(f=>f.id===id);
-  const source=$('photoSourceData')?.value||'';
+  const source=$('photoSourceData')?.value||$('photoData')?.value||'';
   let imageData='';
   try{imageData=await croppedPhotoData(source,Number($('photoX')?.value||50),Number($('photoY')?.value||50),Number($('photoZoom')?.value||100));}
   catch{imageData=$('photoData').value||'';}

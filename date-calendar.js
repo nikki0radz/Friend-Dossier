@@ -29,7 +29,7 @@
         events.push({
           kind:'birthday',friend,entry:null,emoji:'🎂',
           title:`${friend.name}'s birthday`,
-          subtitle:friend.relationship||'Birthday'
+          subtitle:'Birthday · Repeats yearly'
         });
       }
       (friend.entries||[]).filter(e=>e.type==='date').forEach(entry=>{
@@ -42,8 +42,8 @@
         events.push({
           kind:'date',friend,entry,
           emoji:(entry.emoji||'📅').trim()||'📅',
-          title:(entry.title||'Important date').trim()||'Important date',
-          subtitle:friend.name,
+          title:`${friend.name} · ${(entry.title||'Important date').trim()||'Important date'}`,
+          subtitle:recurring?'Repeats yearly':'One-off',
           note:(entry.value||'').trim()
         });
       });

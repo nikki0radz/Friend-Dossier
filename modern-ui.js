@@ -25,7 +25,6 @@ function validDossierDate(day, month, year) {
   const names={allergy:'Allergy / avoid',date:'Important dates',gift:'Gift ideas',like:'Likes',note:'Notes'};
   const catName=type=>names[type]||categoryFor(type).name;
   const catIcon=type=>icon(({allergy:'warning',date:'calendar',gift:'gift',like:'heart'})[type]||'note');
-  let filter='All';
   let peopleOnly=false;
   let allCategories=false;
   let expanded=new Set();
@@ -45,7 +44,20 @@ function validDossierDate(day, month, year) {
   applySettings=function(){priorApplySettings();applyCleanTheme();};
   applyCleanTheme();
 
-  function avatar(f){return f.imageData?`<img class="fd-avatar" src="${esc(f.imageData)}" alt="">`:`<span class="fd-avatar fd-initials">${esc(initials(f.name))}</span>`;}
+  function avatar(f){
+    const source=f.imageData||f.photoSourceData||'';
+    return source?`<img class="fd-avatar" data-friend-photo="${esc(f.id)}" src="${esc(source)}" alt="${esc(f.name)}’s photo">`:`<span class="fd-avatar fd-initials">${esc(initials(f.name))}</span>`;
+  }
+  function bindPhotos(root){
+    root.querySelectorAll('[data-friend-photo]').forEach(img=>{
+      img.onerror=()=>{
+        const f=state.friends.find(friend=>friend.id===img.dataset.friendPhoto);
+        if(f?.photoSourceData && img.getAttribute('src')!==f.photoSourceData){img.src=f.photoSourceData;return;}
+        const fallback=document.createElement('span');fallback.className='fd-avatar fd-initials';fallback.textContent=initials(f?.name||'');img.replaceWith(fallback);
+      };
+      if(img.complete && !img.naturalWidth)img.onerror();
+    });
+  }
   function preview(f){
     const entry=f.entries.find(e=>e.pinned)||f.entries.find(e=>e.type==='like')||f.entries.find(e=>e.type!=='allergy');
     return entry?displayEntry(entry):(f.birthdayDay&&f.birthdayMonth?`Birthday ${formatPartialDate(f.birthdayDay,f.birthdayMonth,'')}`:'Open dossier');
@@ -57,13 +69,13 @@ function validDossierDate(day, month, year) {
       if(birthday)result.push({...birthday,friend,title:`${friend.name}’s birthday`,recurring:true});
       for(const entry of friend.entries.filter(e=>e.type==='date')){
         const next=nextOccurrence(entry.day,entry.month,entry.year,entry.recurring!==false);
-        if(next)result.push({...next,friend,title:entry.title||'Important date',recurring:entry.recurring!==false});
+        if(next)result.push({...next,friend,title:`${friend.name} · ${entry.title||'Important date'}`,recurring:entry.recurring!==false});
       }
     }
     return result.sort((a,b)=>a.date-b.date||a.friend.name.localeCompare(b.friend.name));
   }
-  function peopleRow(f){return `<button class="fd-person" data-person="${esc(f.id)}">${avatar(f)}<span class="fd-person-copy"><strong>${esc(f.name)}</strong><span>${esc(f.relationship||'Person')}</span><small>${esc(preview(f))}</small></span><span class="fd-chevron">${icon('arrow')}</span></button>`;}
-  function bindPeople(root){root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>openPerson(b.dataset.person));}
+  function peopleRow(f){return `<button class="fd-person" data-person="${esc(f.id)}">${avatar(f)}<span class="fd-person-copy"><strong>${esc(f.name)}</strong><small>${esc(preview(f))}</small></span><span class="fd-chevron">${icon('arrow')}</span></button>`;}
+  function bindPeople(root){bindPhotos(root);root.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>openPerson(b.dataset.person));}
   function updateNav(){
     const profile=!$('personView').classList.contains('hidden');
     document.querySelectorAll('[data-nav]').forEach(b=>b.setAttribute('aria-current',b.dataset.nav===((profile||peopleOnly)?'people':'home')?'page':'false'));
@@ -79,14 +91,14 @@ function validDossierDate(day, month, year) {
     $('searchInput').placeholder='Search people and details…';
     const label=document.createElement('label');label.className='fd-search-wrap';label.innerHTML=icon('search');
     $('searchInput').before(label);label.appendChild($('searchInput'));
-    $('homeView').insertAdjacentHTML('afterbegin','<div id="fdAgenda"></div><div id="fdPeopleHead"></div><div id="fdFilters" class="fd-filters" aria-label="Filter people"></div>');
+    $('homeView').insertAdjacentHTML('afterbegin','<div id="fdAgenda"></div><div id="fdPeopleHead"></div>');
     const nav=document.createElement('nav');nav.id='fdBottomNav';nav.className='fd-bottom-nav';nav.setAttribute('aria-label','Main navigation');
     nav.innerHTML=`<button data-nav="home">${icon('grid')}<span>Home</span></button><button data-nav="people">${icon('people')}<span>People</span></button><button data-nav="calendar">${icon('calendar')}<span>Calendar</span></button>`;
     document.body.appendChild(nav);
     nav.querySelector('[data-nav="home"]').onclick=()=>{peopleOnly=false;window.closeImportantDateCalendar?.(true);goHome();};
     nav.querySelector('[data-nav="people"]').onclick=()=>{peopleOnly=true;window.closeImportantDateCalendar?.(true);goHome();$('searchInput').focus();};
     nav.querySelector('[data-nav="calendar"]').onclick=()=>window.openImportantDateCalendar(new Date());
-    $('addFriendBtn').innerHTML=icon('plus')+' Add person';
+    $('addFriendBtn').innerHTML=icon('plus')+' Add friend';
     $('addFriendBtn').onclick=()=>openFriendDialog();
   }
 
@@ -105,18 +117,14 @@ function validDossierDate(day, month, year) {
     nextBox.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nextBox.click();}};
     const agenda=$('fdAgenda');agenda.innerHTML='';
     if(mode==='upcoming'){
-      agenda.innerHTML=`<div class="fd-section-heading"><h2>Coming up</h2><button class="text-button" id="fdViewMonth">View month ${icon('arrow')}</button></div><div class="fd-agenda-list">${upcoming.length?upcoming.slice(0,5).map(e=>`<button class="fd-event" data-person="${esc(e.friend.id)}"><span class="fd-date-block"><strong>${e.date.getDate()}</strong><small>${esc(e.date.toLocaleDateString('en-GB',{month:'short'}))}</small></span><span><strong>${esc(e.title)}</strong><small>${esc(e.friend.name)} · ${esc(countdownWords(e.days))}</small><small>${e.recurring?'Repeats yearly':'One-off'}</small></span>${icon('arrow')}</button>`).join(''):'<p class="fd-empty">Add a birthday or an important date to a profile and it will appear here.</p>'}</div>`;
+      agenda.innerHTML=`<div class="fd-section-heading"><h2>Coming up</h2><button class="text-button" id="fdViewMonth">View month ${icon('arrow')}</button></div><div class="fd-agenda-list">${upcoming.length?upcoming.slice(0,5).map(e=>`<button class="fd-event" data-person="${esc(e.friend.id)}"><span class="fd-date-block"><strong>${e.date.getDate()}</strong><small>${esc(e.date.toLocaleDateString('en-GB',{month:'short'}))}</small></span><span><strong>${esc(e.title)}</strong><small>${esc(countdownWords(e.days))}</small><small>${e.recurring?'Repeats yearly':'One-off'}</small></span>${icon('arrow')}</button>`).join(''):'<p class="fd-empty">Add a birthday or an important date to a profile and it will appear here.</p>'}</div>`;
       $('fdViewMonth').onclick=()=>window.openImportantDateCalendar(new Date());bindPeople(agenda);
     }
-    const labels=['All',...new Set(state.friends.map(f=>f.relationship.trim()).filter(Boolean))];
-    if(!labels.includes(filter))filter='All';
-    $('fdFilters').innerHTML=labels.length>1?labels.map(label=>`<button data-filter="${esc(label)}" aria-pressed="${filter===label}">${esc(label)}</button>`).join(''):'';
-    $('fdFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderHome();});
-    const people=state.friends.filter(f=>(filter==='All'||f.relationship===filter)&&`${f.name} ${f.relationship} ${f.entries.map(displayEntry).join(' ')}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
+    const people=state.friends.filter(f=>`${f.name} ${f.entries.map(displayEntry).join(' ')}`.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name));
     $('fdPeopleHead').innerHTML=`<div class="fd-section-heading"><h2>${mode==='upcoming'?'Your people':'People'} <small>${people.length}</small></h2><button class="text-button" id="fdQuickAdd">${icon('plus')} Add</button></div>`;
     $('fdQuickAdd').onclick=()=>openFriendDialog();
     const grid=$('peopleGrid');grid.className=mode==='cards'?'fd-people fd-card-grid':'fd-people fd-list';
-    grid.innerHTML=people.length?people.map(peopleRow).join(''):`<div class="fd-empty"><h3>${state.friends.length?'No people found':'Your people, remembered'}</h3><p>${state.friends.length?'Try another search or filter.':'Add someone to start keeping their dates, favourites and little details together.'}</p></div>`;
+    grid.innerHTML=people.length?people.map(peopleRow).join(''):`<div class="fd-empty"><h3>${state.friends.length?'No people found':'Your people, remembered'}</h3><p>${state.friends.length?'Try another search.':'Add someone to start keeping their dates, favourites and little details together.'}</p></div>`;
     bindPeople(grid);updateNav();
   };
   const coreGoHome=goHome;
@@ -153,10 +161,13 @@ function validDossierDate(day, month, year) {
     const pinned=f.entries.filter(e=>e.pinned), allergies=f.entries.filter(e=>e.type==='allergy');
     const types=[...new Set([...settings.categories.map(c=>c.id),...f.entries.map(e=>e.type)])];
     const visible=allCategories?types:types.filter(type=>f.entries.some(e=>e.type===type));
-    $('readPanel').innerHTML=`<div class="fd-profile-top"><button id="fdBackPeople" class="text-button">${icon('back')} People</button><button id="fdEditPerson" class="text-button">Edit person</button></div><header class="fd-profile-head">${avatar(f)}<div><h1>${esc(f.name)}</h1><p>${esc(f.relationship||'')}</p>${f.birthdayDay&&f.birthdayMonth?`<span>${icon('calendar')} ${esc(formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear))}</span>`:''}</div></header><button class="primary-button fd-add-info" id="fdAddInfo">${icon('plus')} Add info</button>${allergies.length?`<div class="fd-allergy">${icon('warning')}<div><strong>Allergy / avoid</strong>${allergies.map(e=>`<p>${esc(displayEntry(e))}</p>`).join('')}</div></div>`:''}<section class="fd-pinned"><div class="fd-section-heading"><h2>${icon('pin')} Pinned details</h2></div>${pinned.length?pinned.map(e=>entryCard(e,true)).join(''):'<p class="fd-pin-hint">Tap the pin beside any item to keep it here.</p>'}</section><div class="fd-section-heading"><h2>Browse dossier</h2><button class="text-button" id="fdManageItems">Manage</button></div><div class="fd-categories">${visible.map(type=>{
+    $('readPanel').innerHTML=`<div class="fd-profile-top"><button id="fdBackPeople" class="text-button">${icon('back')} People</button><button id="fdEditPerson" class="text-button">Edit profile</button></div><header class="fd-profile-head">${avatar(f)}<div><h1>${esc(f.name)}</h1>${f.birthdayDay&&f.birthdayMonth?`<span>${icon('calendar')} ${esc(formatPartialDate(f.birthdayDay,f.birthdayMonth,f.birthdayYear))}</span>`:''}<button class="text-button fd-change-photo" id="fdChangePhoto">${f.imageData||f.photoSourceData?'Change photo':'Add photo'}</button></div></header><button class="primary-button fd-add-info" id="fdAddInfo">${icon('plus')} Add info</button>${allergies.length?`<div class="fd-allergy">${icon('warning')}<div><strong>Allergy / avoid</strong>${allergies.map(e=>`<p>${esc(displayEntry(e))}</p>`).join('')}</div></div>`:''}<section class="fd-pinned"><div class="fd-section-heading"><h2>${icon('pin')} Pinned details</h2></div>${pinned.length?pinned.map(e=>entryCard(e,true)).join(''):'<p class="fd-pin-hint">Tap the pin beside any item to keep it here.</p>'}</section><div class="fd-section-heading"><h2>Browse dossier</h2><button class="text-button" id="fdManageItems">Manage</button></div><div class="fd-categories">${visible.map(type=>{
       const entries=f.entries.filter(e=>e.type===type);
-      return `<details data-type="${esc(type)}" ${expanded.has(type)?'open':''}><summary>${catIcon(type)}<strong>${esc(catName(type))}</strong><span class="fd-count">${entries.length}</span>${icon('arrow')}</summary><div class="fd-category-items">${entries.map(e=>entryCard(e)).join('')}<button class="text-button fd-category-add" data-add-type="${esc(type)}">${icon('plus')} Add ${esc(catName(type).toLowerCase())}</button></div></details>`;
+      const photos=entries.flatMap(entry=>(entry.images||[]).map((src,index)=>({src,index,id:entry.id})));
+      return `<div class="fd-category-block"><details data-type="${esc(type)}" ${expanded.has(type)?'open':''}><summary>${catIcon(type)}<strong>${esc(catName(type))}</strong><span class="fd-count">${entries.length}</span>${icon('arrow')}</summary><div class="fd-category-items">${entries.map(e=>entryCard(e)).join('')}<button class="text-button fd-category-add" data-add-type="${esc(type)}">${icon('plus')} Add ${esc(catName(type).toLowerCase())}</button></div></details>${photos.length?`<div class="fd-category-preview">${photos.slice(0,3).map(photo=>`<button type="button" data-entry="${esc(photo.id)}" data-photo="${photo.index}" aria-label="Open ${esc(catName(type).toLowerCase())} picture ${photo.index+1}"><img src="${esc(photo.src)}" alt="${esc(catName(type))} picture" loading="lazy"></button>`).join('')}${photos.length>3?`<span>+${photos.length-3} more</span>`:''}</div>`:''}</div>`;
     }).join('')}</div><button class="fd-all-categories" id="fdAllCategories">${icon('grid')}${allCategories?'Show saved categories':'All categories'}${icon('arrow')}</button><p class="fd-profile-foot">${f.entries.length} saved ${f.entries.length===1?'item':'items'}</p>`;
+    bindPhotos($('readPanel'));
+    $('fdChangePhoto').onclick=()=>{openFriendDialog(f);$('photoInput').click();};
     $('fdBackPeople').onclick=()=>goHome();$('fdEditPerson').onclick=()=>openFriendDialog(f);$('fdAddInfo').onclick=showAddInfo;$('fdManageItems').onclick=renderReadEdit;
     $('fdAllCategories').onclick=()=>{allCategories=!allCategories;renderRead();};
     $('readPanel').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)expanded.add(d.dataset.type);else expanded.delete(d.dataset.type);}));
@@ -193,15 +204,15 @@ function validDossierDate(day, month, year) {
   };
   const coreOpenFriend=openFriendDialog;
   openFriendDialog=function(friend=null){
-    coreOpenFriend(friend);
-    $('friendDialogTitle').textContent=friend?'Edit person':'Add person';
-    $('friendForm').querySelector('.primary-button').textContent='Save person';
+    coreOpenFriend(friend?{...friend,imageData:friend.imageData||friend.photoSourceData||''}:null);
+    $('friendDialogTitle').textContent=friend?'Edit profile':'Add friend';
+    $('friendForm').querySelector('.primary-button').textContent='Save friend';
     $('friendDelete').classList.toggle('hidden',!friend);
     $('friendDelete').onclick=async()=>{
-      if(!friend||!await fdConfirm(`Delete ${friend.name} and their saved details? Export a backup first if you want to keep a copy.`,{title:'Delete person?',confirmLabel:'Delete',danger:true,icon:'!'}))return;
+      if(!friend||!await fdConfirm(`Delete ${friend.name} and their saved details? Export a backup first if you want to keep a copy.`,{title:'Delete friend?',confirmLabel:'Delete',danger:true,icon:'!'}))return;
       const old=state.friends;state.friends=old.filter(f=>f.id!==friend.id);
       if(!persistFriends()){state.friends=old;fdAlert('This change could not be saved.',{title:'Couldn’t save'});return;}
-      safeClose($('friendDialog'));goHome();showToast('Person deleted');
+      safeClose($('friendDialog'));goHome();showToast('Friend deleted');
     };
   };
   function openCategoryDialog(){safeOpen($('fdCategoryDialog'));$('fdCategoryName').focus();}
@@ -232,7 +243,8 @@ function validDossierDate(day, month, year) {
     safeClose($('fdCategoryDialog'));$('fdCategoryForm').reset();if(selected())showAddInfo();showToast('Category created');
   };
   $('entryForm').insertAdjacentHTML('beforeend','<button type="button" id="entryDelete" class="fd-danger hidden">Delete item</button>');
-  $('friendForm').insertAdjacentHTML('beforeend','<button type="button" id="friendDelete" class="fd-danger hidden">Delete person</button>');
+  $('choosePhotoBtn').onclick=()=>$('photoInput').click();
+  $('friendForm').insertAdjacentHTML('beforeend','<button type="button" id="friendDelete" class="fd-danger hidden">Delete friend</button>');
   $('entryDialog').addEventListener('close',()=>{window.__returnToDossierAfterEntry=false;});
   renderHome();
 })();

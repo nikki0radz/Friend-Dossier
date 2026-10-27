@@ -39,3 +39,18 @@ body.modern{background:var(--bg)!important;color:var(--text);font:15px/1.5 syste
 
 html[data-start-screen=upcoming] .modern #dateWeekDashboard{display:block!important;background:var(--surface);border:1px solid var(--border);border-radius:13px;margin:0;padding:12px;box-shadow:none}
 .modern .week-open-calendar span{color:var(--text);font-size:13px}.modern .week-open-calendar small{color:var(--muted);font-size:9px}.modern .week-shift{color:var(--accent)}.modern .date-week-day{color:var(--text);background:transparent;border-color:transparent}.modern .date-week-day small{color:var(--muted)}.modern .date-week-day.today{border-color:var(--accent);background:var(--soft-accent)}
+
+/* Photos remain visible in both home layouts; no relationship labels needed. */
+.modern .fd-avatar{display:block;opacity:1;visibility:visible;flex-shrink:0}
+.modern .fd-initials{display:grid}
+.fd-card-grid .fd-person-copy strong{align-self:center;margin:0}
+.modern .fd-change-photo{display:flex;width:fit-content;min-height:32px;font-size:12px;padding:5px 0;margin-top:5px}
+.modern .photo-row{flex-wrap:wrap}
+.modern #choosePhotoBtn{min-height:44px}
+.modern .photo-crop-editor label{color:var(--muted)}
+
+.fd-category-preview{display:flex;align-items:center;gap:8px;padding:0 0 14px}
+.fd-category-preview button{border:0;background:none;padding:0;border-radius:9px;overflow:hidden}
+.fd-category-preview img{display:block;width:66px;height:66px;object-fit:cover}
+.fd-category-preview>span{color:var(--muted);font-size:12px}
+.fd-category-block>details[open]+.fd-category-preview{display:none}
